@@ -1,8 +1,4 @@
 /**
- * Event-related types and interfaces
- */
-
-/**
  * Core event card data structure used across event listing components
  */
 export interface EventCardData {
@@ -36,9 +32,15 @@ export interface Event {
   startTime: string;
   endTime: string;
   capacity: number | 'unlimited';
-  attendees: number;
+  attendees?: number;
   status: EventStatus;
   checkOutRequired: boolean;
+  is_started?: boolean;
+  is_done?: boolean;
+  checkin_count?: number;
+  checkout_count?: number;
+  checkOutCount: number;
+  checkInCount: number;
 }
 
 /**

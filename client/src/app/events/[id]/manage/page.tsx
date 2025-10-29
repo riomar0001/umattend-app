@@ -88,7 +88,8 @@ export default function ManageSingleEventPage() {
     startTime: apiEvent.all_day ? 'All Day' : formatTimePadded(startDate),
     endTime: apiEvent.all_day ? '' : formatTimePadded(endDate),
     capacity: apiEvent.capacity || 'unlimited',
-    attendees: apiEvent.check_out_required ? apiEvent.checkout_count || 0 : apiEvent.checkin_count || 0,
+    checkOutCount: apiEvent.checkout_count || 0,
+    checkInCount: apiEvent.checkin_count || 0,
     status: getEventStatus(apiEvent),
     checkOutRequired: apiEvent.check_out_required || false
   };

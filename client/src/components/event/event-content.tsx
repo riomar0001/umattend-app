@@ -14,7 +14,7 @@ interface EventContentProps {
 }
 
 const EventContent = ({ event, isLast = false, onCardClick }: EventContentProps) => {
-  const { title, date, dayOfWeek, startTime, endTime, location, hasLocation = false, attendees = 0 } = event;
+  const { title, date, dayOfWeek, startTime, endTime, location, hasLocation = false, checkin_count, checkout_count } = event;
   const eventStatus = event.eventStatus || 'upcoming';
 
   return (
@@ -61,7 +61,11 @@ const EventContent = ({ event, isLast = false, onCardClick }: EventContentProps)
               )}
               <div className="text-muted-foreground flex items-center gap-2 text-xs sm:text-sm">
                 <UsersRound size={14} />
-                <span>{attendees && attendees > 0 ? `${attendees} attendees` : 'No attendees'}</span>
+                <span>
+                  {eventStatus === 'upcoming' && 'No Attendees'}
+                  {eventStatus === 'ongoing' && `${checkin_count} Attending`}
+                  {eventStatus === 'completed' && `${checkout_count} Attended`}
+                </span>
               </div>
             </div>
           </div>

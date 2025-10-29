@@ -53,7 +53,13 @@ const emailWorker = new Worker<EmailJob>(
       throw error;
     }
   },
-  { connection }
+  {
+    connection,
+    limiter: {
+      max: 1,
+      duration: 10000,
+    },
+  }
 );
 
 emailWorker.on('completed', (job) => {

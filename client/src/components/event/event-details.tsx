@@ -14,7 +14,7 @@ interface EventDetailsProps {
 const EventDetails = ({ event, onClose }: EventDetailsProps) => {
   const router = useRouter();
 
-  const { id, apiId, title, description, dayOfWeek, date, startTime, endTime, hasLocation = false, location, attendees = 0 } = event;
+  const { id, apiId, title, description, dayOfWeek, date, startTime, endTime, hasLocation = false, location, checkin_count, checkout_count } = event;
 
   const eventStatus = event.eventStatus || 'upcoming';
 
@@ -62,7 +62,14 @@ const EventDetails = ({ event, onClose }: EventDetailsProps) => {
           <SheetTitle className="text-3xl leading-tight font-bold tracking-tight">{title}</SheetTitle>
           <div className="flex items-center gap-2">
             <UsersRound className="text-muted-foreground h-4 w-4" />
-            <span className="text-muted-foreground text-sm">{attendees > 0 ? `${attendees} attendees` : 'No attendees yet'}</span>
+            <span className="text-muted-foreground text-sm">
+              {' '}
+              <span>
+                {eventStatus === 'upcoming' && 'No Attendees'}
+                {eventStatus === 'ongoing' && `${checkin_count} Attending`}
+                {eventStatus === 'completed' && `${checkout_count} Attended`}
+              </span>
+            </span>
           </div>
         </div>
 

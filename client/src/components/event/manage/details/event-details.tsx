@@ -5,7 +5,7 @@ import { Event } from '@/types/events';
 import { formatDate } from '@/lib/utils';
 
 export default function EventDetails({ event }: { event: Event }) {
-  const capacityPercentage = event.capacity === 'unlimited' ? 0 : Math.round((event.attendees / event.capacity) * 100);
+  const capacityPercentage = event.capacity === 'unlimited' ? 0 : Math.round(((event.checkin_count ?? 0) / event.capacity) * 100);
 
   return (
     <div className="mb-8 space-y-6">

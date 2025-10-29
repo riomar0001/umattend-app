@@ -250,6 +250,107 @@ const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
   }
 };
 
+const massCheckOutStudents = async (
+  event_id: string,
+  student_ids: number[],
+  check_out_by: string,
+  checkout_time?: string | Date
+) => {
+  try {
+    if (!event_id) {
+      throw new NotFoundError('Event ID is required');
+    }
+
+    const eventDetails = await eventRepository.getEventDetails(event_id);
+    if (!eventDetails) {
+      throw new NotFoundError('Event not found');
+    }
+    if (!eventDetails.check_out_required) {
+      throw new NoCheckoutRequiredError(
+        'This event does not require check-out'
+      );
+    }
+
+    // Determine the check_out_at to use for the batch.
+    let checkOutAt: Date;
+
+    if (checkout_time instanceof Date) {
+      checkOutAt = checkout_time;
+    } else if (
+      typeof checkout_time === 'string' &&
+      /^\d{1,2}:\d{2}$/.test(checkout_time)
+    ) {
+      // If given as HH:MM, interpret as local time in Philippines (Asia/Manila, UTC+08:00)
+      // and apply it to the event date (prefer start_time, else today).
+      const baseDate = eventDetails.start_time
+        ? new Date(eventDetails.start_time)
+        : new Date();
+      const [hhStr, mmStr] = checkout_time.split(':');
+      const hh = String(parseInt(hhStr, 10)).padStart(2, '0');
+      const mm = String(parseInt(mmStr, 10)).padStart(2, '0');
+      const y = baseDate.getFullYear();
+      const m = String(baseDate.getMonth() + 1).padStart(2, '0');
+      const d = String(baseDate.getDate()).padStart(2, '0');
+      // Build an ISO string with +08:00 offset so Date parses it as the correct UTC instant
+      const iso = `${y}-${m}-${d}T${hh}:${mm}:00+08:00`;
+      checkOutAt = new Date(iso);
+    } else if (typeof checkout_time === 'string') {
+      const parsed = new Date(checkout_time);
+      if (isNaN(parsed.getTime())) {
+        throw new Error('Invalid checkout_time format');
+      }
+      checkOutAt = parsed;
+    } else {
+      checkOutAt = new Date();
+    }
+
+    const result = await eventRepository.massCheckOutStudents(
+      event_id,
+      student_ids,
+      check_out_by,
+      checkOutAt
+    );
+
+    // send emails for updated records
+    for (const rec of result.updatedRecords) {
+      try {
+        const studentbyUserId = await studentRepository.getUserByStudentId(
+          rec.student.student_id
+        );
+        const checkOutBy = rec.check_out_by_user?.id
+          ? await studentRepository.getStudentByUserId(rec.check_out_by_user.id)
+          : null;
+
+        if (studentbyUserId && rec.check_out_at && checkOutBy) {
+          sendEmail(
+            studentbyUserId.umindanao_email,
+            'Event Check-Out Successful',
+            CHECK_OUT_EMAIL.replace('{{name}}', rec.student.name)
+              .replace('{{event_name}}', rec.event.title)
+              .replace('{{event_location}}', rec.event.location)
+              .replace(
+                '{{event_date_and_time}}',
+                rec.check_out_at.toLocaleString()
+              )
+              .replace('{{checked_out_by}}', checkOutBy.name)
+          );
+        }
+      } catch (err) {
+        console.warn(
+          'Failed to send check-out email for student',
+          rec.student.student_id,
+          err
+        );
+      }
+    }
+
+    return result;
+  } catch (error: unknown) {
+    console.error(error);
+    throw error;
+  }
+};
+
 const scheduleEndEventStatusJob = async (event: events) => {
   if (!event.id) {
     return;
@@ -631,6 +732,7 @@ const eventServices = {
   getAllEvents,
   createCheckInEvent,
   createCheckOutEvent,
+  massCheckOutStudents,
   addOrganizer,
   removeOrganizer,
   getOrganizersByEventId,

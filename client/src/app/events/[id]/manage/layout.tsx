@@ -5,5 +5,5 @@ export default function ManageEventLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <ProtectedRoute requireAdmin>{children}</ProtectedRoute>;
+  return <ProtectedRoute>{children}</ProtectedRoute>;
 }

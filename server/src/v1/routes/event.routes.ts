@@ -47,6 +47,14 @@ router.post(
 );
 
 router.post(
+  `/mass_check_out/:event_id`,
+  authMiddleware,
+  checkRole('admin', 'csg'),
+  checkOrganizer,
+  eventController.massCheckOutEvent
+);
+
+router.post(
   `/add_organizer/:event_id`,
   authMiddleware,
   checkRole('admin', 'csg'),

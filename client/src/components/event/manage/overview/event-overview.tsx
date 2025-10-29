@@ -19,7 +19,7 @@ export default function EventOverview({ event }: { event: Event }) {
             <>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Available Spots</span>
-                <span className="text-foreground text-2xl font-bold">{event.capacity - event.attendees}</span>
+                <span className="text-foreground text-2xl font-bold">{event.capacity - event.checkInCount}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Capacity</span>

@@ -40,8 +40,9 @@ export default function HeroSeciont({ event, setIsSheetOpen }: { event: Event; s
                 <div className="text-muted-foreground flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   <span>
-                    {event.attendees}
-                    {event.checkOutRequired ?? `/ ${event.capacity}`} Attended
+                    {event.status === 'upcoming' && 'No Attendees'}
+                    {event.status === 'ongoing' && `${event.checkInCount} Attending`}
+                    {event.status === 'completed' && `${event.checkOutCount} Attended`}
                   </span>
                 </div>
               </div>
