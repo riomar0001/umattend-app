@@ -9,10 +9,10 @@ export const decodeAndVerifyQR = (qrCode: string) => {
   const hour = time.slice(6, 8);
 
   const now = new Date();
-  const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
-  const currentDate = String(now.getDate()).padStart(2, '0');
-  const currentYear = String(now.getFullYear()).slice(-2);
-  const currentHour = String(now.getHours()).padStart(2, '0');
+  const currentMonth = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const currentDate = String(now.getUTCDate()).padStart(2, '0');
+  const currentYear = String(now.getUTCFullYear()).slice(-2);
+  const currentHour = String(now.getUTCHours()).padStart(2, '0');
 
   const dateMatches =
     month === currentMonth && date === currentDate && year === currentYear;

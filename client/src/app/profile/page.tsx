@@ -36,11 +36,19 @@ const ProfilePage = () => {
     retry: false
   });
 
+  const [currentHour, setCurrentHour] = useState(() => new Date().getUTCHours());
+
+  useEffect(() => {
+    const tick = () => setCurrentHour(new Date().getUTCHours());
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const date = String(now.getDate()).padStart(2, '0');
-  const year = String(now.getFullYear()).slice(-2);
-  const hour = String(now.getHours()).padStart(2, '0');
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const date = String(now.getUTCDate()).padStart(2, '0');
+  const year = String(now.getUTCFullYear()).slice(-2);
+  const hour = String(currentHour).padStart(2, '0');
   const QRCode =
     typeof window !== 'undefined'
       ? btoa(`${month}${date}${year}${hour}${String(user?.student_id)}`)

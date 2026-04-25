@@ -27,6 +27,13 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
   const scanningRef = useRef(false);
   const lastScannedRef = useRef<string>('');
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isProcessingRef = useRef(false);
+
+  const resetScanner = () => {
+    isProcessingRef.current = false;
+    lastScannedRef.current = '';
+  };
+
   // Check-in mutation
   const checkInMutation = useMutation({
     ...postEventCheckInByEventIdByQrCodeMutation(),
@@ -35,7 +42,7 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
       setShowDialog(false);
       setIsProcessing(false);
       setScannedValue(null);
-      lastScannedRef.current = '';
+      resetScanner();
     },
     onError: (error) => {
       setIsProcessing(false);
@@ -49,12 +56,12 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
       }
       console.error('[Check-In Scanner] Error:', error);
       setScannedValue(null);
-      lastScannedRef.current = '';
+      resetScanner();
     }
   });
 
   const handleQRCodeDetected = (detectedCode: string) => {
-    if (detectedCode === lastScannedRef.current) {
+    if (isProcessingRef.current || detectedCode === lastScannedRef.current) {
       return;
     }
 
@@ -65,6 +72,7 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
     }
 
     debounceTimerRef.current = setTimeout(() => {
+      isProcessingRef.current = true;
       setScannedValue(detectedCode);
       setShowDialog(true);
       setIsProcessing(true);
