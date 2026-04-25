@@ -91,3 +91,6 @@ db_backup
 
 #agents
 .claude/
+
+#pm2
+ecosystem.config.js
