@@ -220,11 +220,11 @@ export default function CreateEventPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="bg-background relative min-h-screen">
       {/* Background decorative elements */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         {/* Top gradient wash */}
-        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-primary/[0.15] via-primary/[0.06] to-transparent dark:from-primary/[0.22] dark:via-primary/[0.08]" />
+        <div className="from-primary/[0.15] via-primary/[0.06] dark:from-primary/[0.22] dark:via-primary/[0.08] absolute inset-x-0 top-0 h-72 bg-gradient-to-b to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-neutral-100/60 to-transparent dark:from-neutral-900/50" />
 
         <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none">
@@ -287,7 +287,7 @@ export default function CreateEventPage() {
                     <textarea
                       {...field}
                       placeholder="Event name"
-                      className="text-foreground placeholder:text-muted-foreground/50 min-h-20 w-full max-w-2xl resize-none border-0 bg-background !text-6xl font-bold shadow-none focus:outline-none focus-visible:ring-transparent"
+                      className="text-foreground placeholder:text-muted-foreground/50 bg-background min-h-20 w-full max-w-2xl resize-none border-0 !text-6xl font-bold shadow-none focus:outline-none focus-visible:ring-transparent"
                       rows={1}
                       onInput={(e) => {
                         e.currentTarget.style.height = 'auto';
@@ -301,7 +301,7 @@ export default function CreateEventPage() {
             />
 
             {/* Date and Time */}
-            <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
+            <div className="border-border bg-card space-y-4 rounded-2xl border p-4 sm:p-6">
               <div className="space-y-4">
                 {/* Start Date/Time */}
                 <div className="">
@@ -580,7 +580,7 @@ export default function CreateEventPage() {
                           <Button
                             type="button"
                             onClick={() => field.onChange(!field.value)}
-                            className="text-foreground flex items-center gap-2 rounded-lg bg-muted px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-muted/80"
+                            className="text-foreground bg-muted hover:bg-muted/80 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-colors"
                           >
                             {field.value ? 'Unlimited' : 'Limited'}
                           </Button>

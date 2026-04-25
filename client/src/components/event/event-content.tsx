@@ -37,35 +37,43 @@ const EventContent = ({ event, isLast = false, onCardClick }: EventContentProps)
 
   return (
     <div
-      className={`group relative flex backdrop-blur-md border dark:border-neutral-800 cursor-pointer items-stretch ${!isLast ? 'border-b border-border/60' : ''}`}
+      className={`group relative flex cursor-pointer items-stretch border backdrop-blur-md dark:border-neutral-800 ${!isLast ? 'border-border/60 border-b' : ''}`}
       onClick={onCardClick}
     >
       {/* Base gradient */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-neutral-100/80 via-neutral-50/40 to-transparent dark:from-neutral-800/50 dark:via-neutral-800/20 dark:to-transparent" aria-hidden />
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-neutral-100/80 via-neutral-50/40 to-transparent dark:from-neutral-800/50 dark:via-neutral-800/20 dark:to-transparent"
+        aria-hidden
+      />
       {/* Hover gradient */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-primary/[0.08] via-primary/[0.03] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" aria-hidden />
+      <div
+        className="from-primary/[0.08] via-primary/[0.03] pointer-events-none absolute inset-0 bg-gradient-to-r to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        aria-hidden
+      />
 
       {/* Left bar — amber for drafts, primary on hover otherwise */}
-      <div className={`relative z-10 w-0.5 flex-shrink-0 self-stretch transition-colors duration-300 ${is_draft ? 'bg-amber-400/70' : 'bg-transparent group-hover:bg-primary'}`} />
+      <div
+        className={`relative z-10 w-0.5 flex-shrink-0 self-stretch transition-colors duration-300 ${is_draft ? 'bg-amber-400/70' : 'group-hover:bg-primary bg-transparent'}`}
+      />
 
       {/* Date column */}
       <div className="relative z-10 flex w-12 flex-shrink-0 flex-col justify-center py-5 pl-2 text-right sm:w-20 sm:pl-4">
-        <div className="text-foreground text-[1.9rem] font-black leading-none tracking-tighter sm:text-[3rem]">{dayNum}</div>
-        <div className="text-muted-foreground mt-1 text-[9px] font-bold uppercase tracking-widest">{monthAbbr}</div>
-        <div className="text-muted-foreground/50 text-[8px] uppercase tracking-wide">{dayOfWeek?.slice(0, 3)}</div>
+        <div className="text-foreground text-[1.9rem] leading-none font-black tracking-tighter sm:text-[3rem]">{dayNum}</div>
+        <div className="text-muted-foreground mt-1 text-[9px] font-bold tracking-widest uppercase">{monthAbbr}</div>
+        <div className="text-muted-foreground/50 text-[8px] tracking-wide uppercase">{dayOfWeek?.slice(0, 3)}</div>
       </div>
 
       {/* Hairline separator */}
-      <div className="relative z-10 mx-3 w-px flex-shrink-0 self-stretch bg-border/40 transition-colors duration-300 group-hover:bg-primary/30 sm:mx-5" />
+      <div className="bg-border/40 group-hover:bg-primary/30 relative z-10 mx-3 w-px flex-shrink-0 self-stretch transition-colors duration-300 sm:mx-5" />
 
       {/* Content */}
       <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center py-5 pr-3 sm:pr-4">
         {/* Status · time */}
         <div className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
           {is_draft ? (
-            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-500">Draft</span>
+            <span className="text-[10px] font-bold tracking-widest text-amber-500 uppercase">Draft</span>
           ) : (
-            <span className={`text-[10px] font-bold uppercase tracking-widest ${statusColor}`}>{statusLabel}</span>
+            <span className={`text-[10px] font-bold tracking-widest uppercase ${statusColor}`}>{statusLabel}</span>
           )}
           <span className="text-border/60 text-[10px]">·</span>
           <span className="text-muted-foreground text-xs">
@@ -75,7 +83,7 @@ const EventContent = ({ event, isLast = false, onCardClick }: EventContentProps)
         </div>
 
         {/* Title */}
-        <h3 className="text-foreground mb-2.5 break-words text-base font-semibold leading-snug tracking-tight transition-colors duration-300 group-hover:text-primary/90 sm:text-[1.05rem]">
+        <h3 className="text-foreground group-hover:text-primary/90 mb-2.5 text-base leading-snug font-semibold tracking-tight break-words transition-colors duration-300 sm:text-[1.05rem]">
           {title}
         </h3>
 
@@ -84,7 +92,7 @@ const EventContent = ({ event, isLast = false, onCardClick }: EventContentProps)
           {hasLocation ? (
             <span className="text-muted-foreground flex min-w-0 items-center gap-1 text-xs">
               <MapPin size={11} className="flex-shrink-0" />
-              <span className="truncate max-w-[140px] sm:max-w-none">{location}</span>
+              <span className="max-w-[140px] truncate sm:max-w-none">{location}</span>
             </span>
           ) : (
             <span className="flex items-center gap-1 text-xs text-amber-500">

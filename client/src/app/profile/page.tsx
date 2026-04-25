@@ -49,10 +49,7 @@ const ProfilePage = () => {
   const date = String(now.getUTCDate()).padStart(2, '0');
   const year = String(now.getUTCFullYear()).slice(-2);
   const hour = String(currentHour).padStart(2, '0');
-  const QRCode =
-    typeof window !== 'undefined'
-      ? btoa(`${month}${date}${year}${hour}${String(user?.student_id)}`)
-      : '';
+  const QRCode = typeof window !== 'undefined' ? btoa(`${month}${date}${year}${hour}${String(user?.student_id)}`) : '';
 
   const options: Options = useMemo(
     () => ({
@@ -114,11 +111,11 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="bg-background relative min-h-screen">
       {/* Background decorative elements */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         {/* Top gradient wash */}
-        <div className="absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-primary/[0.16] via-primary/[0.06] to-transparent dark:from-primary/[0.24] dark:via-primary/[0.09]" />
+        <div className="from-primary/[0.16] via-primary/[0.06] dark:from-primary/[0.24] dark:via-primary/[0.09] absolute inset-x-0 top-0 h-80 bg-gradient-to-b to-transparent" />
         {/* Bottom gradient wash */}
         <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-neutral-100/70 to-transparent dark:from-neutral-900/60" />
 
@@ -260,7 +257,7 @@ const ProfilePage = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {canHostEvents && (
-            <TabsList className="text-muted-foreground mb-6 inline-flex h-11 w-full items-center justify-center gap-x-2 rounded-lg  p-1 sm:w-96">
+            <TabsList className="text-muted-foreground mb-6 inline-flex h-11 w-full items-center justify-center gap-x-2 rounded-lg p-1 sm:w-96">
               <TabsTrigger value="attended" className="rounded-md px-3 py-2 text-sm font-medium sm:px-4">
                 <Calendar className="mr-2 h-4 w-4" />
                 Attended Events

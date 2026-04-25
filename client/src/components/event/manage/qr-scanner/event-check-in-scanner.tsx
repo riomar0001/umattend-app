@@ -100,7 +100,6 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
         if (detectedCode) {
           handleQRCodeDetected(detectedCode);
         }
-
       }
 
       requestAnimationFrame(scanFrame);

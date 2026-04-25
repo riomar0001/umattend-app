@@ -6,11 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SettingsPage() {
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="bg-background relative min-h-screen">
       {/* Background decorative elements */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         {/* Top gradient wash */}
-        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-primary/[0.15] via-primary/[0.06] to-transparent dark:from-primary/[0.22] dark:via-primary/[0.09]" />
+        <div className="from-primary/[0.15] via-primary/[0.06] dark:from-primary/[0.22] dark:via-primary/[0.09] absolute inset-x-0 top-0 h-72 bg-gradient-to-b to-transparent" />
 
         <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none">
           {/* Top-left: structured arcs — settings/gear aesthetic */}

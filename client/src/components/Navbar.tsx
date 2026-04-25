@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Menu, Plus } from 'lucide-react';
-import { ThemeToggle } from '@/components/theme-toggle';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useMutation } from '@tanstack/react-query';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -61,8 +61,8 @@ const Navbar = () => {
   };
 
   return (
-    <header className="border-border bg-background sticky top-0 z-50 border-b">
-      <div className="container mx-auto flex h-14 max-w-4xl items-center justify-between px-4 sm:px-6">
+    <header className="border-border bg-background/40 sticky top-0 z-50 border-b backdrop-blur-md">
+      <div className="container flex h-14 min-w-svw items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-4 sm:gap-8">
           <div className="hover:bg-muted rounded-md bg-transparent p-2 transition-colors lg:hidden" onClick={() => setIsMobileMenuOpen(true)}>
             <Menu size={18} />
@@ -88,10 +88,11 @@ const Navbar = () => {
           </nav>
 
           <span className="text-muted-foreground hidden text-xs lg:inline">{formatTimeWithTimezone(now)}</span>
+
           <ThemeToggle />
 
           <Popover>
-            <PopoverTrigger className="cursor-pointer">
+            <PopoverTrigger className="flex cursor-pointer flex-row items-center gap-x-2 rounded-md bg-transparent p-2">
               {!user ? (
                 <Skeleton className="h-8 w-8 rounded-full bg-neutral-200" />
               ) : (
@@ -100,8 +101,9 @@ const Navbar = () => {
                   <AvatarFallback className="bg-foreground text-background text-sm font-semibold">{getInitials(studentData.name)}</AvatarFallback>
                 </Avatar>
               )}
+              <span className="text-muted-foreground hidden text-xs transition-colors hover:text-yellow-500 lg:inline">{studentData.name}</span>
             </PopoverTrigger>
-            <PopoverContent className="mt-3 w-64 rounded-xl border border-border p-0 shadow-lg" align="end">
+            <PopoverContent className="border-border bg-background/50 mt-3 w-64 rounded-xl border p-0 shadow-lg backdrop-blur-lg" align="end">
               <div className="flex items-center gap-3 border-b px-4 py-3">
                 <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
                   <Avatar className="h-8 w-8">
@@ -111,6 +113,7 @@ const Navbar = () => {
                 </div>
                 <div className="flex min-w-0 flex-col">
                   <span className="text-foreground truncate text-sm font-semibold">{studentData.name}</span>
+                  <span className="text-muted-foreground text-xs">{studentData.idNumber}</span>
                   <span className="text-muted-foreground truncate text-xs">{studentData.email}</span>
                 </div>
               </div>

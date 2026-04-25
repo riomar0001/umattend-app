@@ -83,7 +83,7 @@
   --sidebar-ring: oklch(0.439 0 0);
 
   /* Background SVG decoration — lighter neutrals for dark backgrounds */
-  --dec-n1: oklch(0.78 0 0 / 0.30);
+  --dec-n1: oklch(0.78 0 0 / 0.3);
   --dec-n2: oklch(0.78 0 0 / 0.22);
   --dec-n3: oklch(0.78 0 0 / 0.16);
   --dec-n4: oklch(0.78 0 0 / 0.45);

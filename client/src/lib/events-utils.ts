@@ -33,7 +33,7 @@ export const transformEventData = (apiEvent: ApiEventData): ExtendedEventCardDat
     check_out_required: apiEvent.check_out_required,
     checkin_count: apiEvent.checkin_count,
     checkout_count: apiEvent.checkout_count,
-    is_draft: apiEvent.is_draft,
+    is_draft: apiEvent.is_draft
   };
 };
 

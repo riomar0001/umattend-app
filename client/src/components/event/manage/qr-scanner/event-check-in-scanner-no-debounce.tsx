@@ -84,7 +84,6 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
             });
           }
         }
-
       }
 
       requestAnimationFrame(scanFrame);

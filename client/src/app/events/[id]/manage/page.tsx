@@ -73,14 +73,14 @@ export default function ManageSingleEventPage() {
     checkInCount: apiEvent.checkin_count || 0,
     status: getEventStatus(apiEvent),
     checkOutRequired: apiEvent.check_out_required || false,
-    is_draft: apiEvent.is_draft ?? false,
+    is_draft: apiEvent.is_draft ?? false
   };
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="bg-background relative min-h-screen">
       {/* Background decorative */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-primary/[0.15] via-primary/[0.05] to-transparent dark:from-primary/[0.22] dark:via-primary/[0.07]" />
+        <div className="from-primary/[0.15] via-primary/[0.05] dark:from-primary/[0.22] dark:via-primary/[0.07] absolute inset-x-0 top-0 h-96 bg-gradient-to-b to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-neutral-100/60 to-transparent dark:from-neutral-900/60" />
         <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none">
           <circle cx="100%" cy="0" r="600" stroke="oklch(0.85 0.18 95 / 0.20)" strokeWidth="1.5" />
@@ -97,14 +97,14 @@ export default function ManageSingleEventPage() {
 
       <HeroSection event={event} setIsSheetOpen={setIsSheetOpen} refetch={refetch} />
 
-      <main className="relative container mx-auto max-w-4xl px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-8">
+      <main className="relative container mx-auto max-w-7xl px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-8">
         <Tabs defaultValue="details">
           {/* Underline tab nav */}
           <div className="mb-6 overflow-x-auto">
-            <TabsList className="h-auto w-max min-w-full justify-start gap-0 rounded-none border-b border-border bg-transparent p-0">
+            <TabsList className="border-border h-auto w-max min-w-full justify-start gap-0 rounded-none border-b bg-transparent p-0">
               <TabsTrigger
                 value="details"
-                className="relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground"
+                className="text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium shadow-none transition-colors"
               >
                 <BarChart3 className="h-3.5 w-3.5" />
                 Details
@@ -112,7 +112,7 @@ export default function ManageSingleEventPage() {
 
               <TabsTrigger
                 value="attendees"
-                className="relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground"
+                className="text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium shadow-none transition-colors"
               >
                 <Users className="h-3.5 w-3.5" />
                 Attendees
@@ -120,7 +120,7 @@ export default function ManageSingleEventPage() {
 
               <TabsTrigger
                 value="check-in"
-                className="relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground"
+                className="text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium shadow-none transition-colors"
               >
                 <UserCheck className="h-3.5 w-3.5" />
                 Check In
@@ -128,7 +128,7 @@ export default function ManageSingleEventPage() {
 
               <TabsTrigger
                 value="check-out"
-                className="relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground"
+                className="text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium shadow-none transition-colors"
               >
                 <UserX className="h-3.5 w-3.5" />
                 Check Out
@@ -136,7 +136,7 @@ export default function ManageSingleEventPage() {
 
               <TabsTrigger
                 value="organizers"
-                className="relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground"
+                className="text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium shadow-none transition-colors"
               >
                 <Shield className="h-3.5 w-3.5" />
                 Organizers

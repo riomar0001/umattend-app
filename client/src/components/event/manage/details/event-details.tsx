@@ -6,8 +6,7 @@ import { formatDate } from '@/lib/utils';
 
 export default function EventDetails({ event }: { event: Event }) {
   const attendeeCount = event.checkOutRequired ? event.checkOutCount : event.checkInCount;
-  const capacityPercentage =
-    event.capacity === 'unlimited' ? 0 : Math.round((event.checkInCount / (event.capacity as number)) * 100);
+  const capacityPercentage = event.capacity === 'unlimited' ? 0 : Math.round((event.checkInCount / (event.capacity as number)) * 100);
 
   const statusBadgeClass =
     event.status === 'upcoming'
@@ -20,28 +19,26 @@ export default function EventDetails({ event }: { event: Event }) {
     <div className="space-y-3 sm:space-y-4">
       {/* Stats grid — 2 cols on mobile, 4 on lg */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
-        <Card className="border-border bg-card/80 p-3 backdrop-blur-sm transition-colors hover:border-primary/40 sm:p-5">
+        <Card className="border-border bg-card/80 hover:border-primary/40 p-3 backdrop-blur-sm transition-colors sm:p-5">
           <div className="flex items-start gap-2 sm:gap-3">
-            <div className="rounded-lg bg-primary/10 p-2 sm:p-2.5">
-              <Calendar className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
+            <div className="bg-primary/10 rounded-lg p-2 sm:p-2.5">
+              <Calendar className="text-primary h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="mb-1 text-[10px] font-medium text-muted-foreground sm:text-xs">Date</p>
-              <p className="line-clamp-2 text-xs font-semibold leading-tight text-foreground sm:text-sm">
-                {formatDate(event.startDate)}
-              </p>
+              <p className="text-muted-foreground mb-1 text-[10px] font-medium sm:text-xs">Date</p>
+              <p className="text-foreground line-clamp-2 text-xs leading-tight font-semibold sm:text-sm">{formatDate(event.startDate)}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="border-border bg-card/80 p-3 backdrop-blur-sm transition-colors hover:border-primary/40 sm:p-5">
+        <Card className="border-border bg-card/80 hover:border-primary/40 p-3 backdrop-blur-sm transition-colors sm:p-5">
           <div className="flex items-start gap-2 sm:gap-3">
-            <div className="rounded-lg bg-primary/10 p-2 sm:p-2.5">
-              <Clock className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
+            <div className="bg-primary/10 rounded-lg p-2 sm:p-2.5">
+              <Clock className="text-primary h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="mb-1 text-[10px] font-medium text-muted-foreground sm:text-xs">Time</p>
-              <p className="line-clamp-2 text-xs font-semibold leading-tight text-foreground sm:text-sm">
+              <p className="text-muted-foreground mb-1 text-[10px] font-medium sm:text-xs">Time</p>
+              <p className="text-foreground line-clamp-2 text-xs leading-tight font-semibold sm:text-sm">
                 {event.startTime}
                 {event.endTime ? ` – ${event.endTime}` : ''}
               </p>
@@ -49,37 +46,32 @@ export default function EventDetails({ event }: { event: Event }) {
           </div>
         </Card>
 
-        <Card className="border-border bg-card/80 p-3 backdrop-blur-sm transition-colors hover:border-primary/40 sm:p-5">
+        <Card className="border-border bg-card/80 hover:border-primary/40 p-3 backdrop-blur-sm transition-colors sm:p-5">
           <div className="flex items-start gap-2 sm:gap-3">
-            <div className="rounded-lg bg-primary/10 p-2 sm:p-2.5">
-              <MapPin className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
+            <div className="bg-primary/10 rounded-lg p-2 sm:p-2.5">
+              <MapPin className="text-primary h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="mb-1 text-[10px] font-medium text-muted-foreground sm:text-xs">Location</p>
-              <p className="line-clamp-2 text-xs font-semibold leading-tight text-foreground sm:text-sm">
-                {event.location || 'TBD'}
-              </p>
+              <p className="text-muted-foreground mb-1 text-[10px] font-medium sm:text-xs">Location</p>
+              <p className="text-foreground line-clamp-2 text-xs leading-tight font-semibold sm:text-sm">{event.location || 'TBD'}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="border-border bg-card/80 p-3 backdrop-blur-sm transition-colors hover:border-primary/40 sm:p-5">
+        <Card className="border-border bg-card/80 hover:border-primary/40 p-3 backdrop-blur-sm transition-colors sm:p-5">
           <div className="flex items-start gap-2 sm:gap-3">
-            <div className="rounded-lg bg-primary/10 p-2 sm:p-2.5">
-              <Users className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
+            <div className="bg-primary/10 rounded-lg p-2 sm:p-2.5">
+              <Users className="text-primary h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="mb-1 text-[10px] font-medium text-muted-foreground sm:text-xs">Attendance</p>
-              <p className="text-xs font-semibold leading-tight text-foreground sm:text-sm">
+              <p className="text-muted-foreground mb-1 text-[10px] font-medium sm:text-xs">Attendance</p>
+              <p className="text-foreground text-xs leading-tight font-semibold sm:text-sm">
                 {attendeeCount}
                 {event.capacity !== 'unlimited' && ` / ${event.capacity}`}
               </p>
               {event.capacity !== 'unlimited' && (
-                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${Math.min(capacityPercentage, 100)}%` }}
-                  />
+                <div className="bg-muted mt-2 h-1.5 w-full overflow-hidden rounded-full">
+                  <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${Math.min(capacityPercentage, 100)}%` }} />
                 </div>
               )}
             </div>
@@ -91,18 +83,16 @@ export default function EventDetails({ event }: { event: Event }) {
       <Card className="border-border bg-card/80 px-4 py-3 backdrop-blur-sm sm:px-5 sm:py-4">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="text-[10px] text-muted-foreground sm:text-xs">Status</span>
-            <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-wide sm:text-[10px] ${statusBadgeClass}`}>
-              {event.status === 'ongoing' && (
-                <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-600" />
-              )}
+            <span className="text-muted-foreground text-[10px] sm:text-xs">Status</span>
+            <Badge variant="outline" className={`text-[9px] font-bold tracking-wide uppercase sm:text-[10px] ${statusBadgeClass}`}>
+              {event.status === 'ongoing' && <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-600" />}
               {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
             </Badge>
           </div>
 
           {event.department && (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-[10px] text-muted-foreground sm:text-xs">Department</span>
+              <span className="text-muted-foreground text-[10px] sm:text-xs">Department</span>
               <Badge variant="outline" className="text-[9px] font-medium sm:text-[10px]">
                 {event.department}
               </Badge>
@@ -111,7 +101,7 @@ export default function EventDetails({ event }: { event: Event }) {
 
           {event.checkOutRequired && (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-[10px] text-muted-foreground sm:text-xs">Requirement</span>
+              <span className="text-muted-foreground text-[10px] sm:text-xs">Requirement</span>
               <Badge variant="outline" className="text-[9px] font-medium sm:text-[10px]">
                 Check-out required
               </Badge>
@@ -120,7 +110,7 @@ export default function EventDetails({ event }: { event: Event }) {
 
           {event.capacity !== 'unlimited' && (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-[10px] text-muted-foreground sm:text-xs">Capacity</span>
+              <span className="text-muted-foreground text-[10px] sm:text-xs">Capacity</span>
               <Badge
                 variant="outline"
                 className={`text-[9px] font-medium sm:text-[10px] ${
@@ -140,11 +130,11 @@ export default function EventDetails({ event }: { event: Event }) {
 
       {/* About */}
       <Card className="border-border bg-card/80 px-4 py-4 backdrop-blur-sm sm:px-6 sm:py-5">
-        <h2 className="mb-3 text-sm font-bold tracking-tight text-foreground sm:text-base">About this event</h2>
+        <h2 className="text-foreground mb-3 text-sm font-bold tracking-tight sm:text-base">About this event</h2>
         {event.description ? (
-          <p className="text-sm leading-relaxed text-foreground/80 break-words whitespace-pre-wrap">{event.description}</p>
+          <p className="text-foreground/80 text-sm leading-relaxed break-words whitespace-pre-wrap">{event.description}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">No description provided.</p>
+          <p className="text-muted-foreground text-sm">No description provided.</p>
         )}
       </Card>
     </div>

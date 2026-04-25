@@ -7,7 +7,7 @@ const EventContentEmpty = () => {
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
-      <p className="text-foreground/[0.04] select-none text-[8rem] font-black leading-none tracking-tighter sm:text-[10rem]">—</p>
+      <p className="text-foreground/[0.04] text-[8rem] leading-none font-black tracking-tighter select-none sm:text-[10rem]">—</p>
       <div className="-mt-6 space-y-2">
         <h3 className="text-foreground text-lg font-semibold tracking-tight">No upcoming events</h3>
         <p className="text-muted-foreground mx-auto max-w-xs text-sm leading-relaxed">

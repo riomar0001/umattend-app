@@ -137,7 +137,7 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl" hideClose={true}>
-        <SheetHeader className="border-b border-border px-4 py-3 sm:px-6">
+        <SheetHeader className="border-border border-b px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenChange(false)}>
               <ChevronsLeft className="h-4 w-4" />
@@ -148,7 +148,7 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
         <form onSubmit={handleSubmit} className="space-y-6 px-4 py-6 sm:px-6">
           {/* Header Title and Description */}
           <div className="space-y-2">
-            <SheetTitle className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">Update Event</SheetTitle>
+            <SheetTitle className="text-2xl leading-tight font-bold tracking-tight sm:text-3xl">Update Event</SheetTitle>
             <SheetDescription className="text-sm sm:text-base">Make changes to your event details. Click save when you&apos;re done.</SheetDescription>
           </div>
 
@@ -327,7 +327,7 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
               <button
                 type="button"
                 onClick={() => setIsUnlimitedCapacity(!isUnlimitedCapacity)}
-                className=" text-sm font-medium transition-colors hover:underline"
+                className="text-sm font-medium transition-colors hover:underline"
               >
                 {isUnlimitedCapacity ? 'Set Limit' : 'Make Unlimited'}
               </button>
