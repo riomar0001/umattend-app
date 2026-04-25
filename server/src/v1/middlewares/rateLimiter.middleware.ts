@@ -34,7 +34,10 @@ function getClientIp(req: Request): string {
   return forwarded?.split(',')[0]?.trim() ?? req.ip ?? 'unknown';
 }
 
-async function checkSlidingWindow(key: string, limit: number): Promise<boolean> {
+async function checkSlidingWindow(
+  key: string,
+  limit: number
+): Promise<boolean> {
   try {
     const result = await redis.eval(
       slidingWindowScript,
@@ -43,7 +46,7 @@ async function checkSlidingWindow(key: string, limit: number): Promise<boolean> 
       String(Date.now()),
       String(WINDOW_MS),
       String(limit),
-      randomUUID(),
+      randomUUID()
     );
     return result === 1;
   } catch {
@@ -58,7 +61,7 @@ async function checkSlidingWindow(key: string, limit: number): Promise<boolean> 
 export const loginRateLimiter = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> => {
   const ip = getClientIp(req);
   const userId = (req as Request & { user?: { id: string } }).user?.id;
@@ -68,7 +71,9 @@ export const loginRateLimiter = async (
   ];
 
   if (userId) {
-    checks.push(checkSlidingWindow(`rateLimit:account:${userId}`, ACCOUNT_IP_LIMIT));
+    checks.push(
+      checkSlidingWindow(`rateLimit:account:${userId}`, ACCOUNT_IP_LIMIT)
+    );
   }
 
   const results = await Promise.all(checks);
@@ -98,18 +103,21 @@ export const loginRateLimiter = async (
 export const oauthRateLimiter = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> => {
   const allowed = await checkSlidingWindow(
     `rateLimit:oauth:${getClientIp(req)}`,
-    ACCOUNT_IP_LIMIT,
+    ACCOUNT_IP_LIMIT
   );
 
   if (!allowed) {
     if (req.originalUrl.includes('/exchange')) {
-      const errorMessage = 'Too Many Exchange Attempts. Please try again later.';
+      const errorMessage =
+        'Too Many Exchange Attempts. Please try again later.';
       const error_code = await authService.generateErrorCode(errorMessage);
-      res.status(429).json({ status: 'error', message: errorMessage, error_code });
+      res
+        .status(429)
+        .json({ status: 'error', message: errorMessage, error_code });
       return;
     }
 

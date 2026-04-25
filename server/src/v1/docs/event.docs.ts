@@ -3,7 +3,8 @@ const updateAndDeleteEvent = {
     delete: {
       tags: ['Event'],
       summary: 'Delete event',
-      description: 'Delete an existing event by ID (Admin/CSG/Organizer only). Requires typing the event name on the frontend to confirm.',
+      description:
+        'Delete an existing event by ID (Admin/CSG/Organizer only). Requires typing the event name on the frontend to confirm.',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -448,7 +449,8 @@ const updateAndDeleteEvent = {
                       is_draft: {
                         type: 'boolean',
                         example: false,
-                        description: 'Whether the event is a draft (hidden from regular users)',
+                        description:
+                          'Whether the event is a draft (hidden from regular users)',
                       },
                       checkin_count: {
                         type: 'number',
@@ -2265,7 +2267,8 @@ const postAndDraftEvent = {
     patch: {
       tags: ['Event'],
       summary: 'Post event',
-      description: 'Publish a draft event so it becomes visible to all users (Admin/CSG/Organizer only).',
+      description:
+        'Publish a draft event so it becomes visible to all users (Admin/CSG/Organizer only).',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -2285,7 +2288,10 @@ const postAndDraftEvent = {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: true },
-                  message: { type: 'string', example: 'Event posted successfully' },
+                  message: {
+                    type: 'string',
+                    example: 'Event posted successfully',
+                  },
                   data: { type: 'null' },
                 },
               },
@@ -2303,7 +2309,8 @@ const postAndDraftEvent = {
     patch: {
       tags: ['Event'],
       summary: 'Save event as draft',
-      description: 'Unpost an event (save as draft), hiding it from regular users (Admin/CSG/Organizer only).',
+      description:
+        'Unpost an event (save as draft), hiding it from regular users (Admin/CSG/Organizer only).',
       security: [{ bearerAuth: [] }],
       parameters: [
         {

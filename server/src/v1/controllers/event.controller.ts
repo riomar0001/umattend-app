@@ -823,12 +823,19 @@ const getEventAttendanceCount = async (req: Request, res: Response) => {
 const postEvent = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { event_id } = req.params;
-    if (!event_id) return HTTPErrorResponse(res, 400, 'Event ID is required');
+    if (!event_id) {
+      return HTTPErrorResponse(res, 400, 'Event ID is required');
+    }
     await eventServices.postEvent(event_id);
     return HTTPSuccessResponse(res, 200, 'Event posted successfully');
   } catch (error) {
-    if (error instanceof NotFoundError) return HTTPErrorResponse(res, 404, error.message);
-    if (NODE_ENV === 'DEVELOPMENT') { console.error(error); return HTTPErrorResponse(res, 500, error); }
+    if (error instanceof NotFoundError) {
+      return HTTPErrorResponse(res, 404, error.message);
+    }
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error(error);
+      return HTTPErrorResponse(res, 500, error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
   }
 };
@@ -836,12 +843,19 @@ const postEvent = async (req: Request, res: Response): Promise<Response> => {
 const draftEvent = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { event_id } = req.params;
-    if (!event_id) return HTTPErrorResponse(res, 400, 'Event ID is required');
+    if (!event_id) {
+      return HTTPErrorResponse(res, 400, 'Event ID is required');
+    }
     await eventServices.draftEvent(event_id);
     return HTTPSuccessResponse(res, 200, 'Event saved as draft');
   } catch (error) {
-    if (error instanceof NotFoundError) return HTTPErrorResponse(res, 404, error.message);
-    if (NODE_ENV === 'DEVELOPMENT') { console.error(error); return HTTPErrorResponse(res, 500, error); }
+    if (error instanceof NotFoundError) {
+      return HTTPErrorResponse(res, 404, error.message);
+    }
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error(error);
+      return HTTPErrorResponse(res, 500, error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
   }
 };

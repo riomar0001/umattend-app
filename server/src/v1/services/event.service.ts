@@ -67,13 +67,17 @@ const deleteEvent = async (eventId: string): Promise<boolean> => {
 
 const postEvent = async (eventId: string): Promise<void> => {
   const event = await eventRepository.getEventDetails(eventId);
-  if (!event) throw new NotFoundError('Event not found');
+  if (!event) {
+    throw new NotFoundError('Event not found');
+  }
   await eventRepository.postEvent(eventId);
 };
 
 const draftEvent = async (eventId: string): Promise<void> => {
   const event = await eventRepository.getEventDetails(eventId);
-  if (!event) throw new NotFoundError('Event not found');
+  if (!event) {
+    throw new NotFoundError('Event not found');
+  }
   await eventRepository.draftEvent(eventId);
 };
 

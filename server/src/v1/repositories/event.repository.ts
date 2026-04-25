@@ -1,4 +1,9 @@
-import { NotFoundError, ForbiddenError, ConflictError, BadRequestError } from '@/utils/customErrors';
+import {
+  NotFoundError,
+  ForbiddenError,
+  ConflictError,
+  BadRequestError,
+} from '@/utils/customErrors';
 import prisma from '../../configs/prisma.config';
 import {
   AddEventInterface,

@@ -160,7 +160,10 @@ const logoutUser = async (refresh_token: string) => {
     ) as RefreshTokenPayload;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      throw new jwt.TokenExpiredError('Refresh token has expired', error.expiredAt);
+      throw new jwt.TokenExpiredError(
+        'Refresh token has expired',
+        error.expiredAt
+      );
     }
     throw new AuthenticationError('Invalid refresh token format');
   }
@@ -168,7 +171,9 @@ const logoutUser = async (refresh_token: string) => {
   // Fetch token record only to validate the hash — is_active/expires_at are
   // checked atomically inside revokeRefreshToken's transaction to avoid TOCTOU
   // with the cron cleanup job.
-  const tokenRecord = await authRepository.verifyRefreshToken(verifyToken.token_id);
+  const tokenRecord = await authRepository.verifyRefreshToken(
+    verifyToken.token_id
+  );
 
   if (!tokenRecord) {
     throw new NotFoundError('Refresh token not found');
