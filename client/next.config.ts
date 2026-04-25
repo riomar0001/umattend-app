@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
       }
     ];
   },
-  allowedDevOrigins: ['local-origin.dev', '*.local-origin.dev']
+  allowedDevOrigins: ['local-origin.dev', '*.local-origin.dev', 'staging.umattend.site', 'umattend.site']
 };
 
 export default nextConfig;
