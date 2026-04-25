@@ -41,8 +41,13 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
     onError: (error) => {
       setIsProcessing(false);
       setShowDialog(false);
-      const errorMessage = error?.response?.data?.message || 'Failed to check in student';
-      toast.error(errorMessage);
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message;
+      if (status === 409) {
+        toast.warning(message || 'Student is already checked in');
+      } else {
+        toast.error(message || 'Failed to check in student');
+      }
       console.error('[Check-In Scanner] Error:', error);
       setScannedValue(null);
       lastScannedRef.current = '';

@@ -671,6 +671,23 @@ const checkIn = {
             },
           },
         },
+        409: {
+          description: 'Student is already checked in to this event',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  message: {
+                    type: 'string',
+                    example: 'Student is already checked in to this event',
+                  },
+                },
+              },
+            },
+          },
+        },
         500: {
           description: 'Internal server error',
           content: {
@@ -800,6 +817,24 @@ const checkOut = {
                 properties: {
                   success: { type: 'boolean', example: false },
                   message: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        409: {
+          description:
+            'Student has already checked out, or student has already checked out of this event',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  message: {
+                    type: 'string',
+                    example: 'Student has already checked out of this event',
+                  },
                 },
               },
             },

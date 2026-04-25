@@ -36,17 +36,15 @@ const ProfilePage = () => {
     retry: false
   });
 
-  const QRCode = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const date = String(now.getDate()).padStart(2, '0');
-    const year = String(now.getFullYear()).slice(-2);
-    const hour = String(now.getHours()).padStart(2, '0');
-    const time = `${month}${date}${year}${hour}`;
-    return btoa(`${time}${String(user?.student_id)}`);
-  }, [user?.student_id]);
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const date = String(now.getDate()).padStart(2, '0');
+  const year = String(now.getFullYear()).slice(-2);
+  const hour = String(now.getHours()).padStart(2, '0');
+  const QRCode =
+    typeof window !== 'undefined'
+      ? btoa(`${month}${date}${year}${hour}${String(user?.student_id)}`)
+      : '';
 
   const options: Options = useMemo(
     () => ({

@@ -9,6 +9,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { NODE_ENV } from '../../constants/app.constants';
 import {
+  AppError,
   NotFoundError,
   ForbiddenError,
   NoCheckoutRequiredError,
@@ -66,23 +67,7 @@ const deleteEvent = async (
     throw new ForbiddenError('You are not authorized to delete this event');
   }
 
-  const hasCheckedIn = await eventRepository.getEventCheckinCount(event.id);
-
-  if (hasCheckedIn > 0) {
-    throw new ForbiddenError(
-      'Cannot delete event with existing check-ins. Please contact support.'
-    );
-  }
-  let hasCheckedOut = 0;
-
-  if (event.check_out_required) {
-    hasCheckedOut = await eventRepository.getEventCheckoutCount(event.id);
-    if (hasCheckedOut > 0) {
-      throw new ForbiddenError(
-        'Cannot delete event with existing check-outs. Please contact support.'
-      );
-    }
-  }
+  // Count checks are enforced atomically inside the repository transaction
   await eventRepository.deleteEvent(eventId);
   return true;
 };
@@ -98,10 +83,17 @@ const updateEvent = async (eventId: string, event_data: AddEventInterface) => {
   }
   const updated_event = await eventRepository.updateEvent(eventId, event_data);
 
-  await startEventStatusQueue.remove(`event-start-${updated_event.id}`);
-  await endEventStatusQueue.remove(`event-done-${updated_event.id}`);
-  await scheduleStartEventStatusJob(updated_event);
-  await scheduleEndEventStatusJob(updated_event);
+  // Remove existing jobs best-effort — ignore "job not found" errors so a
+  // concurrent update or missing job doesn't abort the whole operation.
+  await Promise.allSettled([
+    startEventStatusQueue.remove(`event-start-${updated_event.id}`),
+    endEventStatusQueue.remove(`event-done-${updated_event.id}`),
+  ]);
+
+  await Promise.all([
+    scheduleStartEventStatusJob(updated_event),
+    scheduleEndEventStatusJob(updated_event),
+  ]);
 
   return updated_event;
 };
@@ -134,7 +126,7 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
       throw new NotFoundError('Check-in record not found');
     }
 
-    sendEmail(
+    await sendEmail(
       studentbyUserId?.umindanao_email,
       'Event Check-In Successful',
       CHECK_IN_EMAIL.replace('{{name}}', checkedIn.student.name)
@@ -149,6 +141,9 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
 
     return checkedIn;
   } catch (error: unknown) {
+    if (error instanceof AppError) {
+      throw error;
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         throw new Error('Unique constraint failed');
@@ -216,7 +211,7 @@ const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
       throw new NotFoundError('Check-in record not found');
     }
 
-    sendEmail(
+    await sendEmail(
       studentbyUserId?.umindanao_email,
       'Event Check-Out Successful',
       CHECK_OUT_EMAIL.replace('{{name}}', checkedOut.student.name)
@@ -231,6 +226,9 @@ const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
 
     return checkedOut;
   } catch (error: unknown) {
+    if (error instanceof AppError) {
+      throw error;
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         throw new Error('Unique constraint failed');
@@ -322,7 +320,7 @@ const massCheckOutStudents = async (
           : null;
 
         if (studentbyUserId && rec.check_out_at && checkOutBy) {
-          sendEmail(
+          await sendEmail(
             studentbyUserId.umindanao_email,
             'Event Check-Out Successful',
             CHECK_OUT_EMAIL.replace('{{name}}', rec.student.name)
@@ -434,7 +432,19 @@ const addOrganizer = async (
     throw new OrganizerError('User is already an organizer for this event');
   }
 
-  return await eventRepository.addOrganizer(user_id, added_by, event_id);
+  try {
+    return await eventRepository.addOrganizer(user_id, added_by, event_id);
+  } catch (error) {
+    // A concurrent request inserted the same organizer between our check and
+    // this insert — treat the unique constraint violation as a duplicate error.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      throw new OrganizerError('User is already an organizer for this event');
+    }
+    throw error;
+  }
 };
 
 const removeOrganizer = async (umindanao_email: string, event_id: string) => {

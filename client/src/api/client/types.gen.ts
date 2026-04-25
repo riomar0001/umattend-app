@@ -1103,6 +1103,13 @@ export type PostEventCheckInByEventIdByQrCodeErrors = {
     message?: string;
   };
   /**
+   * Student is already checked in to this event
+   */
+  409: {
+    success?: boolean;
+    message?: string;
+  };
+  /**
    * Internal server error
    */
   500: {
@@ -1149,7 +1156,7 @@ export type PostEventCheckOutByEventIdByQrCodeData = {
 
 export type PostEventCheckOutByEventIdByQrCodeErrors = {
   /**
-   * Bad request - Missing required fields
+   * Bad request - Student has not checked in to this event
    */
   400: {
     success?: boolean;
@@ -1173,6 +1180,13 @@ export type PostEventCheckOutByEventIdByQrCodeErrors = {
    * User or event not found
    */
   404: {
+    success?: boolean;
+    message?: string;
+  };
+  /**
+   * Student has already checked out of this event
+   */
+  409: {
     success?: boolean;
     message?: string;
   };

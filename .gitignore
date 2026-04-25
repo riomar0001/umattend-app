@@ -85,3 +85,9 @@ id_ed25519.pub
 # Google Auth credentials
 google-oauth-client-secrets
 google-oauth-client-secrets.*
+
+#backups
+db_backup
+
+#agents
+.claude/

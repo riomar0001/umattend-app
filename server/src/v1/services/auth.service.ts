@@ -1,6 +1,7 @@
 import GoogleAuth from '../services/google.service.js';
 import authRepository from '../repositories/auth.repository.js';
 import jwt from 'jsonwebtoken';
+import { Prisma } from '@prisma/client';
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -29,15 +30,29 @@ const googleAuthWithCode = async (
 
   if (!user) {
     const student_id = Number(extractStudentID(googleUser.email));
-
-    user = await authRepository.createUser({
-      umindanao_email: googleUser.email,
-      google_id: googleUser.google_id,
-      role: 'student',
-      student_id: student_id,
-      name: googleUser.name,
-      profile_picture: googleUser.profile_picture,
-    });
+    try {
+      user = await authRepository.createUser({
+        umindanao_email: googleUser.email,
+        google_id: googleUser.google_id,
+        role: 'student',
+        student_id: student_id,
+        name: googleUser.name,
+        profile_picture: googleUser.profile_picture,
+      });
+    } catch (error) {
+      // A concurrent OAuth callback created the user first — fetch the existing row
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        user = await authRepository.findUserByGoogleId(googleUser.google_id);
+        if (!user) {
+          throw error;
+        }
+      } else {
+        throw error;
+      }
+    }
   }
 
   await authRepository.updateLoginAndProfile(
@@ -138,8 +153,6 @@ const logoutUser = async (refresh_token: string) => {
 
   let verifyToken: RefreshTokenPayload;
 
-  let expiredAt: Date | undefined;
-
   try {
     verifyToken = jwt.verify(
       refresh_token,
@@ -147,50 +160,34 @@ const logoutUser = async (refresh_token: string) => {
     ) as RefreshTokenPayload;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      expiredAt = error.expiredAt;
-
-      throw new jwt.TokenExpiredError('Refresh token has expired', expiredAt);
+      throw new jwt.TokenExpiredError('Refresh token has expired', error.expiredAt);
     }
-
     throw new AuthenticationError('Invalid refresh token format');
   }
 
-  if (!verifyToken) {
-    throw new jwt.TokenExpiredError(
-      'Invalid or expired refresh token',
-      expiredAt ?? new Date()
-    );
-  }
+  // Fetch token record only to validate the hash — is_active/expires_at are
+  // checked atomically inside revokeRefreshToken's transaction to avoid TOCTOU
+  // with the cron cleanup job.
+  const tokenRecord = await authRepository.verifyRefreshToken(verifyToken.token_id);
 
-  const verifyTokenDBExist = await authRepository.verifyRefreshToken(
-    verifyToken.token_id
-  );
-
-  if (!verifyTokenDBExist) {
+  if (!tokenRecord) {
     throw new NotFoundError('Refresh token not found');
-  }
-
-  if (!verifyTokenDBExist.is_active) {
-    throw new AuthenticationError('Refresh token has been revoked');
-  }
-
-  if (new Date(verifyTokenDBExist.expires_at) < new Date()) {
-    throw new jwt.TokenExpiredError(
-      'Refresh token has expired',
-      verifyTokenDBExist.expires_at
-    );
   }
 
   const validateHashedToken = await verifyHashedRefreshToken(
     refresh_token,
-    verifyTokenDBExist.token_hash
+    tokenRecord.token_hash
   );
 
   if (!validateHashedToken) {
     throw new AuthenticationError('Invalid refresh token');
   }
 
-  await authRepository.revokeRefreshToken(verifyToken.token_id);
+  const revoked = await authRepository.revokeRefreshToken(verifyToken.token_id);
+
+  if (!revoked) {
+    throw new AuthenticationError('Refresh token has already been revoked');
+  }
 };
 
 const generateErrorCode = async (error_message: string) => {
@@ -210,24 +207,22 @@ const generateAuthCode = async (
 
 const getDataFromErrorCode = async (error_code: string) => {
   const sanitizedErrorCode = sanitizeKey(error_code);
-
+  // getErrorCode uses GETDEL — atomic read-and-remove prevents double-redemption
   const error = await authRepository.getErrorCode(sanitizedErrorCode);
-
   if (!error) {
     throw new NotFoundError('Error code not found');
   }
-  await authRepository.deleteErrorCode(sanitizedErrorCode);
   const { error_message } = JSON.parse(error);
   return error_message;
 };
 
 const getDataFromAuthCode = async (auth_code: string) => {
   const sanitizedAuthCode = sanitizeKey(auth_code);
+  // getAuthCode uses GETDEL — atomic read-and-remove prevents double-redemption
   const tokens = await authRepository.getAuthCode(sanitizedAuthCode);
   if (!tokens) {
     throw new NotFoundError('Auth code not found');
   }
-  await authRepository.deleteAuthCode(sanitizedAuthCode);
   const { access_token, refresh_token } = JSON.parse(tokens);
   return { access_token, refresh_token };
 };

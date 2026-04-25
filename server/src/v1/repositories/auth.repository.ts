@@ -123,11 +123,8 @@ const createErrorCode = async (error_code: string, error_message: string) => {
 };
 
 const getErrorCode = async (error_code: string) => {
-  return await redis.get(`error_code:${error_code}`);
-};
-
-const deleteErrorCode = async (error_code: string) => {
-  return await redis.del(`error_code:${error_code}`);
+  // GETDEL atomically reads and removes the key — prevents double-redemption race
+  return await redis.getdel(`error_code:${error_code}`);
 };
 
 const createAuthCode = async (
@@ -146,11 +143,8 @@ const createAuthCode = async (
 };
 
 const getAuthCode = async (auth_code: string) => {
-  return await redis.get(`auth_code:${auth_code}`);
-};
-
-const deleteAuthCode = async (auth_code: string) => {
-  return await redis.del(`auth_code:${auth_code}`);
+  // GETDEL atomically reads and removes the key — prevents double-redemption race
+  return await redis.getdel(`auth_code:${auth_code}`);
 };
 
 const getLoginHistory = async (user_id: string) => {
@@ -187,10 +181,8 @@ const authRepository = {
   revokeRefreshToken,
   createErrorCode,
   getErrorCode,
-  deleteErrorCode,
   createAuthCode,
   getAuthCode,
-  deleteAuthCode,
   getLoginHistory,
   getEventOragazerByUserId,
 };

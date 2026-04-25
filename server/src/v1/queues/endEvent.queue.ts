@@ -18,6 +18,11 @@ const connection = {
 
 export const endEventStatusQueue = new Queue('event-end-status-queue', {
   connection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 5000 },
+    removeOnFail: false,
+  },
 });
 
 const endEventStatusWorker = new Worker(
@@ -34,7 +39,7 @@ const endEventStatusWorker = new Worker(
 
     console.log(`Event ${event_id} marked as done.`);
   },
-  { connection }
+  { connection, concurrency: 1 }
 );
 
 endEventStatusWorker.on('completed', (job) => {

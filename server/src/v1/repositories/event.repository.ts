@@ -1,4 +1,4 @@
-import { NotFoundError } from '@/utils/customErrors';
+import { NotFoundError, ForbiddenError, ConflictError, BadRequestError } from '@/utils/customErrors';
 import prisma from '../../configs/prisma.config';
 import {
   AddEventInterface,
@@ -39,6 +39,28 @@ const deleteEvent = async (eventId: string) => {
 
     if (existing.is_done) {
       throw new Error('Cannot delete a completed event.');
+    }
+
+    // Count checks are inside the transaction so a concurrent check-in cannot
+    // slip between the check and the DELETE.
+    const checkinCount = await tx.attendance.count({
+      where: { event_id: eventId },
+    });
+    if (checkinCount > 0) {
+      throw new ForbiddenError(
+        'Cannot delete event with existing check-ins. Please contact support.'
+      );
+    }
+
+    if (existing.check_out_required) {
+      const checkoutCount = await tx.attendance.count({
+        where: { event_id: eventId, NOT: { check_out_at: null } },
+      });
+      if (checkoutCount > 0) {
+        throw new ForbiddenError(
+          'Cannot delete event with existing check-outs. Please contact support.'
+        );
+      }
     }
 
     return tx.events.delete({
@@ -137,6 +159,18 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
       throw new Error('Event has already ended');
     }
 
+    // Capacity check is inside the transaction to prevent overbooking under
+    // concurrent check-ins — two simultaneous scans would otherwise both read
+    // count < capacity and both insert.
+    if (event.capacity !== null && event.capacity !== undefined) {
+      const currentCount = await tx.attendance.count({
+        where: { event_id },
+      });
+      if (currentCount >= event.capacity) {
+        throw new Error('Event has reached its maximum capacity');
+      }
+    }
+
     const student = await tx.student.findUnique({
       where: { student_id },
     });
@@ -153,7 +187,7 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
     });
 
     if (existingCheckIn) {
-      throw new Error('Student already checked in for this event');
+      throw new ConflictError('Student is already checked in to this event');
     }
 
     return await tx.attendance.create({
@@ -203,11 +237,11 @@ const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
     });
 
     if (!existingCheckIn) {
-      throw new Error('Student has not checked in for this event');
+      throw new BadRequestError('Student has not checked in to this event');
     }
 
     if (existingCheckIn.check_out_at) {
-      throw new Error('Student has already checked out for this event');
+      throw new ConflictError('Student has already checked out of this event');
     }
 
     return await tx.attendance.update({

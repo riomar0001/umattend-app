@@ -7,7 +7,12 @@ import {
 import { AddEventRequest } from '../interface/event';
 import { matchedData, validationResult } from 'express-validator';
 import eventServices from '../services/event.service';
-import { NotFoundError, ForbiddenError } from '@/utils/customErrors';
+import {
+  NotFoundError,
+  ForbiddenError,
+  ConflictError,
+  BadRequestError,
+} from '@/utils/customErrors';
 import { formatDateTime, generateExportFileName } from '@/utils/export.utils';
 import { NODE_ENV } from '@/constants/app.constants';
 import { decodeAndVerifyQR } from '@/utils/decodeAndVerifyQR';
@@ -250,11 +255,7 @@ const createCheckInEvent = async (
     }
 
     if (!checkIn) {
-      return HTTPErrorResponse(
-        res,
-        400,
-        'Failed to create check-in or student already checked in or already checked out'
-      );
+      return HTTPErrorResponse(res, 500, 'Failed to create check-in record');
     }
 
     const responseData = {
@@ -266,16 +267,18 @@ const createCheckInEvent = async (
 
     return HTTPSuccessResponse(res, 200, 'Check-in successful', responseData);
   } catch (error: unknown) {
+    if (error instanceof ConflictError) {
+      return HTTPErrorResponse(res, 409, error.message);
+    }
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
+    }
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
     if (error instanceof ForbiddenError) {
       return HTTPErrorResponse(res, 403, error.message);
     }
-    if (error instanceof Error) {
-      return HTTPErrorResponse(res, 500, error.message);
-    }
-
     if (NODE_ENV === 'DEVELOPMENT') {
       console.error('Unexpected error checking in', error);
       return HTTPErrorResponse(res, 500, error);
@@ -343,11 +346,7 @@ const createCheckOutEvent = async (
     }
 
     if (!checkOut) {
-      return HTTPErrorResponse(
-        res,
-        400,
-        'Failed to update check-out or student has not checked in yet or already checked out'
-      );
+      return HTTPErrorResponse(res, 500, 'Failed to create check-out record');
     }
 
     const responseData = {
@@ -359,14 +358,17 @@ const createCheckOutEvent = async (
 
     return HTTPSuccessResponse(res, 200, 'Check-out successful', responseData);
   } catch (error: unknown) {
+    if (error instanceof ConflictError) {
+      return HTTPErrorResponse(res, 409, error.message);
+    }
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
+    }
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
     if (error instanceof ForbiddenError) {
       return HTTPErrorResponse(res, 403, error.message);
-    }
-    if (error instanceof Error) {
-      return HTTPErrorResponse(res, 500, error.message);
     }
     if (NODE_ENV === 'DEVELOPMENT') {
       console.error('Unexpected error checking out', error);

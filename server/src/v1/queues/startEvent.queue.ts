@@ -34,7 +34,7 @@ const startEventStatusWorker = new Worker(
 
     console.log(`Event ${event_id} marked as started.`);
   },
-  { connection }
+  { connection, concurrency: 1 }
 );
 
 startEventStatusWorker.on('completed', (job) => {

@@ -41,8 +41,13 @@ export function EventCheckOutScanner({ eventId, isEventDone, isEventStarted }: E
     onError: (error) => {
       setIsProcessing(false);
       setShowDialog(false);
-      const errorMessage = error?.response?.data?.message || 'Failed to check out student';
-      toast.error(errorMessage);
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message;
+      if (status === 409) {
+        toast.warning(message || 'Student has already checked out');
+      } else {
+        toast.error(message || 'Failed to check out student');
+      }
       console.error('[Check-Out Scanner] Error:', error);
       setScannedValue(null);
       lastScannedRef.current = '';
