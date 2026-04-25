@@ -1,6 +1,6 @@
 'use client';
 
-import { MapPin, Clock, Users, Settings, AlertTriangle, CheckCircle, ChevronLeft } from 'lucide-react';
+import { MapPin, Clock, Users, Settings, AlertTriangle, CheckCircle, ChevronLeft, EyeOff } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import EventNotFound from '@/components/event/manage/event-not-found';
@@ -144,16 +144,33 @@ export default function EventDetailsPage() {
 
             {/* Badge + title */}
             <div className="min-w-0 flex-1 space-y-3">
-              <Badge
-                variant="outline"
-                className={`w-fit border text-[10px] font-bold uppercase tracking-widest ${statusClassName}`}
-              >
-                {eventStatus === 'ongoing' && (
-                  <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-600" />
+              <div className="flex flex-wrap items-center gap-2">
+                {event.is_draft ? (
+                  <Badge
+                    variant="outline"
+                    className="w-fit border text-[10px] font-bold uppercase tracking-widest border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                  >
+                    Draft
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className={`w-fit border text-[10px] font-bold uppercase tracking-widest ${statusClassName}`}
+                  >
+                    {eventStatus === 'ongoing' && (
+                      <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-600" />
+                    )}
+                    {statusLabel}
+                  </Badge>
                 )}
-                {statusLabel}
-              </Badge>
-              <h1 className="text-foreground text-2xl font-black leading-tight tracking-tighter sm:text-3xl lg:text-4xl">
+                {event.is_draft && (
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                    <EyeOff className="h-3 w-3" />
+                    Only visible to you
+                  </span>
+                )}
+              </div>
+              <h1 className="text-foreground break-words text-2xl font-black leading-tight tracking-tighter sm:text-3xl lg:text-4xl">
                 {event.title}
               </h1>
             </div>
@@ -174,7 +191,7 @@ export default function EventDetailsPage() {
             <div className="flex items-center gap-3 px-4 py-3.5">
               <MapPin className="h-4 w-4 flex-shrink-0 text-primary" />
               <span className="text-xs font-medium text-muted-foreground">Location</span>
-              <span className="ml-auto  text-right text-sm text-foreground/80 line-clamp-1">{event.location || 'TBD'}</span>
+              <span className="ml-auto min-w-0 max-w-[55%] truncate text-right text-sm text-foreground/80 sm:max-w-[65%]">{event.location || 'TBD'}</span>
             </div>
             <div className="flex items-center gap-3 px-4 py-3.5">
               <Users className="h-4 w-4 flex-shrink-0 text-primary" />

@@ -19,6 +19,7 @@ export interface EventCardData {
   checkin_count?: number;
   checkout_count?: number;
   startDateTime?: Date;
+  is_draft?: boolean;
 }
 
 export interface Event {
@@ -37,6 +38,7 @@ export interface Event {
   checkOutRequired: boolean;
   is_started?: boolean;
   is_done?: boolean;
+  is_draft?: boolean;
   checkin_count?: number;
   checkout_count?: number;
   checkOutCount: number;
@@ -77,6 +79,7 @@ export interface ApiEventData {
   check_out_required?: boolean;
   is_done?: boolean;
   is_started?: boolean;
+  is_draft?: boolean;
   created_by?: string;
   can_edit?: boolean;
   checkin_count?: number;

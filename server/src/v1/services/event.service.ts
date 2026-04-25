@@ -53,23 +53,28 @@ const addEvent = async (event_data: AddEventInterface) => {
   }
 };
 
-const deleteEvent = async (
-  eventId: string,
-  created_by: string
-): Promise<boolean> => {
+const deleteEvent = async (eventId: string): Promise<boolean> => {
   const event = await eventRepository.getEventDetails(eventId);
 
   if (!event) {
     throw new NotFoundError('Event not found');
   }
 
-  if (event.created_by !== created_by) {
-    throw new ForbiddenError('You are not authorized to delete this event');
-  }
-
   // Count checks are enforced atomically inside the repository transaction
   await eventRepository.deleteEvent(eventId);
   return true;
+};
+
+const postEvent = async (eventId: string): Promise<void> => {
+  const event = await eventRepository.getEventDetails(eventId);
+  if (!event) throw new NotFoundError('Event not found');
+  await eventRepository.postEvent(eventId);
+};
+
+const draftEvent = async (eventId: string): Promise<void> => {
+  const event = await eventRepository.getEventDetails(eventId);
+  if (!event) throw new NotFoundError('Event not found');
+  await eventRepository.draftEvent(eventId);
 };
 
 const updateEvent = async (eventId: string, event_data: AddEventInterface) => {
@@ -533,9 +538,10 @@ const getEventDetailsById = async (
 };
 
 const getAllEvents = async (
-  user_id: string
+  user_id: string,
+  includeDrafts = false
 ): Promise<GetAllEventsInterface> => {
-  const events = await eventRepository.getAllEvents();
+  const events = await eventRepository.getAllEvents(includeDrafts);
 
   if (events.length === 0) {
     throw new NotFoundError('No events found');
@@ -560,6 +566,7 @@ const getAllEvents = async (
         end_time: event.end_time ?? undefined,
         check_out_required: event.check_out_required,
         is_started: event.is_started,
+        is_draft: event.is_draft,
         created_by: event.created_by,
         checkin_count: event.checkin_count ?? 0,
         checkout_count: event.checkout_count ?? 0,
@@ -570,9 +577,10 @@ const getAllEvents = async (
 };
 
 const getAllPastEvents = async (
-  user_id: string
+  user_id: string,
+  includeDrafts = false
 ): Promise<GetAllEventsInterface> => {
-  const events = await eventRepository.getAllPastEvents();
+  const events = await eventRepository.getAllPastEvents(includeDrafts);
 
   if (events.length === 0) {
     throw new NotFoundError('No past events found');
@@ -597,6 +605,7 @@ const getAllPastEvents = async (
         end_time: event.end_time ?? undefined,
         check_out_required: event.check_out_required,
         is_done: event.is_done,
+        is_draft: event.is_draft,
         created_by: event.created_by,
         checkin_count: event.checkin_count ?? 0,
         checkout_count: event.checkout_count ?? 0,
@@ -752,6 +761,8 @@ const eventServices = {
   getEventNameById,
   getPaginatedAttendeesByEventId,
   getTotalAttendanceByEventId,
+  postEvent,
+  draftEvent,
 };
 
 export default eventServices;

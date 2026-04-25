@@ -84,11 +84,26 @@ const getEventDetails = async (eventId: string) => {
   });
 };
 
-const getAllEvents = async () => {
+const postEvent = async (eventId: string) => {
+  return await prisma.events.update({
+    where: { id: eventId },
+    data: { is_draft: false },
+  });
+};
+
+const draftEvent = async (eventId: string) => {
+  return await prisma.events.update({
+    where: { id: eventId },
+    data: { is_draft: true },
+  });
+};
+
+const getAllEvents = async (includeDrafts = false) => {
   const events = await prisma.events.findMany({
     orderBy: { start_time: 'asc' },
     where: {
       is_done: false,
+      ...(includeDrafts ? {} : { is_draft: false }),
     },
   });
 
@@ -114,11 +129,12 @@ const getAllEvents = async () => {
   );
 };
 
-const getAllPastEvents = async () => {
+const getAllPastEvents = async (includeDrafts = false) => {
   const events = await prisma.events.findMany({
     orderBy: { end_time: 'desc' },
     where: {
       is_done: true,
+      ...(includeDrafts ? {} : { is_draft: false }),
     },
   });
 
@@ -632,6 +648,8 @@ const eventRepository = {
   checkIfUserAttended,
   getEventAttendanceCount,
   massCheckOutStudents,
+  postEvent,
+  draftEvent,
 };
 
 export default eventRepository;

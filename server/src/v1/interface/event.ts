@@ -11,6 +11,7 @@ export interface AddEventInterface {
   end_time: Date;
   check_out_required: boolean;
   is_done: boolean;
+  is_draft?: boolean;
   form_fields?: {};
   created_by: string;
 }
@@ -63,6 +64,7 @@ export interface GetEventDetailsByIdInterface {
   check_out_required: boolean;
   is_done?: boolean;
   is_started?: boolean;
+  is_draft?: boolean;
   checkin_count: number;
   checkout_count?: number;
   created_by: string;

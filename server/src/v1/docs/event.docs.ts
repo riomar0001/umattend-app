@@ -3,7 +3,7 @@ const updateAndDeleteEvent = {
     delete: {
       tags: ['Event'],
       summary: 'Delete event',
-      description: 'Delete an existing event by ID (Admin/CSG only).',
+      description: 'Delete an existing event by ID (Admin/CSG/Organizer only). Requires typing the event name on the frontend to confirm.',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -444,6 +444,11 @@ const updateAndDeleteEvent = {
                         type: 'boolean',
                         example: false,
                         description: 'Whether the event is marked as completed',
+                      },
+                      is_draft: {
+                        type: 'boolean',
+                        example: false,
+                        description: 'Whether the event is a draft (hidden from regular users)',
                       },
                       checkin_count: {
                         type: 'number',
@@ -1424,6 +1429,7 @@ const createAndGetEvent = {
                         },
                         check_out_required: { type: 'boolean', example: true },
                         is_started: { type: 'boolean', example: false },
+                        is_draft: { type: 'boolean', example: false },
                         created_by: {
                           type: 'string',
                           example: '123e4567-e89b-12d3-a456-426614174001',
@@ -2254,6 +2260,85 @@ const getEventAttendanceCount = {
   },
 };
 
+const postAndDraftEvent = {
+  '/event/{event_id}/post': {
+    patch: {
+      tags: ['Event'],
+      summary: 'Post event',
+      description: 'Publish a draft event so it becomes visible to all users (Admin/CSG/Organizer only).',
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          in: 'path',
+          name: 'event_id',
+          required: true,
+          schema: { type: 'string' },
+          description: 'The unique ID of the event to post.',
+        },
+      ],
+      responses: {
+        200: {
+          description: 'Event posted successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  message: { type: 'string', example: 'Event posted successfully' },
+                  data: { type: 'null' },
+                },
+              },
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden' },
+        404: { description: 'Event not found' },
+        500: { description: 'Internal server error' },
+      },
+    },
+  },
+  '/event/{event_id}/draft': {
+    patch: {
+      tags: ['Event'],
+      summary: 'Save event as draft',
+      description: 'Unpost an event (save as draft), hiding it from regular users (Admin/CSG/Organizer only).',
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          in: 'path',
+          name: 'event_id',
+          required: true,
+          schema: { type: 'string' },
+          description: 'The unique ID of the event to save as draft.',
+        },
+      ],
+      responses: {
+        200: {
+          description: 'Event saved as draft',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  message: { type: 'string', example: 'Event saved as draft' },
+                  data: { type: 'null' },
+                },
+              },
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden' },
+        404: { description: 'Event not found' },
+        500: { description: 'Internal server error' },
+      },
+    },
+  },
+};
+
 export const event = {
   ...createAndGetEvent,
   ...updateAndDeleteEvent,
@@ -2266,4 +2351,5 @@ export const event = {
   ...getOrganizersByEventId,
   ...exportEventAttendeesToExcel,
   ...getEventAttendanceCount,
+  ...postAndDraftEvent,
 };

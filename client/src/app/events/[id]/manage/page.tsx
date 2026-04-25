@@ -51,7 +51,7 @@ export default function ManageSingleEventPage() {
   if (isError || !eventData?.data) return <EventNotFound />;
   if (!eventData.data.can_edit) return <ManageEventSkeleton />;
 
-  const apiEvent = eventData.data;
+  const apiEvent = eventData.data as typeof eventData.data & { is_draft?: boolean };
   const startDate = apiEvent.start_time ? new Date(apiEvent.start_time) : new Date();
   const endDate = apiEvent.end_time ? new Date(apiEvent.end_time) : new Date();
   const now = new Date();
@@ -72,7 +72,8 @@ export default function ManageSingleEventPage() {
     checkOutCount: apiEvent.checkout_count || 0,
     checkInCount: apiEvent.checkin_count || 0,
     status: getEventStatus(apiEvent),
-    checkOutRequired: apiEvent.check_out_required || false
+    checkOutRequired: apiEvent.check_out_required || false,
+    is_draft: apiEvent.is_draft ?? false,
   };
 
   return (
@@ -94,7 +95,7 @@ export default function ManageSingleEventPage() {
         </svg>
       </div>
 
-      <HeroSection event={event} setIsSheetOpen={setIsSheetOpen} />
+      <HeroSection event={event} setIsSheetOpen={setIsSheetOpen} refetch={refetch} />
 
       <main className="relative container mx-auto max-w-4xl px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-8">
         <Tabs defaultValue="details">

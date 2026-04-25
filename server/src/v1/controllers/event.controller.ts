@@ -98,14 +98,13 @@ const addEvent = async (req: Request, res: Response) => {
 
 const deleteEvent = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { eventId } = req.params;
-    const created_by = req.user?.id;
+    const { event_id } = req.params;
 
-    if (!eventId) {
+    if (!event_id) {
       return HTTPErrorResponse(res, 400, 'Event ID is required');
     }
 
-    await eventServices.deleteEvent(eventId, created_by);
+    await eventServices.deleteEvent(event_id);
 
     return HTTPSuccessResponse(res, 200, 'Event successfully deleted');
   } catch (error) {
@@ -604,12 +603,14 @@ const getOrganizersByEventId = async (req: Request, res: Response) => {
 const getAllEvents = async (req: Request, res: Response) => {
   try {
     const user_id = req.user?.id;
+    const role = req.user?.role;
 
     if (!user_id) {
       return HTTPErrorResponse(res, 401, 'Unauthorized');
     }
 
-    const events = await eventServices.getAllEvents(user_id);
+    const includeDrafts = role === 'admin' || role === 'csg';
+    const events = await eventServices.getAllEvents(user_id, includeDrafts);
     return HTTPSuccessResponse(
       res,
       200,
@@ -635,12 +636,14 @@ const getAllEvents = async (req: Request, res: Response) => {
 const getAllPastEvents = async (req: Request, res: Response) => {
   try {
     const user_id = req.user?.id;
+    const role = req.user?.role;
 
     if (!user_id) {
       return HTTPErrorResponse(res, 401, 'Unauthorized');
     }
 
-    const events = await eventServices.getAllPastEvents(user_id);
+    const includeDrafts = role === 'admin' || role === 'csg';
+    const events = await eventServices.getAllPastEvents(user_id, includeDrafts);
     return HTTPSuccessResponse(
       res,
       200,
@@ -817,6 +820,32 @@ const getEventAttendanceCount = async (req: Request, res: Response) => {
   }
 };
 
+const postEvent = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { event_id } = req.params;
+    if (!event_id) return HTTPErrorResponse(res, 400, 'Event ID is required');
+    await eventServices.postEvent(event_id);
+    return HTTPSuccessResponse(res, 200, 'Event posted successfully');
+  } catch (error) {
+    if (error instanceof NotFoundError) return HTTPErrorResponse(res, 404, error.message);
+    if (NODE_ENV === 'DEVELOPMENT') { console.error(error); return HTTPErrorResponse(res, 500, error); }
+    return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
+  }
+};
+
+const draftEvent = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { event_id } = req.params;
+    if (!event_id) return HTTPErrorResponse(res, 400, 'Event ID is required');
+    await eventServices.draftEvent(event_id);
+    return HTTPSuccessResponse(res, 200, 'Event saved as draft');
+  } catch (error) {
+    if (error instanceof NotFoundError) return HTTPErrorResponse(res, 404, error.message);
+    if (NODE_ENV === 'DEVELOPMENT') { console.error(error); return HTTPErrorResponse(res, 500, error); }
+    return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
+  }
+};
+
 const eventController = {
   addEvent,
   deleteEvent,
@@ -833,6 +862,8 @@ const eventController = {
   getPaginatedAttendeesByEventId,
   exportEventAttendeesToExcel,
   getEventAttendanceCount,
+  postEvent,
+  draftEvent,
 };
 
 export default eventController;

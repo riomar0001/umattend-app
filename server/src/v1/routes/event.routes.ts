@@ -19,10 +19,27 @@ router.post(
   eventController.addEvent
 );
 router.delete(
-  '/:eventId',
+  '/:event_id',
   authMiddleware,
   checkRole('admin', 'csg'),
+  checkOrganizer,
   eventController.deleteEvent
+);
+
+router.patch(
+  '/:event_id/post',
+  authMiddleware,
+  checkRole('admin', 'csg'),
+  checkOrganizer,
+  eventController.postEvent
+);
+
+router.patch(
+  '/:event_id/draft',
+  authMiddleware,
+  checkRole('admin', 'csg'),
+  checkOrganizer,
+  eventController.draftEvent
 );
 router.put(
   '/:eventId',

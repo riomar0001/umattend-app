@@ -32,7 +32,8 @@ export const transformEventData = (apiEvent: ApiEventData): ExtendedEventCardDat
     can_edit: apiEvent.can_edit || false,
     check_out_required: apiEvent.check_out_required,
     checkin_count: apiEvent.checkin_count,
-    checkout_count: apiEvent.checkout_count
+    checkout_count: apiEvent.checkout_count,
+    is_draft: apiEvent.is_draft,
   };
 };
 
