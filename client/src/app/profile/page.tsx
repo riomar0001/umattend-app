@@ -114,8 +114,54 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-100">
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
+    <div className="relative min-h-screen bg-background">
+      {/* Background decorative elements */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
+        {/* Top gradient wash */}
+        <div className="absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-primary/[0.16] via-primary/[0.06] to-transparent dark:from-primary/[0.24] dark:via-primary/[0.09]" />
+        {/* Bottom gradient wash */}
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-neutral-100/70 to-transparent dark:from-neutral-900/60" />
+
+        <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none">
+          {/* Top-right: identity arcs — large, personal */}
+          <circle cx="100%" cy="0" r="560" stroke="oklch(0.85 0.18 95 / 0.30)" strokeWidth="1.5" />
+          <circle cx="100%" cy="0" r="420" stroke="oklch(0.85 0.18 95 / 0.24)" strokeWidth="1.5" />
+          <circle cx="100%" cy="0" r="280" stroke="oklch(0.85 0.18 95 / 0.18)" strokeWidth="1.5" />
+          <circle cx="100%" cy="0" r="140" stroke="oklch(0.85 0.18 95 / 0.14)" strokeWidth="1.5" />
+
+          {/* Accent dots */}
+          <circle cx="85%" cy="8%" r="4" fill="oklch(0.85 0.18 95 / 0.85)" />
+          <circle cx="91%" cy="18%" r="2.5" fill="oklch(0.85 0.18 95 / 0.70)" />
+          <circle cx="95%" cy="30%" r="3" fill="oklch(0.85 0.18 95 / 0.55)" />
+          <circle cx="82%" cy="4%" r="2" fill="oklch(0.85 0.18 95 / 0.60)" />
+
+          {/* Diagonal accent lines — left side, giving movement */}
+          <line x1="-5%" y1="25%" x2="25%" y2="55%" stroke="oklch(0.85 0.18 95 / 0.28)" strokeWidth="1" strokeDasharray="6 14" />
+          <line x1="-5%" y1="35%" x2="20%" y2="60%" stroke="oklch(0.85 0.18 95 / 0.20)" strokeWidth="1" strokeDasharray="6 14" />
+
+          {/* Bottom-left arc */}
+          <circle cx="0" cy="100%" r="360" style={{ stroke: 'var(--dec-n1)' }} strokeWidth="1.5" />
+          <circle cx="0" cy="100%" r="200" style={{ stroke: 'var(--dec-n2)' }} strokeWidth="1.5" />
+
+          {/* Bottom-right subtle arc */}
+          <circle cx="100%" cy="100%" r="220" style={{ stroke: 'var(--dec-n2)' }} strokeWidth="1.5" />
+
+          {/* Cross marks */}
+          <line x1="8%" y1="22%" x2="12%" y2="22%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="10%" y1="20%" x2="10%" y2="24%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="4%" y1="60%" x2="7%" y2="60%" stroke="oklch(0.85 0.18 95 / 0.50)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="5.5%" y1="58.5%" x2="5.5%" y2="61.5%" stroke="oklch(0.85 0.18 95 / 0.50)" strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="74%" y1="82%" x2="78%" y2="82%" style={{ stroke: 'var(--dec-n4)' }} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="76%" y1="80%" x2="76%" y2="84%" style={{ stroke: 'var(--dec-n4)' }} strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="50%" y1="92%" x2="53%" y2="92%" style={{ stroke: 'var(--dec-n5)' }} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="51.5%" y1="90.5%" x2="51.5%" y2="93.5%" style={{ stroke: 'var(--dec-n5)' }} strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </div>
+
+      <main className="relative mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
         {/* Hero Profile Card */}
         <div className="border-border from-card to-card/50 relative mb-10 overflow-hidden rounded-2xl border bg-gradient-to-br shadow-lg">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(250,204,21,0.08),transparent_60%)]" />
@@ -214,7 +260,7 @@ const ProfilePage = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {canHostEvents && (
-            <TabsList className="text-muted-foreground mb-6 inline-flex h-11 w-full items-center justify-center gap-x-2 rounded-lg bg-neutral-200 p-1 sm:w-96">
+            <TabsList className="text-muted-foreground mb-6 inline-flex h-11 w-full items-center justify-center gap-x-2 rounded-lg  p-1 sm:w-96">
               <TabsTrigger value="attended" className="rounded-md px-3 py-2 text-sm font-medium sm:px-4">
                 <Calendar className="mr-2 h-4 w-4" />
                 Attended Events

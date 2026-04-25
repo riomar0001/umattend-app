@@ -1,9 +1,6 @@
 import React from 'react';
 import { MapPin, TriangleAlert, UsersRound } from 'lucide-react';
 import type { EventCardData, EventStatus } from '@/types/events';
-import { Badge } from '../ui/badge';
-import { Card, CardContent } from '../ui/card';
-import { getStatusColor } from '@/lib/events-utils';
 
 interface EventContentProps {
   event: EventCardData & { eventStatus?: EventStatus };
@@ -13,64 +10,90 @@ interface EventContentProps {
   onManageClick?: (e: React.MouseEvent) => void;
 }
 
+const statusConfig = (status: EventStatus) => {
+  switch (status) {
+    case 'upcoming':
+      return { label: 'Upcoming', color: 'text-blue-500' };
+    case 'ongoing':
+      return { label: 'Live', color: 'text-green-600' };
+    case 'completed':
+      return { label: 'Completed', color: 'text-neutral-400' };
+    default:
+      return { label: 'Upcoming', color: 'text-blue-500' };
+  }
+};
+
 const EventContent = ({ event, isLast = false, onCardClick }: EventContentProps) => {
   const { title, date, dayOfWeek, startTime, endTime, location, hasLocation = false, checkin_count, checkout_count } = event;
   const eventStatus = event.eventStatus || 'upcoming';
 
+  const dateParts = date ? date.split(' ') : [];
+  const monthAbbr = dateParts[0] || '';
+  const dayNum = dateParts[1]?.replace(',', '') || '';
+
+  const { label: statusLabel, color: statusColor } = statusConfig(eventStatus);
+  const attendeeText =
+    eventStatus === 'upcoming' ? 'No attendees yet' : eventStatus === 'ongoing' ? `${checkin_count} attending` : `${checkout_count} attended`;
+
   return (
-    <div className="flex gap-3 sm:gap-6">
-      <div className="w-16 flex-shrink-0 pt-1 sm:w-24">
-        <div className="text-foreground text-xs font-medium sm:text-sm">{date}</div>
-        <div className="text-muted-foreground text-[10px] sm:text-xs">{dayOfWeek}</div>
+    <div
+      className={`group relative flex cursor-pointer items-stretch ${!isLast ? 'border-b border-border/60' : ''}`}
+      onClick={onCardClick}
+    >
+      {/* Base gradient — always visible, gives the row depth */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-neutral-100/80 via-neutral-50/40 to-transparent dark:from-neutral-800/50 dark:via-neutral-800/20 dark:to-transparent" aria-hidden />
+      {/* Hover gradient — yellow tint, fades in via opacity */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-primary/[0.08] via-primary/[0.03] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" aria-hidden />
+
+      {/* Yellow left bar */}
+      <div className="relative z-10 w-0.5 flex-shrink-0 self-stretch bg-transparent transition-colors duration-300 group-hover:bg-primary" />
+
+      {/* Date column */}
+      <div className="relative z-10 flex w-16 flex-shrink-0 flex-col justify-center py-5 pl-3 text-right sm:w-20 sm:pl-4">
+        <div className="text-foreground text-[2.5rem] font-black leading-none tracking-tighter sm:text-[3rem]">{dayNum}</div>
+        <div className="text-muted-foreground mt-1 text-[9px] font-bold uppercase tracking-widest">{monthAbbr}</div>
+        <div className="text-muted-foreground/50 text-[8px] uppercase tracking-wide">{dayOfWeek?.slice(0, 3)}</div>
       </div>
 
-      <div className="relative flex flex-col items-center">
-        <div className="h-2 w-2 rounded-full bg-neutral-700" />
-        {!isLast && <div className="mx-auto mt-1 flex-1 border-l-2 border-neutral-200" aria-hidden />}
-      </div>
+      {/* Hairline separator */}
+      <div className="relative z-10 mx-4 w-px flex-shrink-0 self-stretch bg-border/40 transition-colors duration-300 group-hover:bg-primary/30 sm:mx-6" />
 
-      <Card
-        className="hover:bg-primary/10 focus-within:bg-primary/10 mb-4 flex flex-1 cursor-pointer rounded-2xl shadow-md transition-all duration-200 ease-in-out focus-within:scale-[1.025] focus-within:shadow-xl hover:scale-[1.025] hover:shadow-xl sm:mb-6"
-        onClick={onCardClick}
-      >
-        <CardContent className="flex h-full flex-col justify-between px-8 pr-5 sm:py-3">
-          <div className="flex flex-1 flex-col justify-center gap-2">
-            <div className="mb-1 flex items-center gap-x-3">
-              <div className="flex flex-row items-center gap-x-3">
-                <span className="text-muted-foreground text-xs sm:text-sm">
-                  {startTime} - {endTime}
-                </span>
-                <Badge variant="outline" className={`border text-xs ${getStatusColor(eventStatus)}`}>
-                  {eventStatus === 'ongoing' && <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-600" />}
-                  {eventStatus.charAt(0).toUpperCase() + eventStatus.slice(1)}
-                </Badge>
-              </div>
-            </div>
-            <h3 className="text-foreground mb-2 text-lg leading-tight font-semibold">{title}</h3>
-            <div className="mb-1 flex flex-col gap-4 sm:flex-row">
-              {hasLocation ? (
-                <div className="text-muted-foreground flex items-center gap-2 text-xs sm:text-sm">
-                  <MapPin size={14} />
-                  <span className="line-clamp-1">{location}</span>
-                </div>
-              ) : (
-                <div className="text-primary flex items-center gap-2 text-xs sm:text-sm">
-                  <TriangleAlert size={14} />
-                  <span className="font-medium">Location Missing</span>
-                </div>
-              )}
-              <div className="text-muted-foreground flex items-center gap-2 text-xs sm:text-sm">
-                <UsersRound size={14} />
-                <span>
-                  {eventStatus === 'upcoming' && 'No Attendees'}
-                  {eventStatus === 'ongoing' && `${checkin_count} Attending`}
-                  {eventStatus === 'completed' && `${checkout_count} Attended`}
-                </span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Content */}
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center py-5 pr-4">
+        {/* Status · time */}
+        <div className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+          <span className={`text-[10px] font-bold uppercase tracking-widest ${statusColor}`}>{statusLabel}</span>
+          <span className="text-border/60 text-[10px]">·</span>
+          <span className="text-muted-foreground text-xs">
+            {startTime}
+            {endTime ? ` – ${endTime}` : ''}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-foreground mb-2.5 text-base font-semibold leading-snug tracking-tight transition-colors duration-300 group-hover:text-primary/90 sm:text-[1.05rem]">
+          {title}
+        </h3>
+
+        {/* Location + attendees */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {hasLocation ? (
+            <span className="text-muted-foreground flex items-center gap-1 text-xs">
+              <MapPin size={11} className="flex-shrink-0" />
+              <span className="line-clamp-1">{location}</span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-xs text-amber-500">
+              <TriangleAlert size={11} className="flex-shrink-0" />
+              Location missing
+            </span>
+          )}
+          <span className="text-muted-foreground flex items-center gap-1 text-xs">
+            <UsersRound size={11} className="flex-shrink-0" />
+            {attendeeText}
+          </span>
+        </div>
+      </div>
     </div>
   );
 };

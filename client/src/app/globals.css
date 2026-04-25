@@ -38,6 +38,13 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Background SVG decoration — neutral stroke colors */
+  --dec-n1: oklch(0.5 0 0 / 0.22);
+  --dec-n2: oklch(0.5 0 0 / 0.16);
+  --dec-n3: oklch(0.5 0 0 / 0.12);
+  --dec-n4: oklch(0.5 0 0 / 0.32);
+  --dec-n5: oklch(0.5 0 0 / 0.22);
 }
 
 .dark {
@@ -74,6 +81,13 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* Background SVG decoration — lighter neutrals for dark backgrounds */
+  --dec-n1: oklch(0.78 0 0 / 0.30);
+  --dec-n2: oklch(0.78 0 0 / 0.22);
+  --dec-n3: oklch(0.78 0 0 / 0.16);
+  --dec-n4: oklch(0.78 0 0 / 0.45);
+  --dec-n5: oklch(0.78 0 0 / 0.32);
 }
 
 @theme inline {

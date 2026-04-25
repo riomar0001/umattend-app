@@ -15,7 +15,6 @@ export default function PastEventsPage() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  // Fetch past events
   const { data: eventsData, isLoading } = useQuery({ ...getEventPastOptions(), retry: false });
 
   const pastEvents = eventsData?.data || [];
@@ -28,31 +27,80 @@ export default function PastEventsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100">
-      <main className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
-          <h1 className="text-foreground text-3xl font-semibold sm:text-4xl">Events</h1>
+    <div className="relative min-h-screen bg-background">
+      {/* Background decorative elements */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
+        {/* Top gradient wash */}
+        <div className="absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-primary/[0.15] via-primary/[0.06] to-transparent dark:from-primary/[0.22] dark:via-primary/[0.08]" />
+        {/* Bottom gradient wash */}
+        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-neutral-100/60 to-transparent dark:from-neutral-900/60" />
 
-          <div className="flex w-full items-center gap-2 rounded-lg bg-stone-200 p-1 sm:w-auto">
-            <Link
-              href="/events"
-              className="text-muted-foreground hover:text-foreground w-36 flex-1 rounded-md px-4 py-1.5 text-center text-sm font-medium transition-colors sm:flex-none"
-            >
-              Upcoming
-            </Link>
-            <Link
-              href="/events/past"
-              className="bg-background text-foreground w-36 flex-1 rounded-md px-4 py-1.5 text-center text-sm font-medium shadow-sm transition-colors sm:flex-none"
-            >
-              Past
-            </Link>
+        {/* SVG decorative layer */}
+        <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none">
+          {/* Top-right: concentric arcs radiating from corner — primary/yellow */}
+          <circle cx="100%" cy="0" r="520" stroke="oklch(0.85 0.18 95 / 0.28)" strokeWidth="1.5" />
+          <circle cx="100%" cy="0" r="390" stroke="oklch(0.85 0.18 95 / 0.22)" strokeWidth="1.5" />
+          <circle cx="100%" cy="0" r="260" stroke="oklch(0.85 0.18 95 / 0.18)" strokeWidth="1.5" />
+          <circle cx="100%" cy="0" r="130" stroke="oklch(0.85 0.18 95 / 0.14)" strokeWidth="1.5" />
+
+          {/* Accent dots near top-right rings */}
+          <circle cx="87%" cy="11%" r="3.5" fill="oklch(0.85 0.18 95 / 0.75)" />
+          <circle cx="92%" cy="21%" r="2" fill="oklch(0.85 0.18 95 / 0.60)" />
+          <circle cx="96%" cy="34%" r="2.5" fill="oklch(0.85 0.18 95 / 0.50)" />
+          <circle cx="84%" cy="6%" r="2" fill="oklch(0.85 0.18 95 / 0.45)" />
+
+          {/* Dashed lines — right edge, mid-page */}
+          <line x1="62%" y1="46%" x2="104%" y2="46%" stroke="oklch(0.85 0.18 95 / 0.32)" strokeWidth="1" strokeDasharray="5 9" />
+          <line x1="68%" y1="50%" x2="104%" y2="50%" stroke="oklch(0.85 0.18 95 / 0.22)" strokeWidth="1" strokeDasharray="5 9" />
+          <line x1="74%" y1="54%" x2="104%" y2="54%" stroke="oklch(0.85 0.18 95 / 0.16)" strokeWidth="1" strokeDasharray="5 9" />
+
+          {/* Bottom-left: neutral arcs — use CSS vars so they adapt to dark mode */}
+          <circle cx="0" cy="100%" r="400" style={{ stroke: 'var(--dec-n1)' }} strokeWidth="1.5" />
+          <circle cx="0" cy="100%" r="260" style={{ stroke: 'var(--dec-n2)' }} strokeWidth="1.5" />
+          <circle cx="0" cy="100%" r="130" style={{ stroke: 'var(--dec-n3)' }} strokeWidth="1.5" />
+
+          {/* Bottom-right arc */}
+          <circle cx="100%" cy="100%" r="180" style={{ stroke: 'var(--dec-n2)' }} strokeWidth="1.5" />
+
+          {/* Plus marks */}
+          <line x1="7%" y1="20%" x2="11%" y2="20%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="9%" y1="18%" x2="9%" y2="22%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="3%" y1="55%" x2="6%" y2="55%" stroke="oklch(0.85 0.18 95 / 0.45)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="4.5%" y1="53.5%" x2="4.5%" y2="56.5%" stroke="oklch(0.85 0.18 95 / 0.45)" strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="76%" y1="84%" x2="80%" y2="84%" style={{ stroke: 'var(--dec-n4)' }} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="78%" y1="82%" x2="78%" y2="86%" style={{ stroke: 'var(--dec-n4)' }} strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="48%" y1="90%" x2="51%" y2="90%" style={{ stroke: 'var(--dec-n5)' }} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="49.5%" y1="88.5%" x2="49.5%" y2="91.5%" style={{ stroke: 'var(--dec-n5)' }} strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </div>
+
+      <main className="relative container mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+        {/* Page header */}
+        <div className="mb-10 sm:mb-12">
+          <div className="mb-6 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
+            <h1 className="text-foreground text-4xl font-black tracking-tighter sm:text-5xl">Events</h1>
+            <nav className="flex items-center gap-6 pb-px">
+              <Link href="/events" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                Upcoming
+              </Link>
+              <Link
+                href="/events/past"
+                className="relative text-sm font-semibold text-foreground after:absolute after:-bottom-0.5 after:left-0 after:h-0.5 after:w-full after:bg-primary after:content-['']"
+              >
+                Past
+              </Link>
+            </nav>
           </div>
+          <div className="h-px bg-border" />
         </div>
 
         {isLoading ? (
           <EventsSkeleton />
         ) : transformedEvents.length > 0 ? (
-          <div className="space-y-6 sm:space-y-4">
+          <div>
             {transformedEvents.map((event, index) => (
               <EventContent
                 key={event.apiId}

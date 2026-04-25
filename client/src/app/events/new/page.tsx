@@ -220,8 +220,51 @@ export default function CreateEventPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100">
-      <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen bg-background">
+      {/* Background decorative elements */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
+        {/* Top gradient wash */}
+        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-primary/[0.15] via-primary/[0.06] to-transparent dark:from-primary/[0.22] dark:via-primary/[0.08]" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-neutral-100/60 to-transparent dark:from-neutral-900/50" />
+
+        <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none">
+          {/* Diagonal ruled lines — top half, creation/canvas feel */}
+          <line x1="-5%" y1="0%" x2="40%" y2="50%" stroke="oklch(0.85 0.18 95 / 0.28)" strokeWidth="1" strokeDasharray="5 16" />
+          <line x1="5%" y1="0%" x2="50%" y2="50%" stroke="oklch(0.85 0.18 95 / 0.20)" strokeWidth="1" strokeDasharray="5 16" />
+          <line x1="15%" y1="0%" x2="60%" y2="50%" stroke="oklch(0.85 0.18 95 / 0.15)" strokeWidth="1" strokeDasharray="5 16" />
+
+          {/* Top-right arc cluster */}
+          <circle cx="100%" cy="0" r="440" stroke="oklch(0.85 0.18 95 / 0.30)" strokeWidth="1.5" />
+          <circle cx="100%" cy="0" r="300" stroke="oklch(0.85 0.18 95 / 0.22)" strokeWidth="1.5" />
+          <circle cx="100%" cy="0" r="160" stroke="oklch(0.85 0.18 95 / 0.18)" strokeWidth="1.5" />
+
+          {/* Accent dots — scattered across top */}
+          <circle cx="88%" cy="9%" r="3.5" fill="oklch(0.85 0.18 95 / 0.85)" />
+          <circle cx="93%" cy="20%" r="2.5" fill="oklch(0.85 0.18 95 / 0.70)" />
+          <circle cx="78%" cy="5%" r="2" fill="oklch(0.85 0.18 95 / 0.60)" />
+          <circle cx="22%" cy="4%" r="2.5" fill="oklch(0.85 0.18 95 / 0.55)" />
+          <circle cx="35%" cy="7%" r="1.5" fill="oklch(0.85 0.18 95 / 0.45)" />
+
+          {/* Bottom-left neutral arcs */}
+          <circle cx="0" cy="100%" r="350" style={{ stroke: 'var(--dec-n1)' }} strokeWidth="1.5" />
+          <circle cx="0" cy="100%" r="200" style={{ stroke: 'var(--dec-n2)' }} strokeWidth="1.5" />
+
+          {/* Cross marks */}
+          <line x1="7%" y1="18%" x2="11%" y2="18%" stroke="oklch(0.85 0.18 95 / 0.70)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="9%" y1="16%" x2="9%" y2="20%" stroke="oklch(0.85 0.18 95 / 0.70)" strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="55%" y1="8%" x2="58%" y2="8%" stroke="oklch(0.85 0.18 95 / 0.55)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="56.5%" y1="6.5%" x2="56.5%" y2="9.5%" stroke="oklch(0.85 0.18 95 / 0.55)" strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="3%" y1="58%" x2="6%" y2="58%" style={{ stroke: 'var(--dec-n4)' }} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="4.5%" y1="56.5%" x2="4.5%" y2="59.5%" style={{ stroke: 'var(--dec-n4)' }} strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="50%" y1="90%" x2="53%" y2="90%" style={{ stroke: 'var(--dec-n5)' }} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="51.5%" y1="88.5%" x2="51.5%" y2="91.5%" style={{ stroke: 'var(--dec-n5)' }} strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </div>
+
+      <main className="relative mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
             {/* Header */}
@@ -244,7 +287,7 @@ export default function CreateEventPage() {
                     <textarea
                       {...field}
                       placeholder="Event name"
-                      className="text-foreground placeholder:text-muted-foreground/50 min-h-20 w-full max-w-2xl resize-none border-0 bg-neutral-100 !text-6xl font-bold shadow-none focus:outline-none focus-visible:ring-transparent"
+                      className="text-foreground placeholder:text-muted-foreground/50 min-h-20 w-full max-w-2xl resize-none border-0 bg-background !text-6xl font-bold shadow-none focus:outline-none focus-visible:ring-transparent"
                       rows={1}
                       onInput={(e) => {
                         e.currentTarget.style.height = 'auto';
@@ -258,7 +301,7 @@ export default function CreateEventPage() {
             />
 
             {/* Date and Time */}
-            <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
+            <div className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
               <div className="space-y-4">
                 {/* Start Date/Time */}
                 <div className="">
@@ -537,7 +580,7 @@ export default function CreateEventPage() {
                           <Button
                             type="button"
                             onClick={() => field.onChange(!field.value)}
-                            className="text-foreground flex items-center gap-2 rounded-lg bg-neutral-100 px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-neutral-100/80"
+                            className="text-foreground flex items-center gap-2 rounded-lg bg-muted px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-muted/80"
                           >
                             {field.value ? 'Unlimited' : 'Limited'}
                           </Button>

@@ -17,7 +17,7 @@ import { formatDate, formatTime } from '@/lib/utils';
 
 const EventDetailsSkeleton = () => {
   return (
-    <div className="min-h-screen bg-neutral-100">
+    <div className="min-h-screen bg-background">
       {/* Hero Section Skeleton */}
       <section className="border-border bg-muted/30 border-b">
         <div className="pt-2" />
@@ -127,9 +127,49 @@ export default function EventDetailsPage() {
   const eventStatus = getEventStatus(event);
 
   return (
-    <div className="min-h-screen">
+    <div className="relative min-h-screen bg-background">
+      {/* Background decorative elements */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
+        {/* Top spotlight gradient — emanating from above the hero */}
+        <div className="absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-primary/[0.18] via-primary/[0.06] to-transparent dark:from-primary/[0.26] dark:via-primary/[0.09]" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-neutral-100/60 to-transparent dark:from-neutral-900/60" />
+
+        <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none">
+          {/* Spotlight arcs emanating from top-center — event detail feel */}
+          <ellipse cx="50%" cy="-10%" rx="500" ry="380" stroke="oklch(0.85 0.18 95 / 0.30)" strokeWidth="1.5" />
+          <ellipse cx="50%" cy="-10%" rx="380" ry="280" stroke="oklch(0.85 0.18 95 / 0.22)" strokeWidth="1.5" />
+          <ellipse cx="50%" cy="-10%" rx="260" ry="180" stroke="oklch(0.85 0.18 95 / 0.18)" strokeWidth="1.5" />
+
+          {/* Vertical accent lines — flanking the content */}
+          <line x1="8%" y1="0%" x2="8%" y2="60%" stroke="oklch(0.85 0.18 95 / 0.28)" strokeWidth="1" strokeDasharray="3 10" />
+          <line x1="5%" y1="0%" x2="5%" y2="45%" stroke="oklch(0.85 0.18 95 / 0.20)" strokeWidth="1" strokeDasharray="3 10" />
+          <line x1="92%" y1="0%" x2="92%" y2="60%" stroke="oklch(0.85 0.18 95 / 0.28)" strokeWidth="1" strokeDasharray="3 10" />
+          <line x1="95%" y1="0%" x2="95%" y2="45%" stroke="oklch(0.85 0.18 95 / 0.20)" strokeWidth="1" strokeDasharray="3 10" />
+
+          {/* Accent dots — scattered top area */}
+          <circle cx="18%" cy="8%" r="3" fill="oklch(0.85 0.18 95 / 0.80)" />
+          <circle cx="78%" cy="6%" r="2.5" fill="oklch(0.85 0.18 95 / 0.70)" />
+          <circle cx="12%" cy="18%" r="2" fill="oklch(0.85 0.18 95 / 0.55)" />
+          <circle cx="86%" cy="16%" r="2" fill="oklch(0.85 0.18 95 / 0.55)" />
+
+          {/* Bottom-left arc */}
+          <circle cx="0" cy="100%" r="300" style={{ stroke: 'var(--dec-n1)' }} strokeWidth="1.5" />
+          <circle cx="0" cy="100%" r="160" style={{ stroke: 'var(--dec-n2)' }} strokeWidth="1.5" />
+
+          {/* Cross marks */}
+          <line x1="3%" y1="30%" x2="7%" y2="30%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="5%" y1="28%" x2="5%" y2="32%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="93%" y1="28%" x2="97%" y2="28%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="95%" y1="26%" x2="95%" y2="30%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
+
+          <line x1="46%" y1="88%" x2="50%" y2="88%" style={{ stroke: 'var(--dec-n4)' }} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="48%" y1="86.5%" x2="48%" y2="89.5%" style={{ stroke: 'var(--dec-n4)' }} strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </div>
+
       {/* Hero Section */}
-      <section className="border-border bg-muted/30 border-b">
+      <section className="border-border bg-muted/30 relative border-b backdrop-blur-[2px]">
         <div className="pt-2" />
         <div className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
           <div className="mx-auto max-w-4xl">

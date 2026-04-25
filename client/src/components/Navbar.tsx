@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Menu, Plus } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -87,6 +88,7 @@ const Navbar = () => {
           </nav>
 
           <span className="text-muted-foreground hidden text-xs lg:inline">{formatTimeWithTimezone(now)}</span>
+          <ThemeToggle />
 
           <Popover>
             <PopoverTrigger className="cursor-pointer">
@@ -99,7 +101,7 @@ const Navbar = () => {
                 </Avatar>
               )}
             </PopoverTrigger>
-            <PopoverContent className="mt-3 w-64 rounded-xl border border-gray-200 p-0 shadow-lg" align="end">
+            <PopoverContent className="mt-3 w-64 rounded-xl border border-border p-0 shadow-lg" align="end">
               <div className="flex items-center gap-3 border-b px-4 py-3">
                 <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
                   <Avatar className="h-8 w-8">
