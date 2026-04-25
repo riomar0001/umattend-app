@@ -18,6 +18,14 @@ services:
     networks:
       - umattend_net
 
+  redis:
+    image: redis:7-alpine
+    container_name: umattend_redis_prod
+    restart: unless-stopped
+    command: redis-server --requirepass password
+    networks:
+      - umattend_net
+
   server:
     build:
       context: ./server
@@ -30,6 +38,9 @@ services:
       - ./server/.env.production
     environment:
       PORT: "4000"
+      REDIS_HOST: "redis"
+    depends_on:
+      - redis
     networks:
       - umattend_net
 
