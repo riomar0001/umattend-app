@@ -58,21 +58,19 @@ const EventDetails = ({ event, onClose }: EventDetailsProps) => {
         {is_draft && (
           <div className="mb-5 flex items-center gap-2 rounded-lg border border-amber-300/50 bg-amber-50 px-3 py-2.5 dark:border-amber-700/40 dark:bg-amber-950/30">
             <EyeOff className="h-3.5 w-3.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-              Draft — only visible to you
-            </p>
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">Draft — only visible to you</p>
           </div>
         )}
 
         {/* Status label */}
         {is_draft ? (
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-amber-500">Draft</p>
+          <p className="mb-3 text-[10px] font-bold tracking-widest text-amber-500 uppercase">Draft</p>
         ) : (
           <p className={`mb-3 text-[10px] font-bold tracking-widest uppercase ${statusColor}`}>{statusLabel}</p>
         )}
 
         {/* Title */}
-        <SheetTitle className="mb-8 break-words text-2xl leading-tight font-black tracking-tighter sm:text-[1.85rem]">{title}</SheetTitle>
+        <SheetTitle className="mb-8 text-2xl leading-tight font-black tracking-tighter break-words sm:text-[1.85rem]">{title}</SheetTitle>
 
         {/* Metadata */}
         <div className="border-border space-y-4 border-t pt-6">
@@ -92,7 +90,7 @@ const EventDetails = ({ event, onClose }: EventDetailsProps) => {
           {hasLocation ? (
             <div className="flex items-start gap-3">
               <MapPin className="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
-              <p className="text-foreground break-words text-sm">{location}</p>
+              <p className="text-foreground text-sm break-words">{location}</p>
             </div>
           ) : (
             <div className="flex items-start gap-3">
@@ -110,7 +108,9 @@ const EventDetails = ({ event, onClose }: EventDetailsProps) => {
         {/* Description */}
         {description && (
           <div className="border-border mt-8 border-t pt-6">
-            <SheetDescription className="text-foreground/80 break-words text-sm leading-relaxed">{description}</SheetDescription>
+            <SheetDescription className="text-foreground/80 text-sm leading-relaxed break-words whitespace-pre-wrap sm:text-[0.9375rem]">
+              {description}
+            </SheetDescription>
           </div>
         )}
       </div>

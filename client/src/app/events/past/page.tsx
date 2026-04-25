@@ -27,11 +27,11 @@ export default function PastEventsPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="bg-background relative min-h-screen">
       {/* Background decorative elements */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         {/* Top gradient wash */}
-        <div className="absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-primary/[0.15] via-primary/[0.06] to-transparent dark:from-primary/[0.22] dark:via-primary/[0.08]" />
+        <div className="from-primary/[0.15] via-primary/[0.06] dark:from-primary/[0.22] dark:via-primary/[0.08] absolute inset-x-0 top-0 h-80 bg-gradient-to-b to-transparent" />
         {/* Bottom gradient wash */}
         <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-neutral-100/60 to-transparent dark:from-neutral-900/60" />
 
@@ -83,24 +83,24 @@ export default function PastEventsPage() {
           <div className="mb-6 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
             <h1 className="text-foreground text-4xl font-black tracking-tighter sm:text-5xl">Events</h1>
             <nav className="flex items-center gap-6 pb-px">
-              <Link href="/events" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <Link href="/events" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
                 Upcoming
               </Link>
               <Link
                 href="/events/past"
-                className="relative text-sm font-semibold text-foreground after:absolute after:-bottom-0.5 after:left-0 after:h-0.5 after:w-full after:bg-primary after:content-['']"
+                className="text-foreground after:bg-primary relative text-sm font-semibold after:absolute after:-bottom-0.5 after:left-0 after:h-0.5 after:w-full after:content-['']"
               >
                 Past
               </Link>
             </nav>
           </div>
-          <div className="h-px bg-border" />
+          <div className="bg-border h-px" />
         </div>
 
         {isLoading ? (
           <EventsSkeleton />
         ) : transformedEvents.length > 0 ? (
-          <div>
+          <div className="flex flex-col gap-y-5">
             {transformedEvents.map((event, index) => (
               <EventContent
                 key={event.apiId}
