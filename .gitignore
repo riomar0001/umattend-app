@@ -14,6 +14,7 @@ build/
 .env.development
 .env.test
 .env.production
+.env.staging
 
 # PM2 process file
 pm2-log.json
