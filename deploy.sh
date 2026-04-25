@@ -13,20 +13,24 @@ ENV="${1:-}"
 case "$ENV" in
   staging)
     COMPOSE_FILE="docker-compose.staging.yml"
-    SERVER_CONTAINER="umattend-server-staging"
+    COMPOSE_PROJECT="umattend-staging"
+    SERVER_CONTAINER="umattend_server_staging"
+    NGINX_CONTAINER="umattend_nginx_staging"
     SERVER_PORT="4000"
-    CLIENT_IMAGE="umattend-app-client"
-    SERVER_IMAGE="umattend-app-server"
+    CLIENT_IMAGE="umattend-client:staging"
+    SERVER_IMAGE="umattend-server:staging"
     ;;
-  production)
-    COMPOSE_FILE="docker-compose.production.yml"
-    SERVER_CONTAINER="umattend-server-production"
+  prod)
+    COMPOSE_FILE="docker-compose.prod.yml"
+    COMPOSE_PROJECT="umattend-prod"
+    SERVER_CONTAINER="umattend_server_prod"
+    NGINX_CONTAINER="umattend_nginx_prod"
     SERVER_PORT="4000"
-    CLIENT_IMAGE="umattend-app-client"
-    SERVER_IMAGE="umattend-app-server"
+    CLIENT_IMAGE="umattend-client:prod"
+    SERVER_IMAGE="umattend-server:prod"
     ;;
   *)
-    echo "Usage: $0 [staging|production]"
+    echo "Usage: $0 [staging|prod]"
     exit 1
     ;;
 esac
@@ -69,7 +73,7 @@ done
 # 3. Build new images — current containers keep serving traffic
 # ---------------------------------------------------------------------------
 log "Building new images (current containers still running)..."
-if ! docker compose -f "$COMPOSE_FILE" build --no-cache 2>&1 | tee -a "$LOG_FILE"; then
+if ! docker compose -f "$COMPOSE_FILE" -p "$COMPOSE_PROJECT" build --no-cache 2>&1 | tee -a "$LOG_FILE"; then
   fail "Build failed. Current containers were NOT interrupted."
 fi
 log "Build succeeded."
@@ -78,7 +82,10 @@ log "Build succeeded."
 # 4. Swap containers (brief downtime here — only after a clean build)
 # ---------------------------------------------------------------------------
 log "Swapping containers..."
-docker compose -f "$COMPOSE_FILE" up -d --remove-orphans 2>&1 | tee -a "$LOG_FILE"
+docker compose -f "$COMPOSE_FILE" -p "$COMPOSE_PROJECT" up -d --remove-orphans 2>&1 | tee -a "$LOG_FILE"
+
+log "Reloading nginx to flush stale upstream DNS..."
+docker exec "$NGINX_CONTAINER" nginx -s reload 2>&1 | tee -a "$LOG_FILE" || true
 
 # ---------------------------------------------------------------------------
 # 5. Health check
@@ -88,7 +95,7 @@ HEALTHY=false
 for i in $(seq 1 "$HEALTH_RETRIES"); do
   log "  Attempt $i/$HEALTH_RETRIES..."
   if docker exec "$SERVER_CONTAINER" \
-      curl -sf "http://localhost:${SERVER_PORT}/api/v1/health" &>/dev/null 2>&1; then
+      node -e "require('http').get('http://localhost:${SERVER_PORT}/api/v1/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))" &>/dev/null 2>&1; then
     HEALTHY=true
     break
   fi
@@ -110,7 +117,7 @@ if [ "$HEALTHY" = false ]; then
         log "  Restored $ROLLBACK_TAG  →  $IMAGE"
       fi
     done
-    docker compose -f "$COMPOSE_FILE" up -d --remove-orphans 2>&1 | tee -a "$LOG_FILE"
+    docker compose -f "$COMPOSE_FILE" -p "$COMPOSE_PROJECT" up -d --remove-orphans 2>&1 | tee -a "$LOG_FILE"
     log "Rollback complete. Verify the service manually."
   else
     log "No rollback images available. Manual intervention required."
