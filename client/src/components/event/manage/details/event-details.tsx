@@ -1,72 +1,85 @@
 import { Calendar, MapPin, Users, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Event } from '@/types/events';
+import type { Event } from '@/types/events';
 import { formatDate } from '@/lib/utils';
 
 export default function EventDetails({ event }: { event: Event }) {
-  const capacityPercentage = event.capacity === 'unlimited' ? 0 : Math.round(((event.checkin_count ?? 0) / event.capacity) * 100);
+  const attendeeCount = event.checkOutRequired ? event.checkOutCount : event.checkInCount;
+  const capacityPercentage =
+    event.capacity === 'unlimited' ? 0 : Math.round((event.checkInCount / (event.capacity as number)) * 100);
+
+  const statusBadgeClass =
+    event.status === 'upcoming'
+      ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300'
+      : event.status === 'ongoing'
+        ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/40 dark:text-green-300'
+        : 'border-neutral-200 bg-neutral-100 text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-400';
 
   return (
-    <div className="mb-8 space-y-6">
-      {/* Key Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Date Card */}
-        <Card className="border-border bg-card hover:border-primary/50 p-5 transition-colors">
-          <div className="flex items-start gap-3">
-            <div className="bg-primary/10 rounded-lg p-2.5">
-              <Calendar className="text-primary h-5 w-5" />
+    <div className="space-y-3 sm:space-y-4">
+      {/* Stats grid — 2 cols on mobile, 4 on lg */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+        <Card className="border-border bg-card/80 p-3 backdrop-blur-sm transition-colors hover:border-primary/40 sm:p-5">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className="rounded-lg bg-primary/10 p-2 sm:p-2.5">
+              <Calendar className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-muted-foreground mb-1 text-xs font-medium">Date</p>
-              <p className="text-foreground text-sm leading-tight font-semibold">{formatDate(event?.startDate)}</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Time Card */}
-        <Card className="border-border bg-card hover:border-primary/50 p-5 transition-colors">
-          <div className="flex items-start gap-3">
-            <div className="bg-primary/10 rounded-lg p-2.5">
-              <Clock className="text-primary h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-muted-foreground mb-1 text-xs font-medium">Time</p>
-              <p className="text-foreground text-sm leading-tight font-semibold">
-                {event?.startTime} - {event?.endTime}
+              <p className="mb-1 text-[10px] font-medium text-muted-foreground sm:text-xs">Date</p>
+              <p className="line-clamp-2 text-xs font-semibold leading-tight text-foreground sm:text-sm">
+                {formatDate(event.startDate)}
               </p>
             </div>
           </div>
         </Card>
 
-        {/* Location Card */}
-        <Card className="border-border bg-card hover:border-primary/50 p-5 transition-colors">
-          <div className="flex items-start gap-3">
-            <div className="bg-primary/10 rounded-lg p-2.5">
-              <MapPin className="text-primary h-5 w-5" />
+        <Card className="border-border bg-card/80 p-3 backdrop-blur-sm transition-colors hover:border-primary/40 sm:p-5">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className="rounded-lg bg-primary/10 p-2 sm:p-2.5">
+              <Clock className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-muted-foreground mb-1 text-xs font-medium">Location</p>
-              <p className="text-foreground truncate text-sm leading-tight font-semibold">{event?.location}</p>
+              <p className="mb-1 text-[10px] font-medium text-muted-foreground sm:text-xs">Time</p>
+              <p className="line-clamp-2 text-xs font-semibold leading-tight text-foreground sm:text-sm">
+                {event.startTime}
+                {event.endTime ? ` – ${event.endTime}` : ''}
+              </p>
             </div>
           </div>
         </Card>
 
-        {/* Attendance Card */}
-        <Card className="border-border bg-card hover:border-primary/50 p-5 transition-colors">
-          <div className="flex items-start gap-3">
-            <div className="bg-primary/10 rounded-lg p-2.5">
-              <Users className="text-primary h-5 w-5" />
+        <Card className="border-border bg-card/80 p-3 backdrop-blur-sm transition-colors hover:border-primary/40 sm:p-5">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className="rounded-lg bg-primary/10 p-2 sm:p-2.5">
+              <MapPin className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-muted-foreground mb-1 text-xs font-medium">Attendance</p>
-              <p className="text-foreground text-sm leading-tight font-semibold">
-                {event?.attendees}
-                {event?.capacity !== 'unlimited' && ` / ${event?.capacity}`}
+              <p className="mb-1 text-[10px] font-medium text-muted-foreground sm:text-xs">Location</p>
+              <p className="line-clamp-2 text-xs font-semibold leading-tight text-foreground sm:text-sm">
+                {event.location || 'TBD'}
               </p>
-              {event?.capacity !== 'unlimited' && (
-                <div className="bg-muted mt-2 h-1.5 w-full overflow-hidden rounded-full">
-                  <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${Math.min(capacityPercentage, 100)}%` }} />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="border-border bg-card/80 p-3 backdrop-blur-sm transition-colors hover:border-primary/40 sm:p-5">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className="rounded-lg bg-primary/10 p-2 sm:p-2.5">
+              <Users className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="mb-1 text-[10px] font-medium text-muted-foreground sm:text-xs">Attendance</p>
+              <p className="text-xs font-semibold leading-tight text-foreground sm:text-sm">
+                {attendeeCount}
+                {event.capacity !== 'unlimited' && ` / ${event.capacity}`}
+              </p>
+              {event.capacity !== 'unlimited' && (
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${Math.min(capacityPercentage, 100)}%` }}
+                  />
                 </div>
               )}
             </div>
@@ -74,63 +87,65 @@ export default function EventDetails({ event }: { event: Event }) {
         </Card>
       </div>
 
-      {/* Additional Info */}
-      <Card className="border-border bg-card p-5">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm">Status:</span>
-            <Badge
-              variant="outline"
-              className={`rounded-md text-xs font-medium ${
-                event.status === 'upcoming'
-                  ? 'border-blue-200 bg-blue-100 text-blue-700'
-                  : event.status === 'ongoing'
-                    ? 'border-green-200 bg-green-100 text-green-700'
-                    : event.status === 'completed'
-                      ? 'border-gray-200 bg-gray-100 text-gray-700'
-                      : 'border-red-200 bg-red-100 text-red-700'
-              }`}
-            >
-              {event.status === 'ongoing' && <span className="mr-1.5 inline-block h-2 w-2 animate-pulse rounded-full bg-green-600" />}
+      {/* Meta badges */}
+      <Card className="border-border bg-card/80 px-4 py-3 backdrop-blur-sm sm:px-5 sm:py-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-[10px] text-muted-foreground sm:text-xs">Status</span>
+            <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-wide sm:text-[10px] ${statusBadgeClass}`}>
+              {event.status === 'ongoing' && (
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-600" />
+              )}
               {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
             </Badge>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm">Department:</span>
-            <Badge variant="outline" className="rounded-md text-xs font-medium">
-              {event?.department}
-            </Badge>
-          </div>
-          {event?.checkOutRequired && (
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-sm">Requirements:</span>
-              <Badge variant="outline" className="rounded-md text-xs font-medium">
-                Check-out Required
+
+          {event.department && (
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[10px] text-muted-foreground sm:text-xs">Department</span>
+              <Badge variant="outline" className="text-[9px] font-medium sm:text-[10px]">
+                {event.department}
               </Badge>
             </div>
           )}
-          {event?.capacity !== 'unlimited' && (
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-sm">Capacity Status:</span>
+
+          {event.checkOutRequired && (
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[10px] text-muted-foreground sm:text-xs">Requirement</span>
+              <Badge variant="outline" className="text-[9px] font-medium sm:text-[10px]">
+                Check-out required
+              </Badge>
+            </div>
+          )}
+
+          {event.capacity !== 'unlimited' && (
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[10px] text-muted-foreground sm:text-xs">Capacity</span>
               <Badge
-                variant={capacityPercentage >= 90 ? 'destructive' : capacityPercentage >= 70 ? 'secondary' : 'outline'}
-                className="rounded-md text-xs font-medium"
+                variant="outline"
+                className={`text-[9px] font-medium sm:text-[10px] ${
+                  capacityPercentage >= 90
+                    ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300'
+                    : capacityPercentage >= 70
+                      ? 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-300'
+                      : ''
+                }`}
               >
-                {capacityPercentage}% Full
+                {capacityPercentage}% full
               </Badge>
             </div>
           )}
         </div>
       </Card>
 
-      {/* About Event Section */}
-      <Card className="border-border bg-card p-6">
-        <div className="space-y-4">
-          <h2 className="text-foreground text-2xl font-bold">About Event</h2>
-          <div className="prose prose-sm text-foreground/90 max-w-none leading-relaxed break-words whitespace-pre-wrap">
-            <p>{event?.description}</p>
-          </div>
-        </div>
+      {/* About */}
+      <Card className="border-border bg-card/80 px-4 py-4 backdrop-blur-sm sm:px-6 sm:py-5">
+        <h2 className="mb-3 text-sm font-bold tracking-tight text-foreground sm:text-base">About this event</h2>
+        {event.description ? (
+          <p className="text-sm leading-relaxed text-foreground/80 break-words whitespace-pre-wrap">{event.description}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">No description provided.</p>
+        )}
       </Card>
     </div>
   );

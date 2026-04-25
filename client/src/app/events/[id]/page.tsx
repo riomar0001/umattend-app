@@ -1,295 +1,279 @@
 'use client';
 
-import { Calendar, MapPin, Clock, Users, Settings, AlertTriangle, CheckCircle } from 'lucide-react';
-import { useParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
+import { MapPin, Clock, Users, Settings, AlertTriangle, CheckCircle, ChevronLeft } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import EventNotFound from '@/components/event/manage/event-not-found';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ApiEventData } from '@/types/events';
 import { getEventByEventIdOptions } from '@/api/client/@tanstack/react-query.gen';
 import { getEventStatus, getAttendanceStatus } from '@/lib/events-utils';
 import { formatDate, formatTime } from '@/lib/utils';
 
-const EventDetailsSkeleton = () => {
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section Skeleton */}
-      <section className="border-border bg-muted/30 border-b">
-        <div className="pt-2" />
-        <div className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-          <div className="mx-auto max-w-4xl">
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
-              <div className="flex-1 space-y-4">
-                {/* Title Skeleton */}
-                <Skeleton className="h-10 w-3/4 bg-neutral-200 md:h-12 lg:h-14" />
-
-                {/* Meta Info Skeleton */}
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-4 rounded bg-neutral-200" />
-                    <Skeleton className="h-4 w-40 bg-neutral-200" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-4 rounded bg-neutral-200" />
-                    <Skeleton className="h-4 w-32 bg-neutral-200" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-4 rounded bg-neutral-200" />
-                    <Skeleton className="h-4 w-28 bg-neutral-200" />
-                  </div>
-                </div>
-
-                {/* Location Skeleton */}
-                <div className="flex items-start gap-2">
-                  <Skeleton className="mt-0.5 h-4 w-4 rounded bg-neutral-200" />
-                  <Skeleton className="h-4 w-48 bg-neutral-200" />
-                </div>
-
-                {/* Button Skeleton */}
-                <div className="pt-2">
-                  <Skeleton className="h-10 w-32 bg-neutral-200" />
-                </div>
-              </div>
-            </div>
+const EventDetailsSkeleton = () => (
+  <div className="min-h-screen bg-background">
+    <section className="border-b border-border">
+      <div className="container mx-auto max-w-4xl px-4 pt-6 pb-10 sm:px-6 sm:pt-8 sm:pb-12">
+        <Skeleton className="h-4 w-16" />
+        <div className="mt-7 flex items-start gap-5 sm:gap-8">
+          <div className="flex-shrink-0 space-y-2 text-right">
+            <Skeleton className="ml-auto h-12 w-10 sm:h-16 sm:w-14" />
+            <Skeleton className="ml-auto h-2 w-7" />
+            <Skeleton className="ml-auto h-2 w-5" />
+          </div>
+          <div className="w-px self-stretch bg-border/40" />
+          <div className="min-w-0 flex-1 space-y-3">
+            <Skeleton className="h-5 w-20 rounded-full" />
+            <Skeleton className="h-8 w-4/5 sm:h-10" />
           </div>
         </div>
-      </section>
-
-      {/* Main Content Skeleton */}
-      <main className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mx-auto max-w-4xl space-y-8">
-          {/* Status Card Skeleton */}
-          <Card className="border-primary/20 bg-primary/5 border-2">
-            <CardContent className="flex items-start gap-4 p-6">
-              <Skeleton className="h-12 w-12 rounded-full bg-neutral-200" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-5 w-48 bg-neutral-200" />
-                <Skeleton className="h-4 w-64 bg-neutral-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* About Event Skeleton */}
-          <section className="space-y-4">
-            <Skeleton className="h-8 w-40 bg-neutral-200" />
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-full bg-neutral-200" />
-              <Skeleton className="h-4 w-full bg-neutral-200" />
-              <Skeleton className="h-4 w-5/6 bg-neutral-200" />
-            </div>
-          </section>
-
-          <Separator />
+        <div className="mt-7 flex flex-wrap gap-2">
+          <Skeleton className="h-9 w-36 rounded-lg" />
+          <Skeleton className="h-9 w-44 rounded-lg" />
+          <Skeleton className="h-9 w-28 rounded-lg" />
         </div>
-      </main>
-    </div>
-  );
-};
+        <Skeleton className="mt-6 h-8 w-32" />
+      </div>
+    </section>
+    <main className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+      <div className="space-y-3">
+        <Skeleton className="h-7 w-40" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-4/5" />
+      </div>
+    </main>
+  </div>
+);
 
 export default function EventDetailsPage() {
   const router = useRouter();
-
   const params = useParams();
   const eventId = params?.id as string;
 
-  // Fetch event data using the API
-  const {
-    data: eventData,
-    isLoading,
-    isError
-  } = useQuery({
-    ...getEventByEventIdOptions({
-      path: {
-        event_id: eventId
-      }
-    }),
+  const { data: eventData, isLoading, isError } = useQuery({
+    ...getEventByEventIdOptions({ path: { event_id: eventId } }),
     enabled: !!eventId,
     retry: false
   });
 
   const event = eventData?.data as ApiEventData | undefined;
-
   const attendanceStatus = event ? getAttendanceStatus(event) : 'did_not_attend';
 
-  if (isLoading || !event) {
-    return <EventDetailsSkeleton />;
-  }
-
-  if (isError) {
-    return <EventNotFound />;
-  }
+  if (isLoading || !event) return <EventDetailsSkeleton />;
+  if (isError) return <EventNotFound />;
 
   const eventStatus = getEventStatus(event);
 
+  const statusConfig = {
+    upcoming: {
+      label: 'Upcoming',
+      className: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300'
+    },
+    ongoing: {
+      label: 'Live now',
+      className: 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/40 dark:text-green-300'
+    },
+    completed: {
+      label: 'Completed',
+      className: 'border-neutral-200 bg-neutral-100 text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-400'
+    }
+  };
+  const { label: statusLabel, className: statusClassName } = statusConfig[eventStatus];
+
+  const startDate = event.start_time ? new Date(event.start_time) : null;
+  const dayNum = startDate ? startDate.getDate().toString() : '—';
+  const monthAbbr = startDate ? startDate.toLocaleString('en', { month: 'short' }).toUpperCase() : '';
+  const dayOfWeek = startDate ? startDate.toLocaleString('en', { weekday: 'long' }) : '';
+  const attendeeCount = event.check_out_required ? event.checkout_count || 0 : event.checkin_count || 0;
+
   return (
     <div className="relative min-h-screen bg-background">
-      {/* Background decorative elements */}
+      {/* Background decorative */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        {/* Top spotlight gradient — emanating from above the hero */}
         <div className="absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-primary/[0.18] via-primary/[0.06] to-transparent dark:from-primary/[0.26] dark:via-primary/[0.09]" />
         <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-neutral-100/60 to-transparent dark:from-neutral-900/60" />
-
         <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none">
-          {/* Spotlight arcs emanating from top-center — event detail feel */}
           <ellipse cx="50%" cy="-10%" rx="500" ry="380" stroke="oklch(0.85 0.18 95 / 0.30)" strokeWidth="1.5" />
           <ellipse cx="50%" cy="-10%" rx="380" ry="280" stroke="oklch(0.85 0.18 95 / 0.22)" strokeWidth="1.5" />
           <ellipse cx="50%" cy="-10%" rx="260" ry="180" stroke="oklch(0.85 0.18 95 / 0.18)" strokeWidth="1.5" />
-
-          {/* Vertical accent lines — flanking the content */}
           <line x1="8%" y1="0%" x2="8%" y2="60%" stroke="oklch(0.85 0.18 95 / 0.28)" strokeWidth="1" strokeDasharray="3 10" />
           <line x1="5%" y1="0%" x2="5%" y2="45%" stroke="oklch(0.85 0.18 95 / 0.20)" strokeWidth="1" strokeDasharray="3 10" />
           <line x1="92%" y1="0%" x2="92%" y2="60%" stroke="oklch(0.85 0.18 95 / 0.28)" strokeWidth="1" strokeDasharray="3 10" />
           <line x1="95%" y1="0%" x2="95%" y2="45%" stroke="oklch(0.85 0.18 95 / 0.20)" strokeWidth="1" strokeDasharray="3 10" />
-
-          {/* Accent dots — scattered top area */}
           <circle cx="18%" cy="8%" r="3" fill="oklch(0.85 0.18 95 / 0.80)" />
           <circle cx="78%" cy="6%" r="2.5" fill="oklch(0.85 0.18 95 / 0.70)" />
           <circle cx="12%" cy="18%" r="2" fill="oklch(0.85 0.18 95 / 0.55)" />
           <circle cx="86%" cy="16%" r="2" fill="oklch(0.85 0.18 95 / 0.55)" />
-
-          {/* Bottom-left arc */}
           <circle cx="0" cy="100%" r="300" style={{ stroke: 'var(--dec-n1)' }} strokeWidth="1.5" />
           <circle cx="0" cy="100%" r="160" style={{ stroke: 'var(--dec-n2)' }} strokeWidth="1.5" />
-
-          {/* Cross marks */}
           <line x1="3%" y1="30%" x2="7%" y2="30%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
           <line x1="5%" y1="28%" x2="5%" y2="32%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
-
           <line x1="93%" y1="28%" x2="97%" y2="28%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
           <line x1="95%" y1="26%" x2="95%" y2="30%" stroke="oklch(0.85 0.18 95 / 0.65)" strokeWidth="1.5" strokeLinecap="round" />
-
           <line x1="46%" y1="88%" x2="50%" y2="88%" style={{ stroke: 'var(--dec-n4)' }} strokeWidth="1.5" strokeLinecap="round" />
           <line x1="48%" y1="86.5%" x2="48%" y2="89.5%" style={{ stroke: 'var(--dec-n4)' }} strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </div>
 
-      {/* Hero Section */}
-      <section className="border-border bg-muted/30 relative border-b backdrop-blur-[2px]">
-        <div className="pt-2" />
-        <div className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-          <div className="mx-auto max-w-4xl">
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
-              {/* Event Info */}
-              <div className="flex-1 space-y-4">
-                <div className="space-y-3">
-                  <Badge
-                    variant="outline"
-                    className={`w-fit border ${
-                      eventStatus === 'upcoming'
-                        ? 'border-blue-200 bg-blue-100 text-blue-700'
-                        : eventStatus === 'ongoing'
-                          ? 'border-green-200 bg-green-100 text-green-700'
-                          : 'border-gray-200 bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {eventStatus === 'ongoing' && <span className="mr-1.5 inline-block h-2 w-2 animate-pulse rounded-full bg-green-600" />}
-                    {eventStatus.charAt(0).toUpperCase() + eventStatus.slice(1)}
-                  </Badge>
-                  <h1 className="text-foreground text-3xl font-bold tracking-tight text-balance md:text-4xl lg:text-5xl">{event.title}</h1>
-                </div>
+      {/* Hero */}
+      <section className="relative border-b border-border backdrop-blur-[2px]">
+        <div className="container mx-auto max-w-4xl px-4 pt-6 pb-10 sm:px-6 sm:pt-8 sm:pb-12">
+          {/* Back nav */}
+          <button
+            onClick={() => router.push('/events')}
+            className="group mb-7 flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+            Events
+          </button>
 
-                <div className="flex flex-wrap gap-4 text-sm">
-                  <div className="text-muted-foreground flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>{event.start_time && formatDate(event.start_time)}</span>
-                  </div>
-                  <div className="text-muted-foreground flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    <span>
-                      {event.start_time && formatTime(event.start_time)} - {event.end_time && formatTime(event.end_time)}
-                    </span>
-                  </div>
-                  <div className="text-muted-foreground flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    <span>{event.check_out_required ? event.checkout_count || 0 : event.checkin_count || 0} Attended</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <MapPin className="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
-                  <div className="text-sm">
-                    <p className="text-foreground font-medium">{event.location}</p>
-                  </div>
-                </div>
-
-                {/* Primary CTA */}
-                <div className="flex flex-wrap gap-3 pt-2">
-                  {event.can_edit ||
-                    (eventStatus !== 'upcoming' && (
-                      <>
-                        {attendanceStatus === 'attended' ? (
-                          <Badge className="bg-green-100 px-4 py-2 text-sm text-green-800">✓ Attended</Badge>
-                        ) : attendanceStatus === 'partially_attended' ? (
-                          <Badge className="bg-yellow-100 px-4 py-2 text-sm text-yellow-800">⚠ Partially Attended</Badge>
-                        ) : (
-                          <Badge className="bg-neutral-200 px-4 py-2 text-sm">Did Not Attend</Badge>
-                        )}
-                      </>
-                    ))}
-                  {event.can_edit && (
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="gap-2 font-semibold shadow-sm transition-shadow hover:shadow"
-                      onClick={() => router.push(`/events/${event.id}/manage`)}
-                    >
-                      <Settings className="h-4 w-4" />
-                      Manage Event
-                    </Button>
-                  )}
-                </div>
-              </div>
+          {/* Date block + title row */}
+          <div className="flex items-start gap-4 sm:gap-7">
+            {/* Date block */}
+            <div className="flex-shrink-0 text-right">
+              <div className="text-foreground text-5xl font-black leading-none tracking-tighter sm:text-6xl">{dayNum}</div>
+              <div className="text-muted-foreground mt-1 text-[9px] font-bold uppercase tracking-widest">{monthAbbr}</div>
+              <div className="text-muted-foreground/50 text-[8px] uppercase tracking-wide">{dayOfWeek.slice(0, 3)}</div>
             </div>
+
+            {/* Hairline */}
+            <div className="w-px self-stretch bg-border/50" />
+
+            {/* Badge + title */}
+            <div className="min-w-0 flex-1 space-y-3">
+              <Badge
+                variant="outline"
+                className={`w-fit border text-[10px] font-bold uppercase tracking-widest ${statusClassName}`}
+              >
+                {eventStatus === 'ongoing' && (
+                  <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-green-600" />
+                )}
+                {statusLabel}
+              </Badge>
+              <h1 className="text-foreground text-2xl font-black leading-tight tracking-tighter sm:text-3xl lg:text-4xl">
+                {event.title}
+              </h1>
+            </div>
+          </div>
+
+          {/* Meta details */}
+          <div className="mt-6 w-auto overflow-hidden rounded-xl border border-border/60 bg-background/60 backdrop-blur-sm divide-y divide-border/40">
+            {startDate && (
+              <div className="flex items-center gap-3 px-4 py-3.5">
+                <Clock className="h-4 w-4 flex-shrink-0 text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">Time</span>
+                <span className="ml-auto text-sm text-foreground/80">
+                  {formatTime(event.start_time!)}
+                  {event.end_time && ` – ${formatTime(event.end_time)}`}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-3 px-4 py-3.5">
+              <MapPin className="h-4 w-4 flex-shrink-0 text-primary" />
+              <span className="text-xs font-medium text-muted-foreground">Location</span>
+              <span className="ml-auto  text-right text-sm text-foreground/80 line-clamp-1">{event.location || 'TBD'}</span>
+            </div>
+            <div className="flex items-center gap-3 px-4 py-3.5">
+              <Users className="h-4 w-4 flex-shrink-0 text-primary" />
+              <span className="text-xs font-medium text-muted-foreground">Attendees</span>
+              <span className="ml-auto text-sm text-foreground/80">{attendeeCount}</span>
+            </div>
+          </div>
+
+          {/* CTA row */}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {event.can_edit && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 font-semibold"
+                onClick={() => router.push(`/events/${event.id}/manage`)}
+              >
+                <Settings className="h-3.5 w-3.5" />
+                Manage Event
+              </Button>
+            )}
+
+            {eventStatus !== 'upcoming' && (
+              <>
+                {attendanceStatus === 'attended' && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 dark:border-green-800 dark:bg-green-950/40 dark:text-green-300">
+                    <CheckCircle className="h-3 w-3" />
+                    Attended
+                  </span>
+                )}
+                {attendanceStatus === 'partially_attended' && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-300">
+                    <AlertTriangle className="h-3 w-3" />
+                    Partially Attended
+                  </span>
+                )}
+                {attendanceStatus === 'did_not_attend' && !event.can_edit && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
+                    Did Not Attend
+                  </span>
+                )}
+              </>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Main Content */}
-      <main className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mx-auto max-w-4xl space-y-8">
-          {/* Status Card - Show based on attendance status */}
+      {/* Main content */}
+      <main className="relative container mx-auto max-w-4xl px-4 py-8 backdrop-blur-sm sm:px-6 sm:py-10">
+        <div className="space-y-8">
+          {/* Attendance banner */}
           {attendanceStatus === 'attended' && (
-            <Card className="border-2 border-green-200 bg-green-50">
-              <CardContent className="flex items-start gap-4">
-                <CheckCircle className="h-12 w-12 text-green-600" />
-                <div>
-                  <h3 className="text-foreground font-semibold">Attendance Confirmed</h3>
-                  <p className="text-muted-foreground text-sm">
-                    {event.check_out_required
-                      ? 'You have successfully checked in and checked out. Thank you for attending!'
-                      : 'You have successfully checked in. Thank you for attending!'}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50/80 px-4 py-4 backdrop-blur-sm dark:border-green-800 dark:bg-green-950/30 sm:gap-4 sm:px-5">
+              <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400 sm:h-5 sm:w-5" />
+              <div>
+                <p className="text-sm font-semibold text-green-800 dark:text-green-300">Attendance confirmed</p>
+                <p className="mt-0.5 text-sm text-green-700 dark:text-green-400">
+                  {event.check_out_required
+                    ? 'You checked in and checked out successfully.'
+                    : 'You checked in successfully. Thanks for attending!'}
+                </p>
+              </div>
+            </div>
           )}
 
           {attendanceStatus === 'partially_attended' && (
-            <Card className="border-2 border-yellow-200 bg-yellow-50">
-              <CardContent className="flex items-start gap-4">
-                <AlertTriangle className="h-12 w-12 text-yellow-600" />
-                <div>
-                  <h3 className="text-foreground font-semibold">Checked In</h3>
-                  <p className="text-muted-foreground text-sm">Don&apos;t forget to check out when you leave to complete your attendance!</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex items-start gap-3 rounded-xl border border-yellow-200 bg-yellow-50/80 px-4 py-4 backdrop-blur-sm dark:border-yellow-800 dark:bg-yellow-950/30 sm:gap-4 sm:px-5">
+              <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-600 dark:text-yellow-400 sm:h-5 sm:w-5" />
+              <div>
+                <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300">Checked in</p>
+                <p className="mt-0.5 text-sm text-yellow-700 dark:text-yellow-400">
+                  Don&apos;t forget to check out when you leave to complete your attendance.
+                </p>
+              </div>
+            </div>
           )}
 
-          {/* About Event */}
-          <section className="space-y-4">
-            <h2 className="text-foreground text-2xl font-bold">About Event</h2>
-            <div className="prose prose-sm text-foreground/90 max-w-none leading-relaxed break-words">
-              <p className="break-words whitespace-pre-wrap">{event.description}</p>
+          {/* Date detail */}
+          {startDate && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="h-px flex-1 bg-border/60" />
+              <span className="text-xs font-medium tracking-wide">{formatDate(event.start_time!)}</span>
+              <div className="h-px flex-1 bg-border/60" />
             </div>
-          </section>
+          )}
 
-          <Separator />
+          {/* About */}
+          {event.description ? (
+            <section className="rounded-xl border border-border/50 bg-background/50 px-5 py-6 backdrop-blur-sm sm:px-6">
+              <h2 className="text-foreground mb-4 text-lg font-bold tracking-tight sm:text-xl">About this event</h2>
+              <p className="text-foreground/80 text-sm leading-relaxed whitespace-pre-wrap break-words sm:text-[0.9375rem]">
+                {event.description}
+              </p>
+            </section>
+          ) : (
+            <section className="flex flex-col items-center justify-center rounded-xl border border-border/50 bg-background/50 py-10 text-center backdrop-blur-sm">
+              <p className="text-muted-foreground text-sm">No description provided for this event.</p>
+            </section>
+          )}
         </div>
       </main>
     </div>

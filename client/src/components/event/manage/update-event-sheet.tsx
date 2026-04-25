@@ -137,19 +137,19 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl" hideClose={true}>
-        <SheetHeader className="border-border border-b">
-          <div className="flex items-center justify-between space-x-3">
-            <Button className="hover:text-primary !h-8 cursor-pointer !py-1 hover:bg-stone-800" onClick={() => onOpenChange(false)}>
-              <ChevronsLeft />
+        <SheetHeader className="border-b border-border px-4 py-3 sm:px-6">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenChange(false)}>
+              <ChevronsLeft className="h-4 w-4" />
             </Button>
           </div>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
+        <form onSubmit={handleSubmit} className="space-y-6 px-4 py-6 sm:px-6">
           {/* Header Title and Description */}
           <div className="space-y-2">
-            <SheetTitle className="text-3xl leading-tight font-bold tracking-tight">Update Event</SheetTitle>
-            <SheetDescription className="text-base">Make changes to your event details. Click save when you&apos;re done.</SheetDescription>
+            <SheetTitle className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">Update Event</SheetTitle>
+            <SheetDescription className="text-sm sm:text-base">Make changes to your event details. Click save when you&apos;re done.</SheetDescription>
           </div>
 
           {/* Event Name */}
@@ -182,14 +182,14 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
           </div>
 
           {/* Date and Time */}
-          <div className="bg-background/50 ring-border space-y-4 rounded-lg p-5 shadow-sm ring-1 backdrop-blur-sm">
+          <div className="bg-background/50 ring-border space-y-4 rounded-lg p-4 shadow-sm ring-1 backdrop-blur-sm sm:p-5">
             <div className="flex items-center gap-2">
               <CalendarIcon className="text-primary/70 h-5 w-5" />
               <Label className="text-base font-semibold">Date & Time</Label>
             </div>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground text-xs font-medium">Start Date</Label>
                   <Popover>
@@ -226,7 +226,7 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground text-xs font-medium">End Date</Label>
                   <Popover>
@@ -318,7 +318,7 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
           </div>
 
           {/* Capacity */}
-          <div className="bg-background/50 ring-border space-y-3 rounded-lg p-5 shadow-sm ring-1 backdrop-blur-sm">
+          <div className="bg-background/50 ring-border space-y-3 rounded-lg p-4 shadow-sm ring-1 backdrop-blur-sm sm:p-5">
             <div className="flex items-center justify-between">
               <Label className="flex items-center gap-2 text-base font-semibold">
                 <Users className="text-primary/70 h-5 w-5" />
@@ -345,7 +345,7 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
           </div>
 
           {/* Check Out Required */}
-          <div className="bg-background/50 ring-border flex items-center justify-between rounded-lg p-5 shadow-sm ring-1 backdrop-blur-sm">
+          <div className="bg-background/50 ring-border flex items-center justify-between rounded-lg p-4 shadow-sm ring-1 backdrop-blur-sm sm:p-5">
             <Label htmlFor="checkout" className="text-base font-semibold">
               Check Out Required
             </Label>
