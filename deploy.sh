@@ -13,20 +13,20 @@ ENV="${1:-}"
 case "$ENV" in
   staging)
     COMPOSE_FILE="docker-compose.staging.yml"
-    SERVER_CONTAINER="umattend_server_staging"
-    SERVER_PORT="4001"
-    CLIENT_IMAGE="umattend-client:staging"
-    SERVER_IMAGE="umattend-server:staging"
-    ;;
-  prod)
-    COMPOSE_FILE="docker-compose.prod.yml"
-    SERVER_CONTAINER="umattend_server_prod"
+    SERVER_CONTAINER="umattend-server-staging"
     SERVER_PORT="4000"
-    CLIENT_IMAGE="umattend-client:prod"
-    SERVER_IMAGE="umattend-server:prod"
+    CLIENT_IMAGE="umattend-app-client"
+    SERVER_IMAGE="umattend-app-server"
+    ;;
+  production)
+    COMPOSE_FILE="docker-compose.production.yml"
+    SERVER_CONTAINER="umattend-server-production"
+    SERVER_PORT="4000"
+    CLIENT_IMAGE="umattend-app-client"
+    SERVER_IMAGE="umattend-app-server"
     ;;
   *)
-    echo "Usage: $0 [staging|prod]"
+    echo "Usage: $0 [staging|production]"
     exit 1
     ;;
 esac
@@ -88,7 +88,7 @@ HEALTHY=false
 for i in $(seq 1 "$HEALTH_RETRIES"); do
   log "  Attempt $i/$HEALTH_RETRIES..."
   if docker exec "$SERVER_CONTAINER" \
-      wget -qO- "http://localhost:${SERVER_PORT}/api/v1/health" &>/dev/null 2>&1; then
+      curl -sf "http://localhost:${SERVER_PORT}/api/v1/health" &>/dev/null 2>&1; then
     HEALTHY=true
     break
   fi
