@@ -77,7 +77,7 @@ export default function PastEventsPage() {
         </svg>
       </div>
 
-      <main className="relative container mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+      <main className="relative container mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-12">
         {/* Page header */}
         <div className="mb-10 sm:mb-12">
           <div className="mb-6 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
