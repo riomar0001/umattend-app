@@ -9,17 +9,17 @@ export default function EventsSkeleton() {
           <div className="w-0.5 flex-shrink-0 self-stretch bg-transparent" />
 
           {/* Date column */}
-          <div className="flex w-16 flex-shrink-0 flex-col justify-center py-5 pl-3 sm:w-20 sm:pl-4">
-            <Skeleton className="ml-auto h-10 w-8 sm:h-12 sm:w-10" />
-            <Skeleton className="ml-auto mt-1.5 h-2 w-5" />
-            <Skeleton className="ml-auto mt-1 h-2 w-4" />
+          <div className="flex w-12 flex-shrink-0 flex-col justify-center py-5 pl-2 sm:w-20 sm:pl-4">
+            <Skeleton className="ml-auto h-8 w-7 sm:h-12 sm:w-10" />
+            <Skeleton className="ml-auto mt-1.5 h-2 w-4" />
+            <Skeleton className="ml-auto mt-1 h-2 w-3" />
           </div>
 
           {/* Hairline */}
-          <div className="mx-4 w-px flex-shrink-0 self-stretch bg-border/40 sm:mx-6" />
+          <div className="mx-3 w-px flex-shrink-0 self-stretch bg-border/40 sm:mx-5" />
 
           {/* Content */}
-          <div className="flex min-w-0 flex-1 flex-col justify-center py-5 pr-4">
+          <div className="flex min-w-0 flex-1 flex-col justify-center py-5 pr-3 sm:pr-4">
             <div className="mb-2 flex items-center gap-1.5">
               <Skeleton className="h-2.5 w-14" />
               <Skeleton className="h-2.5 w-24" />

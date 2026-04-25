@@ -49,17 +49,17 @@ const EventContent = ({ event, isLast = false, onCardClick }: EventContentProps)
       <div className="relative z-10 w-0.5 flex-shrink-0 self-stretch bg-transparent transition-colors duration-300 group-hover:bg-primary" />
 
       {/* Date column */}
-      <div className="relative z-10 flex w-16 flex-shrink-0 flex-col justify-center py-5 pl-3 text-right sm:w-20 sm:pl-4">
-        <div className="text-foreground text-[2.5rem] font-black leading-none tracking-tighter sm:text-[3rem]">{dayNum}</div>
+      <div className="relative z-10 flex w-12 flex-shrink-0 flex-col justify-center py-5 pl-2 text-right sm:w-20 sm:pl-4">
+        <div className="text-foreground text-[1.9rem] font-black leading-none tracking-tighter sm:text-[3rem]">{dayNum}</div>
         <div className="text-muted-foreground mt-1 text-[9px] font-bold uppercase tracking-widest">{monthAbbr}</div>
         <div className="text-muted-foreground/50 text-[8px] uppercase tracking-wide">{dayOfWeek?.slice(0, 3)}</div>
       </div>
 
       {/* Hairline separator */}
-      <div className="relative z-10 mx-4 w-px flex-shrink-0 self-stretch bg-border/40 transition-colors duration-300 group-hover:bg-primary/30 sm:mx-6" />
+      <div className="relative z-10 mx-3 w-px flex-shrink-0 self-stretch bg-border/40 transition-colors duration-300 group-hover:bg-primary/30 sm:mx-5" />
 
       {/* Content */}
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center py-5 pr-4">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center py-5 pr-3 sm:pr-4">
         {/* Status · time */}
         <div className="mb-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
           <span className={`text-[10px] font-bold uppercase tracking-widest ${statusColor}`}>{statusLabel}</span>
