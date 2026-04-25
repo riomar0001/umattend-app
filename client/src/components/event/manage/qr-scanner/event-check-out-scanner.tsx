@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import jsQR from 'jsqr';
 import { Scan, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation } from '@tanstack/react-query';
@@ -26,7 +27,6 @@ export function EventCheckOutScanner({ eventId, isEventDone, isEventStarted }: E
   const scanningRef = useRef(false);
   const lastScannedRef = useRef<string>('');
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [jsQRLoaded, setJsQRLoaded] = useState(false);
 
   // Check-out mutation
   const checkOutMutation = useMutation({
@@ -53,24 +53,6 @@ export function EventCheckOutScanner({ eventId, isEventDone, isEventStarted }: E
       lastScannedRef.current = '';
     }
   });
-
-  // Load jsQR library
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
-    script.onload = () => {
-      setJsQRLoaded(true);
-    };
-    script.onerror = () => {
-      console.error('[Check-Out Scanner] Failed to load jsQR library');
-    };
-    document.head.appendChild(script);
-    return () => {
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
-    };
-  }, []);
 
   const handleQRCodeDetected = (detectedCode: string) => {
     if (detectedCode === lastScannedRef.current) {
@@ -119,16 +101,8 @@ export function EventCheckOutScanner({ eventId, isEventDone, isEventStarted }: E
   };
 
   const detectQRCode = (imageData: ImageData): string | null => {
-    if (typeof window.jsQR === 'undefined') {
-      return null;
-    }
-
-    const code = window.jsQR(imageData.data, imageData.width, imageData.height);
-    if (code) {
-      return code.data;
-    }
-
-    return null;
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    return code ? code.data : null;
   };
 
   const startCamera = async () => {
@@ -213,9 +187,9 @@ export function EventCheckOutScanner({ eventId, isEventDone, isEventStarted }: E
 
         {!isScanning ? (
           <div className="flex flex-col gap-3 sm:gap-4">
-            <Button onClick={startCamera} className="w-full gap-2 text-sm md:text-base" disabled={!jsQRLoaded}>
+            <Button onClick={startCamera} className="w-full gap-2 text-sm md:text-base">
               <Scan className="h-4 w-4" />
-              {jsQRLoaded ? 'Start Camera' : 'Loading QR Scanner...'}
+              Start Camera
             </Button>
           </div>
         ) : (
