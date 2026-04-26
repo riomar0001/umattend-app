@@ -5,7 +5,7 @@ import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
 import { Authentication, Event, type Options, User } from '../sdk.gen';
-import type { DeleteEventByEventIdData, DeleteEventByEventIdError, DeleteEventByEventIdResponse, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdError, DeleteEventRemoveOrganizerByEventIdResponse, GetAuthLoginHistoryData, GetEventAttendanceCountData, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesError, GetEventByEventIdAttendeesResponse, GetEventByEventIdData, GetEventByEventIdOrganizersData, GetEventData, GetEventExportByEventIdData, GetEventPastData, GetUserAttendedEventsData, GetUserData, GetUserEventsData, GetUserHostedEventsData, PatchEventByEventIdDraftData, PatchEventByEventIdDraftResponse, PatchEventByEventIdPostData, PatchEventByEventIdPostResponse, PostAuthExchangeData, PostAuthExchangeError, PostAuthExchangeResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthRefreshData, PostAuthRefreshError, PostAuthRefreshResponse, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdError, PostEventAddOrganizerByEventIdResponse, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdError, PostEventByEventIdCheckoutByStudentIdResponse, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeError, PostEventCheckInByEventIdByQrCodeResponse, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeError, PostEventCheckOutByEventIdByQrCodeResponse, PostEventData, PostEventError, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdResponse, PostEventResponse, PostUserOnboardingData, PostUserOnboardingError, PostUserOnboardingResponse, PutEventByEventIdData, PutEventByEventIdError, PutEventByEventIdResponse, PutUserData, PutUserError, PutUserResponse } from '../types.gen';
+import type { DeleteEventByEventIdData, DeleteEventByEventIdError, DeleteEventByEventIdResponse, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdError, DeleteEventRemoveOrganizerByEventIdResponse, GetAuthLoginHistoryData, GetEventAttendanceCountData, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesError, GetEventByEventIdAttendeesResponse, GetEventByEventIdData, GetEventByEventIdOrganizersData, GetEventData, GetEventExportByEventIdData, GetEventPastData, GetUserAttendedEventsData, GetUserData, GetUserEventsData, GetUserHostedEventsData, PatchEventByEventIdDraftData, PatchEventByEventIdDraftResponse, PatchEventByEventIdPostData, PatchEventByEventIdPostResponse, PostAuthExchangeData, PostAuthExchangeError, PostAuthExchangeResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthRefreshData, PostAuthRefreshError, PostAuthRefreshResponse, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdError, PostEventAddOrganizerByEventIdResponse, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdError, PostEventByEventIdCheckinByStudentIdResponse, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdError, PostEventByEventIdCheckoutByStudentIdResponse, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeError, PostEventCheckInByEventIdByQrCodeResponse, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeError, PostEventCheckOutByEventIdByQrCodeResponse, PostEventData, PostEventError, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdResponse, PostEventResponse, PostUserOnboardingData, PostUserOnboardingError, PostUserOnboardingResponse, PutEventByEventIdData, PutEventByEventIdError, PutEventByEventIdResponse, PutUserData, PutUserError, PutUserResponse } from '../types.gen';
 
 /**
  * Refresh access token
@@ -647,6 +647,25 @@ export const postEventMassCheckOutByEventIdMutation = (options?: Partial<Options
     const mutationOptions: UseMutationOptions<PostEventMassCheckOutByEventIdResponse, AxiosError<DefaultError>, Options<PostEventMassCheckOutByEventIdData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await Event.postEventMassCheckOutByEventId({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Check in student by student ID
+ *
+ * Manually check in a specific student to an event by their numeric student ID (Admin/CSG/Organizer only). No QR code is required — intended for use from the Attendance Records management table.
+ */
+export const postEventByEventIdCheckinByStudentIdMutation = (options?: Partial<Options<PostEventByEventIdCheckinByStudentIdData>>): UseMutationOptions<PostEventByEventIdCheckinByStudentIdResponse, AxiosError<PostEventByEventIdCheckinByStudentIdError>, Options<PostEventByEventIdCheckinByStudentIdData>> => {
+    const mutationOptions: UseMutationOptions<PostEventByEventIdCheckinByStudentIdResponse, AxiosError<PostEventByEventIdCheckinByStudentIdError>, Options<PostEventByEventIdCheckinByStudentIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await Event.postEventByEventIdCheckinByStudentId({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

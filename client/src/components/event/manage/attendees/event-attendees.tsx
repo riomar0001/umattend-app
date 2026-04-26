@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import type { AttendanceRecord } from '@/types/events';
 import { createColumns } from './data-table/attendance-columns';
 import { AttendanceDataTable } from './data-table/attendance-data-table';
+import { CheckInStudentDialog } from './check-in-student-dialog';
 import EvenAttendeesSkeleton from './event-attendees-skeleton';
 import EventAttendeesStats from './event-attendees-stats';
 import EventAttendeesStatsSkeleton from './event-attendees-stats-skeleton';
@@ -23,6 +24,8 @@ export default function EventAttendees({ eventId, checkOutRequired }: EventAtten
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null);
+  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
   const limit = 10;
 
   const {
@@ -136,6 +139,40 @@ export default function EventAttendees({ eventId, checkOutRequired }: EventAtten
     }
   };
 
+  /**
+   * Manually check in a single student by ID.
+   */
+  const handleCheckIn = async (studentId: string) => {
+    if (isCheckingIn) return;
+
+    setIsCheckingIn(true);
+    const toastId = toast.loading('Checking in student…');
+
+    try {
+      await Event.postEventByEventIdCheckinByStudentId({
+        path: {
+          event_id: eventId,
+          student_id: parseInt(studentId, 10)
+        },
+        throwOnError: true
+      });
+
+      toast.dismiss(toastId);
+      toast.success('Student checked in successfully');
+      handleRefresh();
+      setIsCheckInDialogOpen(false);
+    } catch (err: unknown) {
+      toast.dismiss(toastId);
+
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      const msg = axiosErr?.response?.data?.message ?? 'Failed to check in student';
+      toast.error(msg);
+      console.error('Check-in error:', err);
+    } finally {
+      setIsCheckingIn(false);
+    }
+  };
+
   const attendanceRecords: AttendanceRecord[] =
     attendeesData?.data?.data
       ?.map((item) => {
@@ -185,6 +222,11 @@ export default function EventAttendees({ eventId, checkOutRequired }: EventAtten
           <p className="text-muted-foreground mt-1 text-xs sm:text-sm md:mt-2 md:text-base lg:text-lg">Manage student check-in and check-out records</p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => setIsCheckInDialogOpen(true)} variant="outline" className="flex-1 gap-2 bg-transparent text-sm font-semibold shadow-sm sm:flex-none">
+            <UserPlus className="size-4" />
+            <span className="xs:inline hidden">Check in Student</span>
+            <span className="xs:hidden">Check in</span>
+          </Button>
           <Button onClick={handleRefresh} variant="outline" className="flex-1 gap-2 bg-transparent text-sm font-semibold shadow-sm sm:flex-none">
             Refresh
           </Button>
@@ -215,6 +257,13 @@ export default function EventAttendees({ eventId, checkOutRequired }: EventAtten
         error={error}
         onCheckOut={handleCheckOut}
         loadingStudentId={loadingStudentId}
+      />
+
+      <CheckInStudentDialog
+        open={isCheckInDialogOpen}
+        onOpenChange={setIsCheckInDialogOpen}
+        onConfirm={handleCheckIn}
+        isLoading={isCheckingIn}
       />
     </div>
   );

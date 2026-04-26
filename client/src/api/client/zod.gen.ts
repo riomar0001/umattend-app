@@ -773,6 +773,31 @@ export const zPostEventMassCheckOutByEventIdResponse = z.object({
     }))
 });
 
+export const zPostEventByEventIdCheckinByStudentIdData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        event_id: z.string(),
+        student_id: z.int()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Student checked in successfully
+ */
+export const zPostEventByEventIdCheckinByStudentIdResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        event_id: z.optional(z.string()),
+        event_name: z.optional(z.string()),
+        student_id: z.optional(z.int()),
+        student_name: z.optional(z.string()),
+        check_in_at: z.optional(z.iso.datetime()),
+        check_in_by: z.optional(z.string())
+    }))
+});
+
 export const zPostEventByEventIdCheckoutByStudentIdData = z.object({
     body: z.optional(z.never()),
     path: z.object({

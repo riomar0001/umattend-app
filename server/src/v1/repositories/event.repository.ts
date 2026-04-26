@@ -634,6 +634,68 @@ const checkIfUserAttended = async (event_id: string, student_id: number) => {
 };
 
 /**
+ * Directly check in a student to an event using their numeric student_id.
+ * This is used by organizers to manually check in a student from the
+ * Attendance Records table — no QR code decoding required.
+ */
+const checkInStudentById = async (
+  event_id: string,
+  student_id: number,
+  check_in_by: string,
+  check_in_at?: Date
+) => {
+  return await prisma.$transaction(async (tx) => {
+    const event = await tx.events.findUnique({
+      where: { id: event_id },
+    });
+
+    if (!event) {
+      throw new NotFoundError('Event not found');
+    }
+
+    const student = await tx.student.findUnique({
+      where: { student_id },
+    });
+
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    const existingCheckIn = await tx.attendance.findFirst({
+      where: { event_id, student_id },
+    });
+
+    if (existingCheckIn) {
+      throw new ConflictError('Student has already checked in to this event');
+    }
+
+    if (event.capacity !== null && event.capacity !== undefined) {
+      const currentCount = await tx.attendance.count({
+        where: { event_id },
+      });
+      if (currentCount >= event.capacity) {
+        throw new Error('Event has reached its maximum capacity');
+      }
+    }
+
+    return await tx.attendance.create({
+      data: {
+        event_id,
+        student_id,
+        check_in_at: check_in_at ?? new Date(),
+        check_in_by,
+      },
+      include: {
+        event: true,
+        student: true,
+        check_in_by_user: true,
+        check_out_by_user: true,
+      },
+    });
+  });
+};
+
+/**
  * Directly check out a student from an event using their numeric student_id.
  * This is used by organizers to manually check out a student from the
  * Attendance Records table — no QR code decoding required.
@@ -696,6 +758,7 @@ const eventRepository = {
   getEventDetails,
   createCheckInEvent,
   createCheckOutEvent,
+  checkInStudentById,
   checkOutStudentById,
   addOrganizer,
   removeOrganizer,

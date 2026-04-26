@@ -1925,6 +1925,74 @@ export type PostEventMassCheckOutByEventIdResponses = {
 
 export type PostEventMassCheckOutByEventIdResponse = PostEventMassCheckOutByEventIdResponses[keyof PostEventMassCheckOutByEventIdResponses];
 
+export type PostEventByEventIdCheckinByStudentIdData = {
+    body?: never;
+    path: {
+        /**
+         * The unique ID of the event.
+         */
+        event_id: string;
+        /**
+         * The numeric student ID to check in.
+         */
+        student_id: number;
+    };
+    query?: never;
+    url: '/event/{event_id}/checkin/{student_id}';
+};
+
+export type PostEventByEventIdCheckinByStudentIdErrors = {
+    /**
+     * Bad request — capacity reached or already checked in
+     */
+    400: {
+        success?: boolean;
+        message?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin/CSG/Organizer only, or onboarding not complete
+     */
+    403: unknown;
+    /**
+     * Event or student not found
+     */
+    404: unknown;
+    /**
+     * Conflict - already checked in
+     */
+    409: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type PostEventByEventIdCheckinByStudentIdError = PostEventByEventIdCheckinByStudentIdErrors[keyof PostEventByEventIdCheckinByStudentIdErrors];
+
+export type PostEventByEventIdCheckinByStudentIdResponses = {
+    /**
+     * Student checked in successfully
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            event_id?: string;
+            event_name?: string;
+            student_id?: number;
+            student_name?: string;
+            check_in_at?: string;
+            check_in_by?: string;
+        };
+    };
+};
+
+export type PostEventByEventIdCheckinByStudentIdResponse = PostEventByEventIdCheckinByStudentIdResponses[keyof PostEventByEventIdCheckinByStudentIdResponses];
+
 export type PostEventByEventIdCheckoutByStudentIdData = {
     body?: never;
     path: {

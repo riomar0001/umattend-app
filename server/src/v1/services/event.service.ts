@@ -131,9 +131,7 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
       checkedIn.check_in_by_user.id
     );
 
-    if (!checkInBy) {
-      throw new NotFoundError('Check-in record not found');
-    }
+    const checkInByName = checkInBy ? checkInBy.name : 'Organizer/Admin';
 
     await sendEmail(
       studentbyUserId?.umindanao_email,
@@ -145,7 +143,7 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
           '{{event_date_and_time}}',
           checkedIn.check_in_at.toLocaleString()
         )
-        .replace('{{checked_in_by}}', checkInBy.name)
+        .replace('{{checked_in_by}}', checkInByName)
     );
 
     return checkedIn;
@@ -749,6 +747,72 @@ const getTotalAttendanceByEventId = async (
 };
 
 /**
+ * Manually check in a student to an event by their numeric student_id.
+ * Used by organizers via the Attendance Records table action.
+ */
+const checkInStudentById = async (
+  event_id: string,
+  student_id: number,
+  check_in_by: string
+) => {
+  try {
+    if (!event_id) {
+      throw new NotFoundError('Event ID is required');
+    }
+
+    const eventDetails = await eventRepository.getEventDetails(event_id);
+    if (!eventDetails) {
+      throw new NotFoundError('Event not found');
+    }
+
+    const checkedIn = await eventRepository.checkInStudentById(
+      event_id,
+      student_id,
+      check_in_by
+    );
+
+    if (!checkedIn) {
+      throw new Error('Failed to create check-in record');
+    }
+
+    const studentbyUserId = await studentRepository.getUserByStudentId(
+      student_id
+    );
+
+    if (!studentbyUserId) {
+      throw new NotFoundError('Student user not found');
+    }
+
+    const checkInByUser = await studentRepository.getStudentByUserId(
+      checkedIn.check_in_by_user.id
+    );
+
+    const checkInByName = checkInByUser ? checkInByUser.name : 'Organizer/Admin';
+
+    await sendEmail(
+      studentbyUserId?.umindanao_email,
+      'Event Check-In Successful',
+      CHECK_IN_EMAIL.replace('{{name}}', checkedIn.student.name)
+        .replace('{{event_name}}', checkedIn.event.title)
+        .replace('{{event_location}}', checkedIn.event.location)
+        .replace(
+          '{{event_date_and_time}}',
+          checkedIn.check_in_at.toLocaleString()
+        )
+        .replace('{{checked_in_by}}', checkInByName)
+    );
+
+    return checkedIn;
+  } catch (error: unknown) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    console.error(error);
+    throw error;
+  }
+};
+
+/**
  * Manually check out a student from an event by their numeric student_id.
  * Used by organizers via the Attendance Records table action.
  */
@@ -848,6 +912,7 @@ const eventServices = {
   getAllEvents,
   createCheckInEvent,
   createCheckOutEvent,
+  checkInStudentById,
   checkOutStudentById,
   massCheckOutStudents,
   addOrganizer,

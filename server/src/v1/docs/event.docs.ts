@@ -2427,6 +2427,85 @@ const massCheckOut = {
   },
 };
 
+const checkInStudentById = {
+  '/event/{event_id}/checkin/{student_id}': {
+    post: {
+      tags: ['Event'],
+      summary: 'Check in student by student ID',
+      description:
+        'Manually check in a specific student to an event by their numeric student ID (Admin/CSG/Organizer only). No QR code is required — intended for use from the Attendance Records management table.',
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          in: 'path',
+          name: 'event_id',
+          required: true,
+          schema: { type: 'string' },
+          description: 'The unique ID of the event.',
+        },
+        {
+          in: 'path',
+          name: 'student_id',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'The numeric student ID to check in.',
+          example: 20230001,
+        },
+      ],
+      responses: {
+        200: {
+          description: 'Student checked in successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  message: { type: 'string', example: 'Check-in successful' },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      event_id: { type: 'string' },
+                      event_name: { type: 'string' },
+                      student_id: { type: 'integer', example: 20230001 },
+                      student_name: { type: 'string' },
+                      check_in_at: {
+                        type: 'string',
+                        format: 'date-time',
+                        example: '2025-10-15T08:30:00.000Z',
+                      },
+                      check_in_by: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: {
+          description: 'Bad request — capacity reached or already checked in',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  message: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden — Admin/CSG/Organizer only, or onboarding not complete' },
+        404: { description: 'Event or student not found' },
+        409: { description: 'Conflict - already checked in' },
+        500: { description: 'Internal server error' },
+      },
+    },
+  },
+};
+
 const checkoutStudentById = {
   '/event/{event_id}/checkout/{student_id}': {
     post: {
@@ -2536,5 +2615,6 @@ export const event = {
   ...getEventAttendanceCount,
   ...postAndDraftEvent,
   ...massCheckOut,
+  ...checkInStudentById,
   ...checkoutStudentById,
 };
