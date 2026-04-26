@@ -151,6 +151,14 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
     };
   }, []);
 
+  // Stop camera and scanning on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Show message if event hasn't started or is done
   if (!isEventStarted) {
     return (
