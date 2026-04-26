@@ -172,10 +172,7 @@ export const checkInRateLimiter = async (
 
   if (userId) {
     checks.push(
-      checkSlidingWindow(
-        `rateLimit:checkin:user:${userId}`,
-        CHECKIN_USER_LIMIT
-      )
+      checkSlidingWindow(`rateLimit:checkin:user:${userId}`, CHECKIN_USER_LIMIT)
     );
   }
 

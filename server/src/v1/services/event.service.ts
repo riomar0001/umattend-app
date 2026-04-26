@@ -128,9 +128,11 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
       throw new NotFoundError('Student user not found');
     }
 
-    const checkInBy = checkedIn.check_in_by_user?.id ? await studentRepository.getStudentByUserId(
-      checkedIn.check_in_by_user.id
-    ) : null;
+    const checkInBy = checkedIn.check_in_by_user?.id
+      ? await studentRepository.getStudentByUserId(
+          checkedIn.check_in_by_user.id
+        )
+      : null;
 
     const checkInByName = checkInBy ? checkInBy.name : 'Organizer/Admin';
 
@@ -148,7 +150,11 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
           .replace('{{checked_in_by}}', checkInByName)
       );
     } catch (err) {
-      console.warn('Failed to send check-in email for student', attendance_data.student_id, err);
+      console.warn(
+        'Failed to send check-in email for student',
+        attendance_data.student_id,
+        err
+      );
     }
 
     return checkedIn;
@@ -237,7 +243,11 @@ const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
           .replace('{{checked_out_by}}', checkOutByName)
       );
     } catch (err) {
-      console.warn('Failed to send check-out email for student', attendance_data.student_id, err);
+      console.warn(
+        'Failed to send check-out email for student',
+        attendance_data.student_id,
+        err
+      );
     }
 
     return checkedOut;
@@ -823,7 +833,11 @@ const checkInStudentById = async (
           .replace('{{checked_in_by}}', checkInByName)
       );
     } catch (err) {
-      console.warn('Failed to send check-in email for student', student_id, err);
+      console.warn(
+        'Failed to send check-in email for student',
+        student_id,
+        err
+      );
     }
 
     return checkedIn;
@@ -905,7 +919,11 @@ const checkOutStudentById = async (
           .replace('{{checked_out_by}}', checkOutByName)
       );
     } catch (err) {
-      console.warn('Failed to send check-out email for student', student_id, err);
+      console.warn(
+        'Failed to send check-out email for student',
+        student_id,
+        err
+      );
     }
 
     return checkedOut;

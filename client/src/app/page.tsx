@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import ClickSpark from '@/components/ClickSpark';
@@ -16,17 +16,27 @@ export default function LoginContent() {
   const setAuth = useAuthStore((state) => state.setAuth);
   const updateUser = useAuthStore((state) => state.updateUser);
 
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isDoneOnboarding = useAuthStore((state) => state.isDoneOnboarding);
+
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Wait for zustand persist to rehydrate from localStorage before checking auth
+  useEffect(() => {
+    setHasHydrated(useAuthStore.persist.hasHydrated());
+    const unsub = useAuthStore.persist.onFinishHydration(() => setHasHydrated(true));
+    return unsub;
+  }, []);
+
   const handleGoogleLogin = async () => {
     router.push('/api/v1/auth/google');
   };
 
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isDoneOnboarding = useAuthStore((state) => state.isDoneOnboarding);
-
   // Fetch user data after authentication
   const { data: userData } = useQuery({
     ...getUserOptions(),
-    enabled: isAuthenticated(),
+    enabled: hasHydrated && isAuthenticated(),
     staleTime: Infinity,
     retry: false // Don't refetch unless manually invalidated
   });
@@ -53,6 +63,8 @@ export default function LoginContent() {
   }, [userData, updateUser]);
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     const auth_code = searchParams.get('auth_code');
     const error_code = searchParams.get('error_code');
 
@@ -74,21 +86,36 @@ export default function LoginContent() {
 
     handleAuthCode();
     handleErrorCode();
-  }, [exchangeCode, setAuth, searchParams, router, isDoneOnboarding]);
+  }, [hasHydrated, exchangeCode, setAuth, searchParams, router, isDoneOnboarding]);
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push('/');
-    }
+    if (!hasHydrated) return;
+
+    // If we're mid-exchange, let the auth_code effect handle redirect
+    const auth_code = searchParams.get('auth_code');
+    if (auth_code) return;
 
     if (isAuthenticated() && !isDoneOnboarding()) {
-      router.push('/onboarding');
+      router.replace('/onboarding');
+      return;
     }
 
     if (isAuthenticated() && isDoneOnboarding()) {
-      router.push('/events');
+      router.replace('/events');
+      return;
     }
-  }, [isAuthenticated, isDoneOnboarding, router]);
+
+    // Confirmed unauthenticated — safe to render the login form
+    setIsInitializing(false);
+  }, [hasHydrated, isAuthenticated, isDoneOnboarding, router, searchParams]);
+
+  if (!hasHydrated || isInitializing) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"></div>
+      </div>
+    );
+  }
 
   return (
     <ClickSpark sparkColor="#000" sparkSize={10} sparkRadius={15} sparkCount={8} duration={400}>

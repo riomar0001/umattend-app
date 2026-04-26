@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { MapPin, Clock, Users, Edit, ChevronLeft, Shield, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { MapPin, Clock, Users, Edit, ChevronLeft, Shield, Trash2, Eye, EyeOff, Loader2, MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import type { Event } from '@/types/events';
 import { deleteEventByEventIdMutation, patchEventByEventIdPostMutation, patchEventByEventIdDraftMutation } from '@/api/client/@tanstack/react-query.gen';
@@ -87,49 +88,76 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {/* Draft / Post toggle — primary action */}
+          <div className="flex items-center gap-2">
+            {/* Primary state action — same shape across draft/posted, color tells the state */}
             {event.is_draft ? (
               <Button
                 size="sm"
                 onClick={() => postEvent({ path: { event_id: event.id } })}
                 disabled={isPosting}
-                className="gap-1.5 bg-emerald-600 font-semibold text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                className="h-8 gap-1.5 bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-emerald-900 dark:bg-emerald-600 dark:hover:bg-emerald-500"
               >
                 {isPosting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
-                Post Event
+                <span className="hidden sm:inline">Post event</span>
+                <span className="sm:hidden">Post</span>
               </Button>
             ) : (
               <Button
                 size="sm"
-                variant="ghost"
+                variant="outline"
                 onClick={() => draftEvent({ path: { event_id: event.id } })}
                 disabled={isDrafting}
-                className="gap-1.5 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:hover:bg-amber-950/60"
+                className="h-8 gap-1.5 border-amber-300 bg-amber-50/60 px-3 text-xs font-medium text-amber-800 hover:bg-amber-100 hover:text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-200"
               >
                 {isDrafting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <EyeOff className="h-3.5 w-3.5" />}
-                Unpost
+                <span>Unpost</span>
               </Button>
             )}
 
-            {/* Edit — muted fill, no border */}
-            <Button size="sm" variant="ghost" onClick={() => setIsSheetOpen(true)} className="bg-muted hover:bg-muted/70 gap-1.5">
-              <Edit className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Edit</span>
-            </Button>
+            {/* Secondary toolbar — Edit + overflow grouped in a single segmented surface */}
+            <div className="border-border/60 bg-background/40 flex items-center rounded-md border shadow-sm">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsSheetOpen(true)}
+                className="hover:bg-muted/70 h-8 gap-1.5 rounded-l-[5px] rounded-r-none border-0 px-2.5 text-xs font-medium"
+              >
+                <Edit className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Edit</span>
+              </Button>
 
-            {/* Delete — ghost icon-only */}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setConfirmName('');
-                setDeleteDialogOpen(true);
-              }}
-              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+              <div className="bg-border/60 h-4 w-px" />
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted/70 h-8 w-8 rounded-l-none rounded-r-[5px] border-0 p-0"
+                    aria-label="More actions"
+                  >
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem onClick={() => setIsSheetOpen(true)} className="sm:hidden">
+                    <Edit className="mr-2 h-3.5 w-3.5" />
+                    Edit details
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="sm:hidden" />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setConfirmName('');
+                      setDeleteDialogOpen(true);
+                    }}
+                    className="text-destructive focus:bg-destructive/10 focus:text-destructive dark:text-red-400 dark:focus:bg-red-400/10 dark:focus:text-red-400"
+                  >
+                    <Trash2 className="text-destructive mr-2 h-3.5 w-3.5" />
+                    Delete event
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
 
