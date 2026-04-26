@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Menu, Plus } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -62,7 +62,7 @@ const Navbar = () => {
 
   return (
     <header className="border-border bg-background/40 sticky top-0 z-50 border-b backdrop-blur-md">
-      <div className="container flex h-14 min-w-svw items-center justify-between px-4 sm:px-6">
+      <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-4 sm:gap-8">
           <div className="hover:bg-muted rounded-md bg-transparent p-2 transition-colors lg:hidden" onClick={() => setIsMobileMenuOpen(true)}>
             <Menu size={18} />
@@ -78,13 +78,6 @@ const Navbar = () => {
 
         <div className="flex items-center gap-2 sm:gap-3">
           <nav className="hidden items-center gap-6 md:flex">
-            {user?.role && ['admin', 'organizer', 'csg'].includes(user.role) && (
-              <Link href="/events/new">
-                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground hidden cursor-pointer font-medium sm:flex">
-                  Create Event
-                </Button>
-              </Link>
-            )}
           </nav>
 
           <span className="text-muted-foreground hidden text-xs lg:inline">{formatTimeWithTimezone(now)}</span>
@@ -158,14 +151,6 @@ const Navbar = () => {
               <span className="text-muted-foreground text-sm">{formatTimeWithTimezone(now)}</span>
             </div>
 
-            {user?.role && ['admin', 'organizer', 'csg'].includes(user.role) && (
-              <Link href="/events/new" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground w-full font-medium">
-                  <Plus size={16} className="mr-2" />
-                  Create Event
-                </Button>
-              </Link>
-            )}
             <div className="border-border/40 border-b" />
           </nav>
         </SheetContent>
