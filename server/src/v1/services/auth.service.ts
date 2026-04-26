@@ -137,12 +137,14 @@ const refreshAccessToken = async (refresh_token: string) => {
 
   return generateAccessToken({
     user_id: user.id,
-    umindanao_email: user.id,
-    role: user.id,
+    umindanao_email: user.umindanao_email,
+    role: user.role,
+    done_onboarding: user.done_onboarding,
     student_id: user.student?.student_id as number,
     name: user.student?.name as string,
-    department: user.student?.department as string,
-    program: user.student?.program as string,
+    department: user.student?.department ?? '',
+    program: user.student?.program ?? '',
+    profile_picture: user.student?.profile_picture ?? '',
   });
 };
 

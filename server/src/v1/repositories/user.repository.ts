@@ -141,40 +141,43 @@ const getUserHostedEvents = async (user_id: string) => {
           },
         },
       },
+      _count: {
+        select: { attendance: true },
+      },
     },
     orderBy: {
       start_time: 'desc',
     },
   });
 
-  // Get attendee counts for each event
-  const eventsWithCounts = await Promise.all(
-    hostedEvents.map(async (event) => {
-      const checkin_count = await prisma.attendance.count({
-        where: { event_id: event.id },
-      });
-
-      const checkout_count = await prisma.attendance.count({
+  const eventIds = hostedEvents.map((e) => e.id);
+  const checkoutCounts = eventIds.length
+    ? await prisma.attendance.groupBy({
+        by: ['event_id'],
         where: {
-          event_id: event.id,
-          NOT: {
-            check_out_at: null,
-          },
+          event_id: { in: eventIds },
+          NOT: { check_out_at: null },
         },
-      });
+        _count: { _all: true },
+      })
+    : [];
 
-      return {
-        id: event.id,
-        title: event.title,
-        created_by: event.user.student?.name ?? 'Unknown',
-        start_time: event.start_time,
-        end_time: event.end_time,
-        attendees: event.check_out_required ? checkout_count : checkin_count,
-      };
-    })
+  const checkoutMap = new Map(
+    checkoutCounts.map((c) => [c.event_id, c._count._all])
   );
 
-  return eventsWithCounts;
+  return hostedEvents.map((event) => {
+    const checkin_count = event._count.attendance;
+    const checkout_count = checkoutMap.get(event.id) ?? 0;
+    return {
+      id: event.id,
+      title: event.title,
+      created_by: event.user.student?.name ?? 'Unknown',
+      start_time: event.start_time,
+      end_time: event.end_time,
+      attendees: event.check_out_required ? checkout_count : checkin_count,
+    };
+  });
 };
 
 const updateUserProfile = async (

@@ -11,6 +11,29 @@ import {
   AddCheckOutInterface,
 } from '../interface/event';
 import { Prisma } from '@prisma/client';
+import { setTimeout as sleep } from 'timers/promises';
+
+// Retry on Postgres serialization failures (P2034) — Serializable isolation
+// can roll back one of two concurrent transactions; the loser should retry.
+const SERIALIZATION_RETRY_LIMIT = 3;
+async function withSerializationRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < SERIALIZATION_RETRY_LIMIT; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      const isSerializationError =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2034';
+      if (!isSerializationError) {
+        throw error;
+      }
+      await sleep(25 + Math.random() * 50);
+    }
+  }
+  throw lastError;
+}
 
 const createEvent = async (event_data: AddEventInterface) => {
   return await prisma.$transaction(async (tx) => {
@@ -110,28 +133,40 @@ const getAllEvents = async (includeDrafts = false) => {
       is_done: false,
       ...(includeDrafts ? {} : { is_draft: false }),
     },
+    include: {
+      _count: {
+        select: {
+          attendance: true,
+        },
+      },
+    },
   });
 
-  return await Promise.all(
-    events.map(async (event) => {
-      const checkin_count = await prisma.attendance.count({
-        where: { event_id: event.id },
-      });
-      const checkout_count = await prisma.attendance.count({
+  // Single grouped query for checkout counts instead of one per event.
+  const eventIds = events.map((e) => e.id);
+  const checkoutCounts = eventIds.length
+    ? await prisma.attendance.groupBy({
+        by: ['event_id'],
         where: {
-          event_id: event.id,
-          NOT: {
-            check_out_at: null,
-          },
+          event_id: { in: eventIds },
+          NOT: { check_out_at: null },
         },
-      });
-      return {
-        ...event,
-        checkin_count,
-        checkout_count,
-      };
-    })
+        _count: { _all: true },
+      })
+    : [];
+
+  const checkoutMap = new Map(
+    checkoutCounts.map((c) => [c.event_id, c._count._all])
   );
+
+  return events.map((event) => {
+    const { _count, ...rest } = event;
+    return {
+      ...rest,
+      checkin_count: _count.attendance,
+      checkout_count: checkoutMap.get(event.id) ?? 0,
+    };
+  });
 };
 
 const getAllPastEvents = async (includeDrafts = false) => {
@@ -141,99 +176,117 @@ const getAllPastEvents = async (includeDrafts = false) => {
       is_done: true,
       ...(includeDrafts ? {} : { is_draft: false }),
     },
+    include: {
+      _count: {
+        select: {
+          attendance: true,
+        },
+      },
+    },
   });
 
-  return await Promise.all(
-    events.map(async (event) => {
-      const checkin_count = await prisma.attendance.count({
-        where: { event_id: event.id },
-      });
-      const checkout_count = await prisma.attendance.count({
+  const eventIds = events.map((e) => e.id);
+  const checkoutCounts = eventIds.length
+    ? await prisma.attendance.groupBy({
+        by: ['event_id'],
         where: {
-          event_id: event.id,
-          NOT: {
-            check_out_at: null,
-          },
+          event_id: { in: eventIds },
+          NOT: { check_out_at: null },
         },
-      });
-      return {
-        ...event,
-        checkin_count,
-        checkout_count,
-      };
-    })
+        _count: { _all: true },
+      })
+    : [];
+
+  const checkoutMap = new Map(
+    checkoutCounts.map((c) => [c.event_id, c._count._all])
   );
+
+  return events.map((event) => {
+    const { _count, ...rest } = event;
+    return {
+      ...rest,
+      checkin_count: _count.attendance,
+      checkout_count: checkoutMap.get(event.id) ?? 0,
+    };
+  });
 };
 
 const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
   const { event_id, student_id, check_in_at, check_in_by } = attendance_data;
-  return await prisma.$transaction(async (tx) => {
-    const event = await tx.events.findUnique({
-      where: { id: event_id },
-    });
+  return await withSerializationRetry(() =>
+    prisma.$transaction(
+      async (tx) => {
+        const event = await tx.events.findUnique({
+          where: { id: event_id },
+        });
 
-    if (!event) {
-      throw new NotFoundError('Event not found');
-    }
+        if (!event) {
+          throw new NotFoundError('Event not found');
+        }
 
-    if (event.is_done) {
-      throw new Error('Event has already ended');
-    }
+        if (event.is_done) {
+          throw new Error('Event has already ended');
+        }
 
-    // Capacity check is inside the transaction to prevent overbooking under
-    // concurrent check-ins — two simultaneous scans would otherwise both read
-    // count < capacity and both insert.
-    if (event.capacity !== null && event.capacity !== undefined) {
-      const currentCount = await tx.attendance.count({
-        where: { event_id },
-      });
-      if (currentCount >= event.capacity) {
-        throw new Error('Event has reached its maximum capacity');
-      }
-    }
+        // Capacity check is inside a Serializable transaction to prevent
+        // overbooking — under READ COMMITTED two concurrent scans could both
+        // read count < capacity and both insert.
+        if (event.capacity !== null && event.capacity !== undefined) {
+          const currentCount = await tx.attendance.count({
+            where: { event_id },
+          });
+          if (currentCount >= event.capacity) {
+            throw new Error('Event has reached its maximum capacity');
+          }
+        }
 
-    const student = await tx.student.findUnique({
-      where: { student_id },
-    });
+        const student = await tx.student.findUnique({
+          where: { student_id },
+        });
 
-    if (!student) {
-      throw new NotFoundError('Student not found');
-    }
+        if (!student) {
+          throw new NotFoundError('Student not found');
+        }
 
-    if (
-      event.department !== 'Open to all Departments' &&
-      student.department !== event.department
-    ) {
-      throw new ForbiddenError(
-        'This event is only open to students from the organizing department'
-      );
-    }
+        if (
+          event.department !== 'Open to all Departments' &&
+          student.department !== event.department
+        ) {
+          throw new ForbiddenError(
+            'This event is only open to students from the organizing department'
+          );
+        }
 
-    const existingCheckIn = await tx.attendance.findFirst({
-      where: {
-        event_id,
-        student_id,
+        const existingCheckIn = await tx.attendance.findFirst({
+          where: {
+            event_id,
+            student_id,
+          },
+        });
+
+        if (existingCheckIn) {
+          throw new ConflictError(
+            'Student is already checked in to this event'
+          );
+        }
+
+        return await tx.attendance.create({
+          data: {
+            event_id,
+            student_id,
+            check_in_by,
+            check_in_at: check_in_at ?? new Date().toISOString(),
+          },
+          include: {
+            event: true,
+            student: true,
+            check_in_by_user: true,
+          },
+        });
       },
-    });
-
-    if (existingCheckIn) {
-      throw new ConflictError('Student is already checked in to this event');
-    }
-
-    return await tx.attendance.create({
-      data: {
-        event_id,
-        student_id,
-        check_in_by,
-        check_in_at: check_in_at ?? new Date().toISOString(),
-      },
-      include: {
-        event: true,
-        student: true,
-        check_in_by_user: true,
-      },
-    });
-  });
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    )
+  );
 };
 
 const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
@@ -476,119 +529,120 @@ const getPaginatedAttendeesByEventId = async (
 
 /**
  * Mass check-out students for an event.
- * Returns updated records and lists of student_ids that were already checked out or not checked in.
+ *
+ * Validation reads run outside the transaction (cheap, no locks held).
+ * Updates run in batches, each in its own short transaction, so a large
+ * event with thousands of attendees can't blow past the 30s tx timeout.
  */
+const MASS_CHECKOUT_BATCH_SIZE = 200;
+
 const massCheckOutStudents = async (
   event_id: string,
   student_ids: number[],
   check_out_by: string,
   check_out_at?: Date
 ) => {
-  return await prisma.$transaction(async (tx) => {
-    const event = await tx.events.findUnique({
-      where: { id: event_id },
+  const event = await prisma.events.findUnique({ where: { id: event_id } });
+  if (!event) {
+    throw new NotFoundError('Event not found');
+  }
+
+  const departmentMismatch: number[] = [];
+
+  if (event.department !== 'Open to all Departments') {
+    const students = await prisma.student.findMany({
+      where: { student_id: { in: student_ids } },
+      select: { student_id: true, department: true },
     });
 
-    if (!event) {
-      throw new NotFoundError('Event not found');
-    }
-
-    const departmentMismatch: number[] = [];
-
-    if (event.department !== 'Open to all Departments') {
-      const students = await tx.student.findMany({
-        where: { student_id: { in: student_ids } },
-        select: { student_id: true, department: true },
-      });
-
-      const studentDeptMap = new Map(
-        students.map((s) => [s.student_id, s.department])
-      );
-
-      for (const sid of student_ids) {
-        const dept = studentDeptMap.get(sid);
-        if (dept !== undefined && dept !== event.department) {
-          departmentMismatch.push(sid);
-        }
-      }
-
-      if (departmentMismatch.length > 0) {
-        console.log(
-          `massCheckOut: students [${departmentMismatch.join(', ')}] department mismatch for event ${event_id}, skipping`
-        );
-      }
-    }
-
-    // fetch existing attendance rows for the given student ids
-    const existing = await tx.attendance.findMany({
-      where: {
-        event_id,
-        student_id: { in: student_ids },
-      },
-    });
-
-    const existingMap = new Map<number, (typeof existing)[number]>();
-    existing.forEach((e) => existingMap.set(e.student_id, e));
-
-    const notCheckedIn: number[] = [];
-    const alreadyCheckedOut: number[] = [];
-    const toUpdateIds: string[] = [];
+    const studentDeptMap = new Map(
+      students.map((s) => [s.student_id, s.department])
+    );
 
     for (const sid of student_ids) {
-      if (departmentMismatch.includes(sid)) {
-        continue;
+      const dept = studentDeptMap.get(sid);
+      if (dept !== undefined && dept !== event.department) {
+        departmentMismatch.push(sid);
       }
-
-      const rec = existingMap.get(sid);
-      if (!rec) {
-        // Student has no attendance record for this event — skip and log
-        notCheckedIn.push(sid);
-        console.log(
-          `massCheckOut: student ${sid} not checked in for event ${event_id}, skipping`
-        );
-        continue;
-      }
-      if (rec.check_out_at) {
-        // Student already checked out — treat as pass, log and continue
-        alreadyCheckedOut.push(sid);
-        console.log(
-          `massCheckOut: student ${sid} already checked out for event ${event_id}, skipping`
-        );
-        continue;
-      }
-      toUpdateIds.push(rec.id);
     }
+  }
 
-    if (toUpdateIds.length > 0) {
-      await tx.attendance.updateMany({
-        where: { id: { in: toUpdateIds } },
-        data: {
-          check_out_at: check_out_at ?? new Date(),
-          check_out_by,
-        },
-      });
-    }
-
-    const updatedRecords = await tx.attendance.findMany({
-      where: {
-        id: { in: toUpdateIds },
-      },
-      include: {
-        event: true,
-        student: true,
-        check_in_by_user: true,
-        check_out_by_user: true,
-      },
-    });
-
-    return {
-      updatedRecords,
-      alreadyCheckedOut,
-      notCheckedIn,
-      departmentMismatch,
-      updatedCount: updatedRecords.length,
-    };
+  const existing = await prisma.attendance.findMany({
+    where: {
+      event_id,
+      student_id: { in: student_ids },
+    },
+    select: {
+      id: true,
+      student_id: true,
+      check_out_at: true,
+    },
   });
+
+  const existingMap = new Map<number, (typeof existing)[number]>();
+  existing.forEach((e) => existingMap.set(e.student_id, e));
+
+  const notCheckedIn: number[] = [];
+  const alreadyCheckedOut: number[] = [];
+  const toUpdateIds: string[] = [];
+  const departmentMismatchSet = new Set(departmentMismatch);
+
+  for (const sid of student_ids) {
+    if (departmentMismatchSet.has(sid)) {
+      continue;
+    }
+
+    const rec = existingMap.get(sid);
+    if (!rec) {
+      notCheckedIn.push(sid);
+      continue;
+    }
+    if (rec.check_out_at) {
+      alreadyCheckedOut.push(sid);
+      continue;
+    }
+    toUpdateIds.push(rec.id);
+  }
+
+  const checkoutTimestamp = check_out_at ?? new Date();
+
+  // Process updates in batches, each in its own transaction. Avoids holding
+  // locks for the whole operation and stays well within the tx timeout.
+  for (let i = 0; i < toUpdateIds.length; i += MASS_CHECKOUT_BATCH_SIZE) {
+    const batch = toUpdateIds.slice(i, i + MASS_CHECKOUT_BATCH_SIZE);
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.attendance.updateMany({
+          where: { id: { in: batch } },
+          data: {
+            check_out_at: checkoutTimestamp,
+            check_out_by,
+          },
+        });
+      },
+      { timeout: 60_000 }
+    );
+  }
+
+  const updatedRecords = toUpdateIds.length
+    ? await prisma.attendance.findMany({
+        where: { id: { in: toUpdateIds } },
+        include: {
+          event: true,
+          student: true,
+          check_in_by_user: true,
+          check_out_by_user: true,
+        },
+      })
+    : [];
+
+  return {
+    updatedRecords,
+    alreadyCheckedOut,
+    notCheckedIn,
+    departmentMismatch,
+    updatedCount: updatedRecords.length,
+  };
 };
 
 const getAttendeesByEventId = async (event_id: string) => {
@@ -627,18 +681,17 @@ const getEventAttendanceCount = async (event_id: string) => {
     throw new NotFoundError('Event not found');
   }
 
-  const totalAttendance = await prisma.attendance.count({
-    where: { event_id },
-  });
-
-  const totalCheckedOut = await prisma.attendance.count({
-    where: {
-      event_id,
-      NOT: {
-        check_out_at: null,
+  // Both counts run in a single transaction so they're a consistent snapshot
+  // — without this, a check-out between the two calls makes the numbers lie.
+  const [totalAttendance, totalCheckedOut] = await prisma.$transaction([
+    prisma.attendance.count({ where: { event_id } }),
+    prisma.attendance.count({
+      where: {
+        event_id,
+        NOT: { check_out_at: null },
       },
-    },
-  });
+    }),
+  ]);
 
   return { totalAttendance, totalCheckedOut };
 };
@@ -701,64 +754,71 @@ const checkInStudentById = async (
   check_in_by: string,
   check_in_at?: Date
 ) => {
-  return await prisma.$transaction(async (tx) => {
-    const event = await tx.events.findUnique({
-      where: { id: event_id },
-    });
+  return await withSerializationRetry(() =>
+    prisma.$transaction(
+      async (tx) => {
+        const event = await tx.events.findUnique({
+          where: { id: event_id },
+        });
 
-    if (!event) {
-      throw new NotFoundError('Event not found');
-    }
+        if (!event) {
+          throw new NotFoundError('Event not found');
+        }
 
-    const student = await tx.student.findUnique({
-      where: { student_id },
-    });
+        const student = await tx.student.findUnique({
+          where: { student_id },
+        });
 
-    if (!student) {
-      throw new NotFoundError('Student not found');
-    }
+        if (!student) {
+          throw new NotFoundError('Student not found');
+        }
 
-    if (
-      event.department !== 'Open to all Departments' &&
-      student.department !== event.department
-    ) {
-      throw new ForbiddenError(
-        'This event is only open to students from the organizing department'
-      );
-    }
+        if (
+          event.department !== 'Open to all Departments' &&
+          student.department !== event.department
+        ) {
+          throw new ForbiddenError(
+            'This event is only open to students from the organizing department'
+          );
+        }
 
-    const existingCheckIn = await tx.attendance.findFirst({
-      where: { event_id, student_id },
-    });
+        const existingCheckIn = await tx.attendance.findFirst({
+          where: { event_id, student_id },
+        });
 
-    if (existingCheckIn) {
-      throw new ConflictError('Student has already checked in to this event');
-    }
+        if (existingCheckIn) {
+          throw new ConflictError(
+            'Student has already checked in to this event'
+          );
+        }
 
-    if (event.capacity !== null && event.capacity !== undefined) {
-      const currentCount = await tx.attendance.count({
-        where: { event_id },
-      });
-      if (currentCount >= event.capacity) {
-        throw new Error('Event has reached its maximum capacity');
-      }
-    }
+        if (event.capacity !== null && event.capacity !== undefined) {
+          const currentCount = await tx.attendance.count({
+            where: { event_id },
+          });
+          if (currentCount >= event.capacity) {
+            throw new Error('Event has reached its maximum capacity');
+          }
+        }
 
-    return await tx.attendance.create({
-      data: {
-        event_id,
-        student_id,
-        check_in_at: check_in_at ?? new Date(),
-        check_in_by,
+        return await tx.attendance.create({
+          data: {
+            event_id,
+            student_id,
+            check_in_at: check_in_at ?? new Date(),
+            check_in_by,
+          },
+          include: {
+            event: true,
+            student: true,
+            check_in_by_user: true,
+            check_out_by_user: true,
+          },
+        });
       },
-      include: {
-        event: true,
-        student: true,
-        check_in_by_user: true,
-        check_out_by_user: true,
-      },
-    });
-  });
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    )
+  );
 };
 
 /**

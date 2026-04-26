@@ -9,6 +9,7 @@ import {
   RemoveOrganizerValidSchema,
 } from '../validators/addEventValidSchema';
 import { checkOrganizer } from '../middlewares/checkOrganizer.middleware';
+import { checkInRateLimiter } from '../middlewares/rateLimiter.middleware';
 const router = express.Router();
 
 router.post(
@@ -51,12 +52,14 @@ router.put(
 router.post(
   `/check_in/:event_id/:qr_code`,
   authMiddleware,
+  checkInRateLimiter,
   checkOrganizer,
   eventController.createCheckInEvent
 );
 router.post(
   `/check_out/:event_id/:qr_code`,
   authMiddleware,
+  checkInRateLimiter,
   checkOrganizer,
   eventController.createCheckOutEvent
 );
@@ -64,6 +67,7 @@ router.post(
 router.post(
   `/mass_check_out/:event_id`,
   authMiddleware,
+  checkInRateLimiter,
   checkOrganizer,
   eventController.massCheckOutEvent
 );
@@ -71,6 +75,7 @@ router.post(
 router.post(
   `/:event_id/checkin/:student_id`,
   authMiddleware,
+  checkInRateLimiter,
   checkOrganizer,
   eventController.checkInStudentById
 );
@@ -78,6 +83,7 @@ router.post(
 router.post(
   `/:event_id/checkout/:student_id`,
   authMiddleware,
+  checkInRateLimiter,
   checkOrganizer,
   eventController.checkOutStudentById
 );

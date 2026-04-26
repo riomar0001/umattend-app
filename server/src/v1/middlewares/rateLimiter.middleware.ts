@@ -8,6 +8,12 @@ const WINDOW_MS = 60_000;
 const IP_LIMIT = 300;
 const ACCOUNT_IP_LIMIT = 10;
 
+// Check-in/check-out limits: tuned for fast organizer scanning (a busy
+// queue is realistically <2 scans/sec) while still catching automated
+// brute-force or QR-iteration attacks.
+const CHECKIN_USER_LIMIT = 120; // 120 scans/min per organizer
+const CHECKIN_IP_LIMIT = 600; // 600 scans/min per IP (multiple devices)
+
 // Atomic sliding window via Redis sorted set
 const slidingWindowScript = `
 local key = KEYS[1]
@@ -30,16 +36,19 @@ return 1
 `;
 
 function getClientIp(req: Request): string {
-  // CF-Connecting-IP is set by Cloudflare and is the most reliable real-visitor
-  // IP when the stack is Cloudflare → Nginx → Express.
+  // CF-Connecting-IP is set by Cloudflare. Only trust it when the request
+  // actually came through our Cloudflare edge — `req.ip` reflects that
+  // because Express resolves it via the configured `trust proxy` setting.
+  // In other environments (direct access, internal tools, staging) we
+  // ignore CF-Connecting-IP because any client could spoof it.
   const cfIp = req.headers['cf-connecting-ip'] as string | undefined;
-  if (cfIp) {
+  if (cfIp && req.ip) {
     return cfIp.trim();
   }
 
-  // Fallback: leftmost entry of X-Forwarded-For (added by Nginx/proxies)
-  const forwarded = req.headers['x-forwarded-for'] as string | undefined;
-  return forwarded?.split(',')[0]?.trim() ?? req.ip ?? 'unknown';
+  // Otherwise fall back to Express's resolved IP — with `trust proxy` set,
+  // this honours X-Forwarded-For only when it comes from a trusted hop.
+  return req.ip ?? 'unknown';
 }
 
 async function checkSlidingWindow(
@@ -140,6 +149,52 @@ export const oauthRateLimiter = async (
       status: 429,
       success: false,
       message: 'Too many OAuth requests. Please try again later.',
+    });
+    return;
+  }
+
+  next();
+};
+
+// Per-user + per-IP limiter for check-in/check-out scan endpoints. Sits
+// after authMiddleware so we always have a user id.
+export const checkInRateLimiter = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const ip = getClientIp(req);
+  const userId = (req as Request & { user?: { id: string } }).user?.id;
+
+  const checks: Promise<boolean>[] = [
+    checkSlidingWindow(`rateLimit:checkin:ip:${ip}`, CHECKIN_IP_LIMIT),
+  ];
+
+  if (userId) {
+    checks.push(
+      checkSlidingWindow(
+        `rateLimit:checkin:user:${userId}`,
+        CHECKIN_USER_LIMIT
+      )
+    );
+  }
+
+  const results = await Promise.all(checks);
+
+  if (results[0] === false) {
+    res.status(429).json({
+      status: 429,
+      success: false,
+      message: 'Too many scan requests from this IP. Please slow down.',
+    });
+    return;
+  }
+
+  if (results[1] === false) {
+    res.status(429).json({
+      status: 429,
+      success: false,
+      message: 'Too many scan requests for this account. Please slow down.',
     });
     return;
   }

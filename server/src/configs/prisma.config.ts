@@ -15,10 +15,13 @@ const originalTransaction = prisma.$transaction.bind(
 ): Promise<T> {
   const startTime = Date.now();
 
-  return originalTransaction(queries, {
-    ...options,
+  // Default to 30s but let callers override (e.g. batched bulk operations).
+  const mergedOptions: TransactionOptions = {
     timeout: 30000,
-  } as TransactionOptions)
+    ...(options ?? {}),
+  } as TransactionOptions;
+
+  return originalTransaction(queries, mergedOptions)
     .then((result: unknown) => {
       const duration = Date.now() - startTime;
       if (duration > 10000) {

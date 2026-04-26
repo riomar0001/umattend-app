@@ -24,6 +24,7 @@ import studentRepository from '../repositories/student.repository';
 import { CHECK_IN_EMAIL } from '../template/checkIn.email';
 import { sendEmail } from './email.service';
 import { CHECK_OUT_EMAIL } from '../template/checkOut.email';
+import { invalidateOrganizerCache } from '../middlewares/checkOrganizer.middleware';
 
 const addEvent = async (event_data: AddEventInterface) => {
   try {
@@ -448,7 +449,13 @@ const addOrganizer = async (
   }
 
   try {
-    return await eventRepository.addOrganizer(user_id, added_by, event_id);
+    const created = await eventRepository.addOrganizer(
+      user_id,
+      added_by,
+      event_id
+    );
+    await invalidateOrganizerCache(user_id, event_id);
+    return created;
   } catch (error) {
     // A concurrent request inserted the same organizer between our check and
     // this insert — treat the unique constraint violation as a duplicate error.
@@ -480,7 +487,9 @@ const removeOrganizer = async (umindanao_email: string, event_id: string) => {
     throw new ForbiddenError('Cannot remove the event creator as an organizer');
   }
 
-  return await eventRepository.removeOrganizer(user_id, event_id);
+  const removed = await eventRepository.removeOrganizer(user_id, event_id);
+  await invalidateOrganizerCache(user_id, event_id);
+  return removed;
 };
 
 const getOrganizersByEventId = async (event_id: string) => {

@@ -49,17 +49,18 @@ const updateLoginAndProfile = async (
   user_id: string,
   profile_picture: string
 ) => {
+  // Prisma's interactive-tx client uses a single connection — running
+  // writes in parallel over it can interleave at the protocol level, so
+  // these must be awaited sequentially.
   return prisma.$transaction(async (tx) => {
-    await Promise.all([
-      tx.user.update({
-        where: { id: user_id },
-        data: { last_login_at: new Date() },
-      }),
-      tx.student.updateMany({
-        where: { user_id },
-        data: { profile_picture },
-      }),
-    ]);
+    await tx.user.update({
+      where: { id: user_id },
+      data: { last_login_at: new Date() },
+    });
+    await tx.student.updateMany({
+      where: { user_id },
+      data: { profile_picture },
+    });
   });
 };
 
