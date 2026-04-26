@@ -36,7 +36,7 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
   const [validationErrors, setValidationErrors] = useState<{ endDate?: string; endTime?: string }>({});
 
   const timeOptions = generateTimeOptions();
-  const departments = Object.keys(DepartmentAndPrograms);
+  const departments = ['Open to all Departments', ...Object.keys(DepartmentAndPrograms)];
 
   useEffect(() => {
     setFormData({

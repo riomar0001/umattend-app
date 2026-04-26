@@ -21,7 +21,7 @@ import { generateTimeOptions, getDefaultStartTime, addOneHour } from '@/lib/util
 export default function CreateEventPage() {
   const router = useRouter();
   const timeOptions = generateTimeOptions();
-  const departments = Object.keys(DepartmentAndPrograms);
+  const departments = ['Open to all Departments', ...Object.keys(DepartmentAndPrograms)];
   const defaultStartTime = getDefaultStartTime();
   const defaultEndTime = addOneHour(defaultStartTime);
 
