@@ -775,9 +775,8 @@ const checkInStudentById = async (
       throw new Error('Failed to create check-in record');
     }
 
-    const studentbyUserId = await studentRepository.getUserByStudentId(
-      student_id
-    );
+    const studentbyUserId =
+      await studentRepository.getUserByStudentId(student_id);
 
     if (!studentbyUserId) {
       throw new NotFoundError('Student user not found');
@@ -787,7 +786,9 @@ const checkInStudentById = async (
       checkedIn.check_in_by_user.id
     );
 
-    const checkInByName = checkInByUser ? checkInByUser.name : 'Organizer/Admin';
+    const checkInByName = checkInByUser
+      ? checkInByUser.name
+      : 'Organizer/Admin';
 
     await sendEmail(
       studentbyUserId?.umindanao_email,
@@ -854,9 +855,8 @@ const checkOutStudentById = async (
       throw new NotFoundError('Check-out date not found');
     }
 
-    const studentbyUserId = await studentRepository.getUserByStudentId(
-      student_id
-    );
+    const studentbyUserId =
+      await studentRepository.getUserByStudentId(student_id);
 
     if (!studentbyUserId) {
       throw new NotFoundError('Student user not found');

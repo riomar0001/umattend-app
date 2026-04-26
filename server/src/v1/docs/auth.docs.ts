@@ -338,7 +338,10 @@ const loginHistory = {
                           type: 'object',
                           properties: {
                             id: { type: 'string' },
-                            ip_address: { type: 'string', example: '203.0.113.42' },
+                            ip_address: {
+                              type: 'string',
+                              example: '203.0.113.42',
+                            },
                             browser: { type: 'string', example: 'Chrome' },
                             os: { type: 'string', example: 'Windows' },
                             device: { type: 'string', example: 'Desktop' },

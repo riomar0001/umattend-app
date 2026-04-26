@@ -113,12 +113,7 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
             )}
 
             {/* Edit — muted fill, no border */}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsSheetOpen(true)}
-              className="bg-muted hover:bg-muted/70 gap-1.5"
-            >
+            <Button size="sm" variant="ghost" onClick={() => setIsSheetOpen(true)} className="bg-muted hover:bg-muted/70 gap-1.5">
               <Edit className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Edit</span>
             </Button>

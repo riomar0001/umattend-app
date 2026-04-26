@@ -4,9 +4,9 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import type { AttendanceRecord } from '@/types/events';
+import { CheckInStudentDialog } from './check-in-student-dialog';
 import { createColumns } from './data-table/attendance-columns';
 import { AttendanceDataTable } from './data-table/attendance-data-table';
-import { CheckInStudentDialog } from './check-in-student-dialog';
 import EvenAttendeesSkeleton from './event-attendees-skeleton';
 import EventAttendeesStats from './event-attendees-stats';
 import EventAttendeesStatsSkeleton from './event-attendees-stats-skeleton';
@@ -222,7 +222,11 @@ export default function EventAttendees({ eventId, checkOutRequired }: EventAtten
           <p className="text-muted-foreground mt-1 text-xs sm:text-sm md:mt-2 md:text-base lg:text-lg">Manage student check-in and check-out records</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setIsCheckInDialogOpen(true)} variant="outline" className="flex-1 gap-2 bg-transparent text-sm font-semibold shadow-sm sm:flex-none">
+          <Button
+            onClick={() => setIsCheckInDialogOpen(true)}
+            variant="outline"
+            className="flex-1 gap-2 bg-transparent text-sm font-semibold shadow-sm sm:flex-none"
+          >
             <UserPlus className="size-4" />
             <span className="xs:inline hidden">Check in Student</span>
             <span className="xs:hidden">Check in</span>
@@ -259,12 +263,7 @@ export default function EventAttendees({ eventId, checkOutRequired }: EventAtten
         loadingStudentId={loadingStudentId}
       />
 
-      <CheckInStudentDialog
-        open={isCheckInDialogOpen}
-        onOpenChange={setIsCheckInDialogOpen}
-        onConfirm={handleCheckIn}
-        isLoading={isCheckingIn}
-      />
+      <CheckInStudentDialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen} onConfirm={handleCheckIn} isLoading={isCheckingIn} />
     </div>
   );
 }

@@ -2,14 +2,7 @@
 
 import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface CheckOutConfirmDialogProps {
   open: boolean;
@@ -20,14 +13,7 @@ interface CheckOutConfirmDialogProps {
   onConfirm: () => void;
 }
 
-export function CheckOutConfirmDialog({
-  open,
-  onOpenChange,
-  studentName,
-  studentId,
-  isLoading,
-  onConfirm
-}: CheckOutConfirmDialogProps) {
+export function CheckOutConfirmDialog({ open, onOpenChange, studentName, studentId, isLoading, onConfirm }: CheckOutConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
@@ -39,8 +25,7 @@ export function CheckOutConfirmDialog({
             <DialogTitle>Check Out Student</DialogTitle>
           </div>
           <DialogDescription className="pt-3">
-            Are you sure you want to manually check out{' '}
-            <span className="text-foreground font-semibold">{studentName}</span>{' '}
+            Are you sure you want to manually check out <span className="text-foreground font-semibold">{studentName}</span>{' '}
             <span className="text-muted-foreground text-xs">(ID: {studentId})</span>?
             <br />
             <br />

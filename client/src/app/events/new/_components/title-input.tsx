@@ -27,7 +27,7 @@ export function TitleInput({ control }: TitleInputProps) {
               }}
             />
           </FormControl>
-          <FormMessage className="text-sm p-1 px-5 backdrop-blur-md bg-background/30 w-auto rounded-4xl" />
+          <FormMessage className="bg-background/30 w-auto rounded-4xl p-1 px-5 text-sm backdrop-blur-md" />
         </FormItem>
       )}
     />

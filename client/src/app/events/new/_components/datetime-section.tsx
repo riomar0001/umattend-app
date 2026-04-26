@@ -23,24 +23,9 @@ export function DateTimeSection({ control, form, timeOptions }: DateTimeSectionP
       <SectionLabel index={1} icon={<CalendarDays className="text-foreground h-4 w-4" />} title="When" />
 
       <div className="bg-card border-border space-y-1 rounded-2xl border shadow-sm backdrop-blur-sm">
-        <DateTimeRow
-          label="Start"
-          dateName="startDate"
-          timeName="startTime"
-          control={control}
-          form={form}
-          timeOptions={timeOptions}
-          isFirst
-        />
+        <DateTimeRow label="Start" dateName="startDate" timeName="startTime" control={control} form={form} timeOptions={timeOptions} isFirst />
         <div className="bg-border mx-4 h-px opacity-50" />
-        <DateTimeRow
-          label="End"
-          dateName="endDate"
-          timeName="endTime"
-          control={control}
-          form={form}
-          timeOptions={timeOptions}
-        />
+        <DateTimeRow label="End" dateName="endDate" timeName="endTime" control={control} form={form} timeOptions={timeOptions} />
       </div>
     </div>
   );
@@ -59,9 +44,7 @@ interface DateTimeRowProps {
 function DateTimeRow({ label, dateName, timeName, control, form, timeOptions, isFirst }: DateTimeRowProps) {
   return (
     <div className={`flex items-center gap-3 px-5 ${isFirst ? 'pt-4 pb-3' : 'pt-3 pb-4'}`}>
-      <Label className="text-muted-foreground w-10 shrink-0 text-xs font-medium uppercase tracking-wide">
-        {label}
-      </Label>
+      <Label className="text-muted-foreground w-10 shrink-0 text-xs font-medium tracking-wide uppercase">{label}</Label>
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-center gap-1.5">
           <FormField
@@ -72,10 +55,7 @@ function DateTimeRow({ label, dateName, timeName, control, form, timeOptions, is
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
-                      <Button
-                        variant="ghost"
-                        className="hover:bg-primary/10 h-8 w-full justify-start rounded-lg px-2.5 text-left text-sm font-medium"
-                      >
+                      <Button variant="ghost" className="hover:bg-primary/10 h-8 w-full justify-start rounded-lg px-2.5 text-left text-sm font-medium">
                         {field.value ? format(field.value, 'EEE, MMM d') : 'Pick date'}
                       </Button>
                     </FormControl>
@@ -119,8 +99,24 @@ function DateTimeRow({ label, dateName, timeName, control, form, timeOptions, is
           />
         </div>
         <div className="space-y-0.5">
-          <FormField control={control} name={dateName} render={() => <FormItem className="space-y-0"><FormMessage className="text-xs" /></FormItem>} />
-          <FormField control={control} name={timeName} render={() => <FormItem className="space-y-0"><FormMessage className="text-xs" /></FormItem>} />
+          <FormField
+            control={control}
+            name={dateName}
+            render={() => (
+              <FormItem className="space-y-0">
+                <FormMessage className="text-xs" />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name={timeName}
+            render={() => (
+              <FormItem className="space-y-0">
+                <FormMessage className="text-xs" />
+              </FormItem>
+            )}
+          />
         </div>
       </div>
     </div>
@@ -136,9 +132,7 @@ interface SectionLabelProps {
 export function SectionLabel({ index, icon, title }: SectionLabelProps) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="bg-foreground/10 text-foreground flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold">
-        {index}
-      </div>
+      <div className="bg-foreground/10 text-foreground flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold">{index}</div>
       {icon}
       <span className="text-foreground text-xs font-semibold tracking-widest uppercase">{title}</span>
     </div>

@@ -7,15 +7,15 @@ import { toast } from 'sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { Form } from '@/components/ui/form';
-import { postEventMutation, patchEventByEventIdDraftMutation } from '@/api/client/@tanstack/react-query.gen';
-import { DepartmentAndPrograms } from '@/lib/department-and-program';
-import { generateTimeOptions, getDefaultStartTime, addOneHour } from '@/lib/utils';
-import { createEventSchema, CreateEventFormValues } from './_components/schema';
-import { TitleInput } from './_components/title-input';
 import { DateTimeSection } from './_components/datetime-section';
 import { DetailsSection } from './_components/details-section';
 import { OptionsSection } from './_components/options-section';
 import { PreviewSidebar } from './_components/preview-sidebar';
+import { createEventSchema, CreateEventFormValues } from './_components/schema';
+import { TitleInput } from './_components/title-input';
+import { postEventMutation, patchEventByEventIdDraftMutation } from '@/api/client/@tanstack/react-query.gen';
+import { DepartmentAndPrograms } from '@/lib/department-and-program';
+import { generateTimeOptions, getDefaultStartTime, addOneHour } from '@/lib/utils';
 
 export default function CreateEventPage() {
   const router = useRouter();

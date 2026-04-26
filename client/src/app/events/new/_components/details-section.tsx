@@ -86,7 +86,7 @@ export function DetailsSection({ control, departments }: DetailsSectionProps) {
                   <FormLabel className="text-foreground text-sm font-medium">Department</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="hover:border-foreground/30 h-9 w-full break-words !whitespace-normal text-sm transition-colors [&>span]:line-clamp-2 [&>span]:text-left [&>span]:leading-normal [&>span]:break-words [&>span]:whitespace-normal">
+                      <SelectTrigger className="hover:border-foreground/30 h-9 w-full text-sm break-words !whitespace-normal transition-colors [&>span]:line-clamp-2 [&>span]:text-left [&>span]:leading-normal [&>span]:break-words [&>span]:whitespace-normal">
                         <SelectValue placeholder="Select your department" />
                       </SelectTrigger>
                     </FormControl>

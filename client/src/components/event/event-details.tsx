@@ -13,8 +13,22 @@ interface EventDetailsProps {
 const EventDetails = ({ event, onClose }: EventDetailsProps) => {
   const router = useRouter();
 
-  const { id, apiId, title, description, dayOfWeek, date, startTime, endTime, hasLocation = false, location, checkin_count, checkout_count, is_draft, can_edit } =
-    event;
+  const {
+    id,
+    apiId,
+    title,
+    description,
+    dayOfWeek,
+    date,
+    startTime,
+    endTime,
+    hasLocation = false,
+    location,
+    checkin_count,
+    checkout_count,
+    is_draft,
+    can_edit
+  } = event;
 
   const eventStatus = event.eventStatus || 'upcoming';
   const eventId = apiId || id;
@@ -58,7 +72,7 @@ const EventDetails = ({ event, onClose }: EventDetailsProps) => {
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto">
         {/* Hero */}
-        <div className="relative overflow-hidden px-6 pb-8 pt-7">
+        <div className="relative overflow-hidden px-6 pt-7 pb-8">
           {/* Background gradient */}
           <div className="from-primary/[0.12] via-primary/[0.04] pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent" />
 

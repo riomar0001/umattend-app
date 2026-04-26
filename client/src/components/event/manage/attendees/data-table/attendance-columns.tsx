@@ -1,16 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreVertical, LogOut, Eye } from 'lucide-react';
+import { MoreVertical, LogOut } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { CheckOutConfirmDialog } from '@/components/event/manage/attendees/check-out-confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { AttendanceRecord } from '@/types/events';
 
-const Th = ({ label }: { label: string }) => (
-  <div className="text-foreground pl-3 text-xs font-medium md:text-sm">{label}</div>
-);
+const Th = ({ label }: { label: string }) => <div className="text-foreground pl-3 text-xs font-medium md:text-sm">{label}</div>;
 
 // ---------------------------------------------------------------------------
 // Actions column component — mirrors organizers-columns.tsx ActionsColumn
@@ -50,16 +48,14 @@ function ActionsColumn({ record, onCheckOut, loadingStudentId }: ActionsColumnPr
                   onClick={() => setIsCheckOutDialogOpen(true)}
                   disabled={isLoading}
                   variant="ghost"
-                  className="w-full justify-start gap-2 text-xs font-medium text-amber-600 hover:bg-amber-500/10 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 md:gap-3 md:text-sm"
+                  className="w-full justify-start gap-2 text-xs font-medium text-amber-600 hover:bg-amber-500/10 hover:text-amber-700 md:gap-3 md:text-sm dark:text-amber-400 dark:hover:text-amber-300"
                   size="sm"
                 >
                   <LogOut className="size-3 md:size-4" />
                   {isLoading ? 'Checking out…' : 'Check Out'}
                 </Button>
               ) : (
-                <p className="text-muted-foreground px-2 py-1.5 text-xs">
-                  Already checked out
-                </p>
+                <p className="text-muted-foreground px-2 py-1.5 text-xs">Already checked out</p>
               )}
             </div>
           </PopoverContent>
@@ -147,11 +143,7 @@ export const columns: ColumnDef<AttendanceRecord>[] = baseColumns;
  * The Actions column is driven by a table.meta object so the column
  * definition stays static and avoids re-renders on every keystroke.
  */
-export function createColumns({
-  checkOutRequired
-}: {
-  checkOutRequired: boolean;
-}): ColumnDef<AttendanceRecord>[] {
+export function createColumns({ checkOutRequired }: { checkOutRequired: boolean }): ColumnDef<AttendanceRecord>[] {
   if (!checkOutRequired) {
     return baseColumns;
   }
@@ -166,13 +158,7 @@ export function createColumns({
         loadingStudentId: string | null;
       };
 
-      return (
-        <ActionsColumn
-          record={record}
-          onCheckOut={meta?.onCheckOut}
-          loadingStudentId={meta?.loadingStudentId ?? null}
-        />
-      );
+      return <ActionsColumn record={record} onCheckOut={meta?.onCheckOut} loadingStudentId={meta?.loadingStudentId ?? null} />;
     }
   };
 

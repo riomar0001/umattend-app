@@ -97,7 +97,7 @@ export default function ManageSingleEventPage() {
 
       <HeroSection event={event} setIsSheetOpen={setIsSheetOpen} refetch={refetch} />
 
-      <main className="relative container mx-auto max-w-10xl px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-8">
+      <main className="max-w-10xl relative container mx-auto px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-8">
         <Tabs defaultValue="details">
           {/* Underline tab nav */}
           <div className="mb-6 overflow-x-auto">

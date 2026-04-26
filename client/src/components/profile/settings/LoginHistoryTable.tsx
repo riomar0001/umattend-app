@@ -40,7 +40,7 @@ const formatDateTime = (dateStr?: string) => {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true,
+    hour12: true
   }).format(d);
 };
 
@@ -113,9 +113,7 @@ export const LoginHistoryTable = () => {
                   {/* Date / time header */}
                   <div className="mb-3 flex items-center justify-between">
                     <span className="text-foreground text-xs font-semibold">{dateTime}</span>
-                    <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 font-mono text-xs">
-                      {ipAddress}
-                    </span>
+                    <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 font-mono text-xs">{ipAddress}</span>
                   </div>
 
                   <div className="space-y-1.5">
@@ -125,7 +123,9 @@ export const LoginHistoryTable = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Monitor className="text-muted-foreground h-4 w-4 flex-shrink-0" />
-                      <span className="text-foreground text-sm">{device} · {os}</span>
+                      <span className="text-foreground text-sm">
+                        {device} · {os}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Globe className="text-muted-foreground h-4 w-4 flex-shrink-0" />

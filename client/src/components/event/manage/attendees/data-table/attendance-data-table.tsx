@@ -128,17 +128,9 @@ export function AttendanceDataTable<TData, TValue>({
               .getAllColumns()
               .filter((col) => col.getCanHide())
               .map((col) => {
-                const label =
-                  typeof col.columnDef.header === 'string'
-                    ? col.columnDef.header
-                    : col.id.charAt(0).toUpperCase() + col.id.slice(1);
+                const label = typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id.charAt(0).toUpperCase() + col.id.slice(1);
                 return (
-                  <DropdownMenuCheckboxItem
-                    key={col.id}
-                    className="capitalize"
-                    checked={col.getIsVisible()}
-                    onCheckedChange={(v) => col.toggleVisibility(!!v)}
-                  >
+                  <DropdownMenuCheckboxItem key={col.id} className="capitalize" checked={col.getIsVisible()} onCheckedChange={(v) => col.toggleVisibility(!!v)}>
                     {label}
                   </DropdownMenuCheckboxItem>
                 );
@@ -154,9 +146,7 @@ export function AttendanceDataTable<TData, TValue>({
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
-                    {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
+                  <TableHead key={h.id}>{h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}</TableHead>
                 ))}
               </TableRow>
             ))}
@@ -182,9 +172,7 @@ export function AttendanceDataTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                 </TableRow>
               ))
@@ -196,20 +184,12 @@ export function AttendanceDataTable<TData, TValue>({
       {/* Pagination */}
       <div className="mt-5 flex flex-col items-start justify-between gap-4 text-xs sm:flex-row sm:items-center md:text-sm">
         <p className="text-muted-foreground font-medium">
-          {totalRecords === 0
-            ? 'No records'
-            : `Showing ${(page - 1) * 10 + 1}–${Math.min(page * 10, totalRecords)} of ${totalRecords}`}
+          {totalRecords === 0 ? 'No records' : `Showing ${(page - 1) * 10 + 1}–${Math.min(page * 10, totalRecords)} of ${totalRecords}`}
         </p>
 
         <div className="flex items-center gap-1">
           {/* Prev */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onPageChange(page - 1)}
-            disabled={page <= 1}
-            className="h-8 w-8 p-0"
-          >
+          <Button variant="ghost" size="sm" onClick={() => onPageChange(page - 1)} disabled={page <= 1} className="h-8 w-8 p-0">
             <ChevronLeft className="size-4" />
           </Button>
 
@@ -220,13 +200,7 @@ export function AttendanceDataTable<TData, TValue>({
                 key={`ellipsis-${i}`}
                 variant="ghost"
                 size="sm"
-                onClick={() =>
-                  onPageChange(
-                    p === 'prev-ellipsis'
-                      ? Math.max(1, page - 5)
-                      : Math.min(totalPages, page + 5)
-                  )
-                }
+                onClick={() => onPageChange(p === 'prev-ellipsis' ? Math.max(1, page - 5) : Math.min(totalPages, page + 5))}
                 className="text-muted-foreground hover:bg-muted h-8 w-8 p-0 text-sm"
               >
                 …
@@ -238,9 +212,7 @@ export function AttendanceDataTable<TData, TValue>({
                 size="sm"
                 onClick={() => onPageChange(p)}
                 className={`h-8 w-8 p-0 text-xs font-medium ${
-                  page === p
-                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 font-semibold'
-                    : 'hover:bg-muted'
+                  page === p ? 'bg-primary text-primary-foreground hover:bg-primary/90 font-semibold' : 'hover:bg-muted'
                 }`}
               >
                 {p}
@@ -249,13 +221,7 @@ export function AttendanceDataTable<TData, TValue>({
           )}
 
           {/* Next */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages}
-            className="h-8 w-8 p-0"
-          >
+          <Button variant="ghost" size="sm" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages} className="h-8 w-8 p-0">
             <ChevronRight className="size-4" />
           </Button>
         </div>

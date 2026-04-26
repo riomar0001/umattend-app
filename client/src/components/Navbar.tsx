@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { useMutation } from '@tanstack/react-query';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 import { Skeleton } from './ui/skeleton';
@@ -77,8 +76,7 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <nav className="hidden items-center gap-6 md:flex">
-          </nav>
+          <nav className="hidden items-center gap-6 md:flex"></nav>
 
           <span className="text-muted-foreground hidden text-xs lg:inline">{formatTimeWithTimezone(now)}</span>
 

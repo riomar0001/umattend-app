@@ -2351,7 +2351,8 @@ const massCheckOut = {
     post: {
       tags: ['Event'],
       summary: 'Mass check-out students',
-      description: 'Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only).',
+      description:
+        'Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only).',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -2378,7 +2379,8 @@ const massCheckOut = {
                 },
                 checkout_time: {
                   type: 'string',
-                  description: 'Optional checkout time in HH:MM (Philippines time) or ISO 8601 format.',
+                  description:
+                    'Optional checkout time in HH:MM (Philippines time) or ISO 8601 format.',
                   example: '14:30',
                 },
               },
@@ -2395,7 +2397,10 @@ const massCheckOut = {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: true },
-                  message: { type: 'string', example: 'Mass check-out completed' },
+                  message: {
+                    type: 'string',
+                    example: 'Mass check-out completed',
+                  },
                   data: {
                     type: 'object',
                     properties: {
@@ -2403,7 +2408,8 @@ const massCheckOut = {
                       alreadyCheckedOut: {
                         type: 'array',
                         items: { type: 'integer' },
-                        description: 'Student IDs that were already checked out.',
+                        description:
+                          'Student IDs that were already checked out.',
                       },
                       notCheckedIn: {
                         type: 'array',
@@ -2497,7 +2503,10 @@ const checkInStudentById = {
           },
         },
         401: { description: 'Unauthorized' },
-        403: { description: 'Forbidden — Admin/CSG/Organizer only, or onboarding not complete' },
+        403: {
+          description:
+            'Forbidden — Admin/CSG/Organizer only, or onboarding not complete',
+        },
         404: { description: 'Event or student not found' },
         409: { description: 'Conflict - already checked in' },
         500: { description: 'Internal server error' },
@@ -2562,7 +2571,8 @@ const checkoutStudentById = {
           },
         },
         400: {
-          description: 'Bad request — student has not checked in, or event_id / student_id missing',
+          description:
+            'Bad request — student has not checked in, or event_id / student_id missing',
           content: {
             'application/json': {
               schema: {
@@ -2576,7 +2586,10 @@ const checkoutStudentById = {
           },
         },
         401: { description: 'Unauthorized' },
-        403: { description: 'Forbidden — Admin/CSG/Organizer only, or onboarding not complete' },
+        403: {
+          description:
+            'Forbidden — Admin/CSG/Organizer only, or onboarding not complete',
+        },
         404: { description: 'Event or student not found' },
         409: {
           description: 'Student has already checked out of this event',
