@@ -6,6 +6,8 @@ export interface EventCardData {
   title: string;
   date: string;
   dayOfWeek: string;
+  endDate: string;
+  endDayOfWeek: string;
   startTime: string;
   endTime: string;
   location?: string | null;

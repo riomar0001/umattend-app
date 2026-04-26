@@ -20,6 +20,8 @@ const EventDetails = ({ event, onClose }: EventDetailsProps) => {
     description,
     dayOfWeek,
     date,
+    endDate,
+    endDayOfWeek,
     startTime,
     endTime,
     hasLocation = false,
@@ -135,14 +137,15 @@ const EventDetails = ({ event, onClose }: EventDetailsProps) => {
               <div className="bg-muted mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md">
                 <Clock className="text-muted-foreground h-3.5 w-3.5" />
               </div>
-              <div className="space-y-0.5 pt-0.5">
-                <p className="text-foreground text-sm font-medium">
-                  {dayOfWeek}, {date}
+              <div className="space-y-1 pt-0.5">
+                <p className="text-foreground text-sm font-semibold">
+                  <span className="text-primary font-bold">From</span> {dayOfWeek}, {date} at {startTime}
                 </p>
-                <p className="text-muted-foreground text-sm">
-                  {startTime}
-                  {endTime ? ` – ${endTime}` : ''}
-                </p>
+                {endTime && (
+                  <p className="text-muted-foreground text-sm">
+                    <span className="font-medium">To</span> {endDayOfWeek}, {endDate} at {endTime}
+                  </p>
+                )}
               </div>
             </div>
 

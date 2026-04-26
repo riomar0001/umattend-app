@@ -22,6 +22,8 @@ export const transformEventData = (apiEvent: ApiEventData): ExtendedEventCardDat
     description: apiEvent.description,
     date: formatDateVeryShort(startDate),
     dayOfWeek: formatDayOfWeek(startDate),
+    endDate: formatDateVeryShort(endDate),
+    endDayOfWeek: formatDayOfWeek(endDate),
     startTime: apiEvent.all_day ? 'All Day' : formatTime(startDate),
     endTime: apiEvent.all_day ? '' : formatTime(endDate),
     location: apiEvent.location,

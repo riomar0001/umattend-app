@@ -26,7 +26,10 @@ export default function EventDetails({ event }: { event: Event }) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-muted-foreground mb-1 text-[10px] font-medium sm:text-xs">Date</p>
-              <p className="text-foreground line-clamp-2 text-xs leading-tight font-semibold sm:text-sm">{formatDate(event.startDate)}</p>
+              <div className="text-xs leading-tight sm:text-sm">
+                <p className="text-foreground font-semibold">From {formatDate(event.startDate)}</p>
+                <p className="text-muted-foreground">To {formatDate(event.endDate)}</p>
+              </div>
             </div>
           </div>
         </Card>
@@ -38,10 +41,10 @@ export default function EventDetails({ event }: { event: Event }) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-muted-foreground mb-1 text-[10px] font-medium sm:text-xs">Time</p>
-              <p className="text-foreground line-clamp-2 text-xs leading-tight font-semibold sm:text-sm">
-                {event.startTime}
-                {event.endTime ? ` – ${event.endTime}` : ''}
-              </p>
+              <div className="text-xs leading-tight sm:text-sm">
+                <p className="text-foreground font-semibold">From {event.startTime}</p>
+                {event.endTime && <p className="text-muted-foreground">To {event.endTime}</p>}
+              </div>
             </div>
           </div>
         </Card>

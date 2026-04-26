@@ -66,12 +66,17 @@ export function PreviewSidebar({ values, isDraft = false }: PreviewSidebarProps)
                 <div className="flex items-start gap-2.5">
                   <CalendarDays className="text-foreground mt-0.5 h-4 w-4 shrink-0" />
                   <div className="text-foreground text-sm">
-                    <p className="font-medium">{formatDate(startDate)}</p>
-                    {startTime && (
+                    <p className="font-semibold">
+                      <span className="text-primary font-bold">From</span> {formatDate(startDate)}{startTime && ` at ${startTime}`}
+                    </p>
+                    {(endDate || endTime) && (
                       <p className="text-muted-foreground text-xs">
-                        {startTime}
-                        {endTime && ` – ${endTime}`}
-                        {endDate && endDate.toDateString() !== startDate?.toDateString() && <span> · ends {formatDate(endDate)}</span>}
+                        <span className="font-medium">To</span>{' '}
+                        {endDate && startDate && endDate.toDateString() !== startDate.toDateString()
+                          ? `${formatDate(endDate)}${endTime ? ` at ${endTime}` : ''}`
+                          : endTime
+                            ? `${endTime}`
+                            : formatDate(endDate!)}
                       </p>
                     )}
                   </div>

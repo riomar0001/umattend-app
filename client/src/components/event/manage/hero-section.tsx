@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import type { Event } from '@/types/events';
+import { formatDateShort } from '@/lib/utils';
 import { deleteEventByEventIdMutation, patchEventByEventIdPostMutation, patchEventByEventIdDraftMutation } from '@/api/client/@tanstack/react-query.gen';
 
 const statusConfig = {
@@ -202,13 +203,17 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
 
         {/* Meta details card */}
         <div className="border-border/60 bg-background/60 divide-border/40 mt-6 divide-y overflow-hidden rounded-xl border backdrop-blur-sm">
-          <div className="flex items-center gap-3 px-4 py-3.5">
-            <Clock className="text-primary h-4 w-4 flex-shrink-0" />
-            <span className="text-muted-foreground text-xs font-medium">Time</span>
-            <span className="text-foreground/80 ml-auto text-sm">
-              {event.startTime}
-              {event.endTime ? ` – ${event.endTime}` : ''}
-            </span>
+          <div className="flex items-start gap-3 px-4 py-3.5">
+            <Clock className="text-primary mt-0.5 h-4 w-4 flex-shrink-0" />
+            <span className="text-muted-foreground mt-0.5 text-xs font-medium">Time</span>
+            <div className="ml-auto text-right text-sm">
+              <p className="text-foreground/80 font-semibold">
+                From {event.startTime}, {formatDateShort(event.startDate)}
+              </p>
+              <p className="text-muted-foreground">
+                To {event.endTime}, {formatDateShort(event.endDate)}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3 px-4 py-3.5">
             <MapPin className="text-primary h-4 w-4 flex-shrink-0" />

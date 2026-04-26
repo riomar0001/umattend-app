@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { ApiEventData } from '@/types/events';
 import { getEventByEventIdOptions } from '@/api/client/@tanstack/react-query.gen';
 import { getEventStatus, getAttendanceStatus } from '@/lib/events-utils';
-import { formatDate, formatTime } from '@/lib/utils';
+import { formatDate, formatDateShort, formatTime } from '@/lib/utils';
 
 const EventDetailsSkeleton = () => (
   <div className="bg-background min-h-screen">
@@ -88,6 +88,7 @@ export default function EventDetailsPage() {
   const { label: statusLabel, className: statusClassName } = statusConfig[eventStatus];
 
   const startDate = event.start_time ? new Date(event.start_time) : null;
+  const endDate = event.end_time ? new Date(event.end_time) : null;
   const dayNum = startDate ? startDate.getDate().toString() : '—';
   const monthAbbr = startDate ? startDate.toLocaleString('en', { month: 'short' }).toUpperCase() : '';
   const dayOfWeek = startDate ? startDate.toLocaleString('en', { weekday: 'long' }) : '';
@@ -176,13 +177,19 @@ export default function EventDetailsPage() {
           {/* Meta details */}
           <div className="border-border/60 bg-background/60 divide-border/40 mt-6 w-auto divide-y overflow-hidden rounded-xl border backdrop-blur-sm">
             {startDate && (
-              <div className="flex items-center gap-3 px-4 py-3.5">
-                <Clock className="text-primary h-4 w-4 flex-shrink-0" />
-                <span className="text-muted-foreground text-xs font-medium">Time</span>
-                <span className="text-foreground/80 ml-auto text-sm">
-                  {formatTime(event.start_time!)}
-                  {event.end_time && ` – ${formatTime(event.end_time)}`}
-                </span>
+              <div className="flex items-start gap-3 px-4 py-3.5">
+                <Clock className="text-primary mt-0.5 h-4 w-4 flex-shrink-0" />
+                <span className="text-muted-foreground mt-0.5 text-xs font-medium">Time</span>
+                <div className="ml-auto text-right text-sm">
+                  <p className="text-foreground/80 font-semibold">
+                    From {formatTime(event.start_time!)}, {formatDateShort(startDate)}
+                  </p>
+                  {endDate && (
+                    <p className="text-muted-foreground">
+                      To {formatTime(event.end_time!)}, {formatDateShort(endDate)}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
             <div className="flex items-center gap-3 px-4 py-3.5">
@@ -263,7 +270,10 @@ export default function EventDetailsPage() {
           {startDate && (
             <div className="text-muted-foreground flex items-center gap-2 text-sm">
               <div className="bg-border/60 h-px flex-1" />
-              <span className="text-xs font-medium tracking-wide">{formatDate(event.start_time!)}</span>
+              <span className="text-xs font-semibold tracking-wide">
+                From {formatDate(event.start_time!)}
+                {endDate && <span className="text-muted-foreground font-normal"> · To {formatDate(event.end_time!)}</span>}
+              </span>
               <div className="bg-border/60 h-px flex-1" />
             </div>
           )}
