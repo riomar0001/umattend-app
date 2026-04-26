@@ -187,7 +187,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100">
+    <div className="bg-background min-h-screen">
       <main className="container mx-auto max-w-4xl px-4 py-12 sm:px-12 sm:py-16">
         <div className="mb-8 sm:mb-12">
           <h1 className="text-foreground text-2xl font-semibold sm:text-3xl">Complete Your Profile</h1>
@@ -247,17 +247,13 @@ export default function OnboardingPage() {
                 <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
                   <SelectTrigger
                     id="department"
-                    className="border-border hover:border-foreground/20 bg-background h-12 w-full text-left text-sm break-words !whitespace-normal transition-colors [&>span]:line-clamp-2 [&>span]:text-left [&>span]:leading-normal [&>span]:break-words [&>span]:whitespace-normal"
+                    className="sborder-border hover:border-foreground/20 bg-background !h-auto w-full text-left text-sm break-words !whitespace-normal transition-colors [&>span]:line-clamp-2 [&>span]:text-left [&>span]:leading-normal [&>span]:break-words [&>span]:whitespace-normal"
                   >
                     <SelectValue placeholder="Select your department" />
                   </SelectTrigger>
-                  <SelectContent className="max-w-[calc(100vw-2rem)] md:max-w-md">
+                  <SelectContent className="max-w-[calc(100vw-2rem)] md:w-full">
                     {departments.map((dept) => (
-                      <SelectItem
-                        key={dept}
-                        value={dept}
-                        className="h-auto min-h-fit cursor-pointer !items-start py-3 text-sm leading-normal break-words !whitespace-normal"
-                      >
+                      <SelectItem key={dept} value={dept} className="cursor-pointer !items-start py-3 text-sm leading-normal !whitespace-normal">
                         {dept}
                       </SelectItem>
                     ))}
@@ -274,11 +270,11 @@ export default function OnboardingPage() {
                 <Select value={selectedProgram} onValueChange={handleProgramChange} disabled={!selectedDepartment}>
                   <SelectTrigger
                     id="program"
-                    className="border-border hover:border-foreground/20 bg-background h-12 w-full text-left text-sm break-words !whitespace-normal transition-colors disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-2 [&>span]:text-left [&>span]:leading-normal [&>span]:break-words [&>span]:whitespace-normal"
+                    className="border-border hover:border-foreground/20 bg-background !h-auto w-full text-left text-sm break-words !whitespace-normal transition-colors disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-2 [&>span]:text-left [&>span]:leading-normal [&>span]:break-words [&>span]:whitespace-normal"
                   >
                     <SelectValue placeholder={selectedDepartment ? 'Select your program' : 'Please select a department first'} />
                   </SelectTrigger>
-                  <SelectContent className="max-w-[calc(100vw-2rem)] md:max-w-md">
+                  <SelectContent className="max-w-[calc(100vw-2rem)] md:w-full">
                     {programs.map((program) => (
                       <SelectItem
                         key={program}
