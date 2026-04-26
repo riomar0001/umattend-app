@@ -51,14 +51,12 @@ router.put(
 router.post(
   `/check_in/:event_id/:qr_code`,
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   eventController.createCheckInEvent
 );
 router.post(
   `/check_out/:event_id/:qr_code`,
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   eventController.createCheckOutEvent
 );
@@ -66,7 +64,6 @@ router.post(
 router.post(
   `/mass_check_out/:event_id`,
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   eventController.massCheckOutEvent
 );
@@ -74,7 +71,6 @@ router.post(
 router.post(
   `/:event_id/checkin/:student_id`,
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   eventController.checkInStudentById
 );
@@ -82,7 +78,6 @@ router.post(
 router.post(
   `/:event_id/checkout/:student_id`,
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   eventController.checkOutStudentById
 );
@@ -90,7 +85,6 @@ router.post(
 router.post(
   `/add_organizer/:event_id`,
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   checkSchema(AddOrganizerValidSchema),
   eventController.addOrganizer
@@ -99,7 +93,6 @@ router.post(
 router.delete(
   `/remove_organizer/:event_id`,
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   checkSchema(RemoveOrganizerValidSchema),
   eventController.removeOrganizer

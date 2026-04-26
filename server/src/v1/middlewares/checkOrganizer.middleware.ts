@@ -15,6 +15,10 @@ export const checkOrganizer = async (
       return HTTPErrorResponse(res, 400, 'User ID and Event ID are required.');
     }
 
+    if (req.user.role === 'admin' || req.user.role === 'csg') {
+      return next();
+    }
+
     const organizer = await eventRepository.checkOrganizer(user_id, event_id);
 
     if (!organizer) {

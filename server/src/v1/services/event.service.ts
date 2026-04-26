@@ -127,24 +127,28 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
       throw new NotFoundError('Student user not found');
     }
 
-    const checkInBy = await studentRepository.getStudentByUserId(
+    const checkInBy = checkedIn.check_in_by_user?.id ? await studentRepository.getStudentByUserId(
       checkedIn.check_in_by_user.id
-    );
+    ) : null;
 
     const checkInByName = checkInBy ? checkInBy.name : 'Organizer/Admin';
 
-    await sendEmail(
-      studentbyUserId?.umindanao_email,
-      'Event Check-In Successful',
-      CHECK_IN_EMAIL.replace('{{name}}', checkedIn.student.name)
-        .replace('{{event_name}}', checkedIn.event.title)
-        .replace('{{event_location}}', checkedIn.event.location)
-        .replace(
-          '{{event_date_and_time}}',
-          checkedIn.check_in_at.toLocaleString()
-        )
-        .replace('{{checked_in_by}}', checkInByName)
-    );
+    try {
+      await sendEmail(
+        studentbyUserId?.umindanao_email,
+        'Event Check-In Successful',
+        CHECK_IN_EMAIL.replace('{{name}}', checkedIn.student.name)
+          .replace('{{event_name}}', checkedIn.event.title)
+          .replace('{{event_location}}', checkedIn.event.location)
+          .replace(
+            '{{event_date_and_time}}',
+            checkedIn.check_in_at.toLocaleString()
+          )
+          .replace('{{checked_in_by}}', checkInByName)
+      );
+    } catch (err) {
+      console.warn('Failed to send check-in email for student', attendance_data.student_id, err);
+    }
 
     return checkedIn;
   } catch (error: unknown) {
@@ -210,26 +214,30 @@ const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
       throw new NotFoundError('Student user not found');
     }
 
-    const checkOutBy = await studentRepository.getStudentByUserId(
-      checkedOut.check_out_by_user.id
-    );
-
-    if (!checkOutBy) {
-      throw new NotFoundError('Check-in record not found');
-    }
-
-    await sendEmail(
-      studentbyUserId?.umindanao_email,
-      'Event Check-Out Successful',
-      CHECK_OUT_EMAIL.replace('{{name}}', checkedOut.student.name)
-        .replace('{{event_name}}', checkedOut.event.title)
-        .replace('{{event_location}}', checkedOut.event.location)
-        .replace(
-          '{{event_date_and_time}}',
-          checkedOut.check_out_at.toLocaleString()
+    const checkOutBy = checkedOut.check_out_by_user?.id
+      ? await studentRepository.getStudentByUserId(
+          checkedOut.check_out_by_user.id
         )
-        .replace('{{checked_out_by}}', checkOutBy.name)
-    );
+      : null;
+
+    const checkOutByName = checkOutBy ? checkOutBy.name : 'Organizer/Admin';
+
+    try {
+      await sendEmail(
+        studentbyUserId?.umindanao_email,
+        'Event Check-Out Successful',
+        CHECK_OUT_EMAIL.replace('{{name}}', checkedOut.student.name)
+          .replace('{{event_name}}', checkedOut.event.title)
+          .replace('{{event_location}}', checkedOut.event.location)
+          .replace(
+            '{{event_date_and_time}}',
+            checkedOut.check_out_at.toLocaleString()
+          )
+          .replace('{{checked_out_by}}', checkOutByName)
+      );
+    } catch (err) {
+      console.warn('Failed to send check-out email for student', attendance_data.student_id, err);
+    }
 
     return checkedOut;
   } catch (error: unknown) {
@@ -782,26 +790,32 @@ const checkInStudentById = async (
       throw new NotFoundError('Student user not found');
     }
 
-    const checkInByUser = await studentRepository.getStudentByUserId(
-      checkedIn.check_in_by_user.id
-    );
+    const checkInByUser = checkedIn.check_in_by_user?.id
+      ? await studentRepository.getStudentByUserId(
+          checkedIn.check_in_by_user.id
+        )
+      : null;
 
     const checkInByName = checkInByUser
       ? checkInByUser.name
       : 'Organizer/Admin';
 
-    await sendEmail(
-      studentbyUserId?.umindanao_email,
-      'Event Check-In Successful',
-      CHECK_IN_EMAIL.replace('{{name}}', checkedIn.student.name)
-        .replace('{{event_name}}', checkedIn.event.title)
-        .replace('{{event_location}}', checkedIn.event.location)
-        .replace(
-          '{{event_date_and_time}}',
-          checkedIn.check_in_at.toLocaleString()
-        )
-        .replace('{{checked_in_by}}', checkInByName)
-    );
+    try {
+      await sendEmail(
+        studentbyUserId?.umindanao_email,
+        'Event Check-In Successful',
+        CHECK_IN_EMAIL.replace('{{name}}', checkedIn.student.name)
+          .replace('{{event_name}}', checkedIn.event.title)
+          .replace('{{event_location}}', checkedIn.event.location)
+          .replace(
+            '{{event_date_and_time}}',
+            checkedIn.check_in_at.toLocaleString()
+          )
+          .replace('{{checked_in_by}}', checkInByName)
+      );
+    } catch (err) {
+      console.warn('Failed to send check-in email for student', student_id, err);
+    }
 
     return checkedIn;
   } catch (error: unknown) {
@@ -868,18 +882,22 @@ const checkOutStudentById = async (
 
     const checkOutByName = checkOutBy ? checkOutBy.name : 'Organizer/Admin';
 
-    await sendEmail(
-      studentbyUserId?.umindanao_email,
-      'Event Check-Out Successful',
-      CHECK_OUT_EMAIL.replace('{{name}}', checkedOut.student.name)
-        .replace('{{event_name}}', checkedOut.event.title)
-        .replace('{{event_location}}', checkedOut.event.location)
-        .replace(
-          '{{event_date_and_time}}',
-          checkedOut.check_out_at.toLocaleString()
-        )
-        .replace('{{checked_out_by}}', checkOutByName)
-    );
+    try {
+      await sendEmail(
+        studentbyUserId?.umindanao_email,
+        'Event Check-Out Successful',
+        CHECK_OUT_EMAIL.replace('{{name}}', checkedOut.student.name)
+          .replace('{{event_name}}', checkedOut.event.title)
+          .replace('{{event_location}}', checkedOut.event.location)
+          .replace(
+            '{{event_date_and_time}}',
+            checkedOut.check_out_at.toLocaleString()
+          )
+          .replace('{{checked_out_by}}', checkOutByName)
+      );
+    } catch (err) {
+      console.warn('Failed to send check-out email for student', student_id, err);
+    }
 
     return checkedOut;
   } catch (error: unknown) {
