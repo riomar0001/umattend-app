@@ -18,14 +18,16 @@ interface DateTimeSectionProps {
 }
 
 export function DateTimeSection({ control, form, timeOptions }: DateTimeSectionProps) {
+  const startDate = form.watch('startDate');
+
   return (
     <div className="space-y-3">
       <SectionLabel index={1} icon={<CalendarDays className="text-foreground h-4 w-4" />} title="When" />
 
       <div className="bg-card border-border space-y-1 rounded-2xl border shadow-sm backdrop-blur-sm">
-        <DateTimeRow label="Start" dateName="startDate" timeName="startTime" control={control} form={form} timeOptions={timeOptions} isFirst />
+        <DateTimeRow label="Start" dateName="startDate" timeName="startTime" control={control} form={form} timeOptions={timeOptions} isFirst disabledBefore={new Date()} />
         <div className="bg-border mx-4 h-px opacity-50" />
-        <DateTimeRow label="End" dateName="endDate" timeName="endTime" control={control} form={form} timeOptions={timeOptions} />
+        <DateTimeRow label="End" dateName="endDate" timeName="endTime" control={control} form={form} timeOptions={timeOptions} disabledBefore={startDate} />
       </div>
     </div>
   );
@@ -39,9 +41,10 @@ interface DateTimeRowProps {
   form: UseFormReturn<CreateEventFormValues>;
   timeOptions: string[];
   isFirst?: boolean;
+  disabledBefore?: Date;
 }
 
-function DateTimeRow({ label, dateName, timeName, control, form, timeOptions, isFirst }: DateTimeRowProps) {
+function DateTimeRow({ label, dateName, timeName, control, form, timeOptions, isFirst, disabledBefore }: DateTimeRowProps) {
   return (
     <div className={`flex items-center gap-3 px-5 ${isFirst ? 'pt-4 pb-3' : 'pt-3 pb-4'}`}>
       <Label className="text-muted-foreground w-10 shrink-0 text-xs font-medium tracking-wide uppercase">{label}</Label>
@@ -68,6 +71,7 @@ function DateTimeRow({ label, dateName, timeName, control, form, timeOptions, is
                         field.onChange(date);
                         form.trigger([dateName, timeName]);
                       }}
+                      disabled={disabledBefore ? { before: disabledBefore } : undefined}
                     />
                   </PopoverContent>
                 </Popover>
