@@ -200,6 +200,15 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
       throw new NotFoundError('Student not found');
     }
 
+    if (
+      event.department !== 'Open to all Departments' &&
+      student.department !== event.department
+    ) {
+      throw new ForbiddenError(
+        'This event is only open to students from the organizing department'
+      );
+    }
+
     const existingCheckIn = await tx.attendance.findFirst({
       where: {
         event_id,
@@ -248,6 +257,15 @@ const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
 
     if (!student) {
       throw new NotFoundError('Student not found');
+    }
+
+    if (
+      event.department !== 'Open to all Departments' &&
+      student.department !== event.department
+    ) {
+      throw new ForbiddenError(
+        'This event is only open to students from the organizing department'
+      );
     }
 
     const existingCheckIn = await tx.attendance.findFirst({
@@ -467,6 +485,40 @@ const massCheckOutStudents = async (
   check_out_at?: Date
 ) => {
   return await prisma.$transaction(async (tx) => {
+    const event = await tx.events.findUnique({
+      where: { id: event_id },
+    });
+
+    if (!event) {
+      throw new NotFoundError('Event not found');
+    }
+
+    const departmentMismatch: number[] = [];
+
+    if (event.department !== 'Open to all Departments') {
+      const students = await tx.student.findMany({
+        where: { student_id: { in: student_ids } },
+        select: { student_id: true, department: true },
+      });
+
+      const studentDeptMap = new Map(
+        students.map((s) => [s.student_id, s.department])
+      );
+
+      for (const sid of student_ids) {
+        const dept = studentDeptMap.get(sid);
+        if (dept !== undefined && dept !== event.department) {
+          departmentMismatch.push(sid);
+        }
+      }
+
+      if (departmentMismatch.length > 0) {
+        console.log(
+          `massCheckOut: students [${departmentMismatch.join(', ')}] department mismatch for event ${event_id}, skipping`
+        );
+      }
+    }
+
     // fetch existing attendance rows for the given student ids
     const existing = await tx.attendance.findMany({
       where: {
@@ -483,6 +535,10 @@ const massCheckOutStudents = async (
     const toUpdateIds: string[] = [];
 
     for (const sid of student_ids) {
+      if (departmentMismatch.includes(sid)) {
+        continue;
+      }
+
       const rec = existingMap.get(sid);
       if (!rec) {
         // Student has no attendance record for this event — skip and log
@@ -529,6 +585,7 @@ const massCheckOutStudents = async (
       updatedRecords,
       alreadyCheckedOut,
       notCheckedIn,
+      departmentMismatch,
       updatedCount: updatedRecords.length,
     };
   });
@@ -661,6 +718,15 @@ const checkInStudentById = async (
       throw new NotFoundError('Student not found');
     }
 
+    if (
+      event.department !== 'Open to all Departments' &&
+      student.department !== event.department
+    ) {
+      throw new ForbiddenError(
+        'This event is only open to students from the organizing department'
+      );
+    }
+
     const existingCheckIn = await tx.attendance.findFirst({
       where: { event_id, student_id },
     });
@@ -721,6 +787,15 @@ const checkOutStudentById = async (
 
     if (!student) {
       throw new NotFoundError('Student not found');
+    }
+
+    if (
+      event.department !== 'Open to all Departments' &&
+      student.department !== event.department
+    ) {
+      throw new ForbiddenError(
+        'This event is only open to students from the organizing department'
+      );
     }
 
     const existingCheckIn = await tx.attendance.findFirst({
