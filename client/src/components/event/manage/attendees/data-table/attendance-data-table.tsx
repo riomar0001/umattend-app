@@ -5,12 +5,10 @@ import { Search, Settings2, ChevronRight, ChevronLeft } from 'lucide-react';
 import {
   type ColumnDef,
   type ColumnFiltersState,
-  type SortingState,
   type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getSortedRowModel,
   useReactTable
 } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
@@ -32,10 +30,26 @@ interface DataTableProps<TData, TValue> {
   error?: unknown;
 }
 
+type PageItem = number | 'prev-ellipsis' | 'next-ellipsis';
+
+function getPageNumbers(current: number, total: number): PageItem[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages: PageItem[] = [1];
+  const left = current - 2;
+  const right = current + 2;
+
+  if (left > 2) pages.push('prev-ellipsis');
+  for (let i = Math.max(2, left); i <= Math.min(total - 1, right); i++) pages.push(i);
+  if (right < total - 1) pages.push('next-ellipsis');
+  if (total > 1) pages.push(total);
+
+  return pages;
+}
+
 export function AttendanceDataTable<TData, TValue>({
   columns,
   data,
-  search,
   onSearchChange,
   page,
   onPageChange,
@@ -44,37 +58,46 @@ export function AttendanceDataTable<TData, TValue>({
   isLoading,
   error
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [inputValue, setInputValue] = React.useState('');
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const debounceRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const handleSearchChange = (value: string) => {
+    setInputValue(value);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onSearchChange(value);
+      onPageChange(1);
+    }, 400);
+  };
+
+  React.useEffect(() => () => clearTimeout(debounceRef.current), []);
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility
-    },
+    state: { columnFilters, columnVisibility },
     manualPagination: true,
     pageCount: totalPages
   });
 
+  const pageNumbers = getPageNumbers(page, totalPages);
+
   return (
     <div className="w-full">
+      {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 py-4">
         <div className="relative max-w-sm flex-1">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2 transform" />
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             placeholder="Search by Student ID, Name, or Email..."
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
+            value={inputValue}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -88,25 +111,20 @@ export function AttendanceDataTable<TData, TValue>({
           <DropdownMenuContent align="end" className="w-56">
             {table
               .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                let headerText = '';
-                if (typeof column.columnDef.header === 'string') {
-                  headerText = column.columnDef.header;
-                } else if (column.columnDef.header === undefined) {
-                  headerText = column.id;
-                } else {
-                  headerText = column.id.charAt(0).toUpperCase() + column.id.slice(1);
-                }
-
+              .filter((col) => col.getCanHide())
+              .map((col) => {
+                const label =
+                  typeof col.columnDef.header === 'string'
+                    ? col.columnDef.header
+                    : col.id.charAt(0).toUpperCase() + col.id.slice(1);
                 return (
                   <DropdownMenuCheckboxItem
-                    key={column.id}
+                    key={col.id}
                     className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    checked={col.getIsVisible()}
+                    onCheckedChange={(v) => col.toggleVisibility(!!v)}
                   >
-                    {headerText}
+                    {label}
                   </DropdownMenuCheckboxItem>
                 );
               })}
@@ -114,99 +132,116 @@ export function AttendanceDataTable<TData, TValue>({
         </DropdownMenu>
       </div>
 
+      {/* Table */}
       <div className="rounded-md border">
-        <Table className="p-5">
+        <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return <TableHead key={header.id}>{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}</TableHead>;
-                })}
+            {table.getHeaderGroups().map((hg) => (
+              <TableRow key={hg.id}>
+                {hg.headers.map((h) => (
+                  <TableHead key={h.id}>
+                    {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  <div className="border-border grid grid-cols-10 gap-4">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((j) => (
-                      <Skeleton key={j} className="h-5 w-full" />
+                <TableCell colSpan={columns.length} className="h-24">
+                  <div className="grid grid-cols-10 gap-4 px-4">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <Skeleton key={i} className="h-5 w-full" />
                     ))}
                   </div>
                 </TableCell>
               </TableRow>
-            ) : error ? (
+            ) : error || !table.getRowModel().rows?.length ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={columns.length} className="h-24 text-center text-sm">
                   No records found
                 </TableCell>
               </TableRow>
-            ) : table.getRowModel().rows?.length ? (
+            ) : (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No records found
-                </TableCell>
-              </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
 
+      {/* Pagination */}
       <div className="mt-5 flex flex-col items-start justify-between gap-4 text-xs sm:flex-row sm:items-center md:text-sm">
         <p className="text-muted-foreground font-medium">
-          Showing {(page - 1) * 10 + 1} to {Math.min(page * 10, totalRecords)} of {totalRecords} records
+          {totalRecords === 0
+            ? 'No records'
+            : `Showing ${(page - 1) * 10 + 1}–${Math.min(page * 10, totalRecords)} of ${totalRecords}`}
         </p>
-        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+
+        <div className="flex items-center gap-1">
+          {/* Prev */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="h-8 gap-1 text-xs font-medium shadow-sm md:h-9 md:text-sm"
+            className="h-8 w-8 p-0"
           >
-            <ChevronLeft className="size-3 md:size-4" />
-            <span className="hidden sm:inline">Previous</span>
-            <span className="sm:hidden">Prev</span>
+            <ChevronLeft className="size-4" />
           </Button>
-          <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
-              return (
-                <Button
-                  key={pageNum}
-                  variant={page === pageNum ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => onPageChange(pageNum)}
-                  className={
-                    page === pageNum
-                      ? 'bg-primary text-primary-foreground h-8 w-8 text-xs font-semibold shadow-sm md:h-9 md:w-9 md:text-sm'
-                      : 'h-8 w-8 bg-transparent text-xs font-medium shadow-sm md:h-9 md:w-9 md:text-sm'
-                  }
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-          </div>
+
+          {/* Page numbers */}
+          {pageNumbers.map((p, i) =>
+            p === 'prev-ellipsis' || p === 'next-ellipsis' ? (
+              <Button
+                key={`ellipsis-${i}`}
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  onPageChange(
+                    p === 'prev-ellipsis'
+                      ? Math.max(1, page - 5)
+                      : Math.min(totalPages, page + 5)
+                  )
+                }
+                className="text-muted-foreground hover:bg-muted h-8 w-8 p-0 text-sm"
+              >
+                …
+              </Button>
+            ) : (
+              <Button
+                key={p}
+                variant="ghost"
+                size="sm"
+                onClick={() => onPageChange(p)}
+                className={`h-8 w-8 p-0 text-xs font-medium ${
+                  page === p
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 font-semibold'
+                    : 'hover:bg-muted'
+                }`}
+              >
+                {p}
+              </Button>
+            )
+          )}
+
+          {/* Next */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="h-8 gap-1 text-xs font-medium shadow-sm md:h-9 md:text-sm"
+            className="h-8 w-8 p-0"
           >
-            <span className="hidden sm:inline">Next</span>
-            <span className="sm:hidden">Next</span>
-            <ChevronRight className="size-3 md:size-4" />
+            <ChevronRight className="size-4" />
           </Button>
         </div>
       </div>

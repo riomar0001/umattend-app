@@ -139,17 +139,17 @@ export default function EventsTabsView({ defaultTab }: EventsTabsViewProps) {
         {!isUpcomingLoading && liveEvents.length > 0 && <div className="bg-border mb-10 h-px" />}
 
         {/* Upcoming / Past tabs */}
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="mb-6 grid h-10 w-full grid-cols-2 rounded-none border-b-2 bg-transparent">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className='backdrop-blur-sm p-2 rounded-md'>
+          <TabsList className="mb-6 grid h-10 w-full grid-cols-2 rounded-none border-b-2 bg-transparent backdrop-blur-xs">
             <TabsTrigger
               value="upcoming"
-              className="hover:text-foreground cursor-pointer rounded-none border-b-2 border-transparent bg-transparent text-sm font-medium transition-all duration-200 data-[state=active]:border-current data-[state=active]:shadow-none"
+              className="hover:text-foreground cursor-pointer rounded-none border-b-2 border-transparent bg-transparent text-sm font-medium transition-all duration-200 data-[state=active]:border-primary data-[state=active]:shadow-none"
             >
               Upcoming
             </TabsTrigger>
             <TabsTrigger
               value="past"
-              className="hover:text-foreground cursor-pointer rounded-none border-b-2 border-transparent bg-transparent text-sm font-medium transition-all duration-200 data-[state=active]:border-current data-[state=active]:shadow-none"
+              className="hover:text-foreground cursor-pointer rounded-none border-b-2 border-transparent bg-transparent text-sm font-medium transition-all duration-200 data-[state=active]:border-primary data-[state=active]:shadow-none"
             >
               Past
             </TabsTrigger>

@@ -72,28 +72,29 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
     <section className="border-border relative border-b backdrop-blur-[2px]">
       <div className="container mx-auto max-w-4xl px-4 pt-6 pb-10 sm:px-6 sm:pt-8 sm:pb-12">
         {/* Top bar: back nav + action buttons */}
-        <div className="mb-7 flex items-center justify-between">
-          <button
-            onClick={() => router.push(`/events/${event.id}`)}
-            className="group text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Event
-          </button>
-
-          <div className="flex items-center gap-2">
+        <div className="mb-7 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push(`/events/${event.id}`)}
+              className="group text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+              Event
+            </button>
             <span className="text-muted-foreground hidden items-center gap-1.5 text-xs sm:flex">
               <Shield className="h-3 w-3" />
               Manage mode
             </span>
+          </div>
 
-            {/* Draft / Post toggle */}
+          <div className="flex items-center gap-1.5">
+            {/* Draft / Post toggle — primary action */}
             {event.is_draft ? (
               <Button
                 size="sm"
                 onClick={() => postEvent({ path: { event_id: event.id } })}
                 disabled={isPosting}
-                className="gap-2 bg-emerald-600 font-semibold text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                className="gap-1.5 bg-emerald-600 font-semibold text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
               >
                 {isPosting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
                 Post Event
@@ -101,31 +102,38 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
             ) : (
               <Button
                 size="sm"
+                variant="ghost"
                 onClick={() => draftEvent({ path: { event_id: event.id } })}
                 disabled={isDrafting}
-                className="gap-2 bg-amber-500 font-semibold text-white hover:bg-amber-600 dark:bg-amber-500 dark:hover:bg-amber-400"
+                className="gap-1.5 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:hover:bg-amber-950/60"
               >
                 {isDrafting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <EyeOff className="h-3.5 w-3.5" />}
                 Unpost
               </Button>
             )}
 
-            <Button size="sm" onClick={() => setIsSheetOpen(true)} className="gap-2 font-semibold">
-              <Edit className="h-3.5 w-3.5" />
-              Edit
-            </Button>
-
+            {/* Edit — muted fill, no border */}
             <Button
               size="sm"
-              variant="destructive"
+              variant="ghost"
+              onClick={() => setIsSheetOpen(true)}
+              className="bg-muted hover:bg-muted/70 gap-1.5"
+            >
+              <Edit className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Edit</span>
+            </Button>
+
+            {/* Delete — ghost icon-only */}
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => {
                 setConfirmName('');
                 setDeleteDialogOpen(true);
               }}
-              className="gap-2 font-semibold"
+              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              Delete
             </Button>
           </div>
         </div>
