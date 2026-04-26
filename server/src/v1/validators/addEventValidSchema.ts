@@ -49,8 +49,11 @@ export const EventValidSchema = {
   },
   capacity: {
     optional: true,
-    notEmpty: { errorMessage: 'Capacity is required' },
-    isInt: { errorMessage: 'Capacity must be a number' },
+    notEmpty: { errorMessage: 'Capacity cannot be empty' },
+    isInt: {
+      options: { min: 1 },
+      errorMessage: 'Capacity must be greater than 0',
+    },
     toInt: true,
   },
   all_day: {
