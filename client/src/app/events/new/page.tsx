@@ -17,6 +17,7 @@ import { postEventMutation, patchEventByEventIdDraftMutation } from '@/api/clien
 import { DepartmentAndPrograms } from '@/lib/department-and-program';
 import { generateTimeOptions, getDefaultStartTime, addOneHour } from '@/lib/utils';
 
+
 export default function CreateEventPage() {
   const router = useRouter();
   const timeOptions = generateTimeOptions();
@@ -116,22 +117,74 @@ export default function CreateEventPage() {
   const handleApiError = (error: { response?: { status?: number; data?: unknown }; message?: string }) => {
     const status = error.response?.status;
     const errorData = error.response?.data;
-    let errorMessage = 'Failed to create event';
-
-    if (errorData && typeof errorData === 'object' && 'message' in errorData) {
-      errorMessage = String((errorData as { message: unknown }).message);
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
 
     if (status === 403) {
       toast.error('You do not have permission to create events');
-    } else if (status === 401) {
+      return;
+    }
+    if (status === 401) {
       toast.error('Please log in to create events');
       router.push('/');
-    } else {
-      toast.error(errorMessage);
+      return;
     }
+
+    // Parse server validation errors (400) and attach to form fields
+    if (status === 400 && errorData && typeof errorData === 'object') {
+      const rawMessage = (errorData as { message?: unknown }).message;
+
+      if (Array.isArray(rawMessage)) {
+        const validFields = new Set([
+          'title',
+          'description',
+          'department',
+          'location',
+          'startDate',
+          'startTime',
+          'endDate',
+          'endTime',
+          'isUnlimitedCapacity',
+          'capacity',
+          'check_out_required',
+          'all_day'
+        ]);
+        let fieldErrorsFound = false;
+
+        for (const err of rawMessage) {
+          // Extract field name: Zod format (path as array) or express-validator (path as string)
+          let fieldName: string;
+          if (Array.isArray(err.path)) {
+            fieldName = err.path[err.path.length - 1]; // ["body","description"] → "description"
+          } else if (typeof err.path === 'string') {
+            fieldName = err.path;
+          } else if (err.param) {
+            fieldName = err.param;
+          } else {
+            continue;
+          }
+
+          const message: string = err.message || err.msg || 'Invalid value';
+
+          if (fieldName && validFields.has(fieldName)) {
+            form.setError(fieldName as keyof CreateEventFormValues, { message });
+            fieldErrorsFound = true;
+          }
+        }
+
+        if (fieldErrorsFound) return;
+      }
+
+      if (typeof rawMessage === 'string') {
+        toast.error(rawMessage);
+        return;
+      }
+    }
+
+    // Generic fallback
+    const errorMessage =
+      errorData && typeof errorData === 'object' && 'message' in errorData
+        ? String((errorData as { message: unknown }).message)
+        : error.message || 'Failed to create event';
+    toast.error(errorMessage);
   };
 
   const onInvalid = () => {

@@ -4,7 +4,7 @@ import { parseTimeToMinutes } from '@/lib/utils';
 export const createEventSchema = z
   .object({
     title: z.string().min(1, 'Event title is required').max(140, 'Title is too long'),
-    description: z.string().min(10, 'Description must be at least 10 characters').max(500, 'Description is too long'),
+    description: z.string().min(20, 'Description must be at least 20 characters').max(500, 'Description is too long'),
     department: z.string().min(1, 'Department is required'),
     location: z.string().min(3, 'Location is required').max(140, 'Location is too long'),
     startDate: z.date(),
@@ -12,7 +12,7 @@ export const createEventSchema = z
     endDate: z.date(),
     endTime: z.string(),
     isUnlimitedCapacity: z.boolean().default(true),
-    capacity: z.number().int().positive().optional().nullable(),
+    capacity: z.number().int().positive('Capacity must be greater than 0').optional().nullable(),
     check_out_required: z.boolean().default(false),
     all_day: z.boolean().default(false)
   })
