@@ -157,7 +157,6 @@ export function EventCheckOutScanner({ eventId, isEventDone, isEventStarted }: E
     return () => {
       stopCamera();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Show message if event hasn't started or is done

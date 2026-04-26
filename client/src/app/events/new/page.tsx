@@ -17,7 +17,6 @@ import { postEventMutation, patchEventByEventIdDraftMutation } from '@/api/clien
 import { DepartmentAndPrograms } from '@/lib/department-and-program';
 import { generateTimeOptions, getDefaultStartTime, addOneHour } from '@/lib/utils';
 
-
 export default function CreateEventPage() {
   const router = useRouter();
   const timeOptions = generateTimeOptions();

@@ -4,3 +4,4 @@ node_modules
 *.md
 *.lock
 *.config.js
+src/api/
