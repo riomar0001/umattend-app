@@ -2346,6 +2346,182 @@ const postAndDraftEvent = {
   },
 };
 
+const massCheckOut = {
+  '/event/mass_check_out/{event_id}': {
+    post: {
+      tags: ['Event'],
+      summary: 'Mass check-out students',
+      description: 'Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only).',
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          in: 'path',
+          name: 'event_id',
+          required: true,
+          schema: { type: 'string' },
+          description: 'The unique ID of the event.',
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['student_ids'],
+              properties: {
+                student_ids: {
+                  type: 'array',
+                  items: { type: 'integer' },
+                  description: 'Array of student IDs to check out.',
+                  example: [20230001, 20230002],
+                },
+                checkout_time: {
+                  type: 'string',
+                  description: 'Optional checkout time in HH:MM (Philippines time) or ISO 8601 format.',
+                  example: '14:30',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: 'Mass check-out completed',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  message: { type: 'string', example: 'Mass check-out completed' },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      updatedCount: { type: 'integer', example: 1 },
+                      alreadyCheckedOut: {
+                        type: 'array',
+                        items: { type: 'integer' },
+                        description: 'Student IDs that were already checked out.',
+                      },
+                      notCheckedIn: {
+                        type: 'array',
+                        items: { type: 'integer' },
+                        description: 'Student IDs that had not checked in.',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: { description: 'Bad request — student_ids array is required' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden — Admin/CSG/Organizer only' },
+        404: { description: 'Event not found' },
+        500: { description: 'Internal server error' },
+      },
+    },
+  },
+};
+
+const checkoutStudentById = {
+  '/event/{event_id}/checkout/{student_id}': {
+    post: {
+      tags: ['Event'],
+      summary: 'Check out student by student ID',
+      description:
+        'Manually check out a specific student from an event by their numeric student ID (Admin/CSG/Organizer only). No QR code is required — intended for use from the Attendance Records management table.',
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          in: 'path',
+          name: 'event_id',
+          required: true,
+          schema: { type: 'string' },
+          description: 'The unique ID of the event.',
+        },
+        {
+          in: 'path',
+          name: 'student_id',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'The numeric student ID to check out.',
+          example: 20230001,
+        },
+      ],
+      responses: {
+        200: {
+          description: 'Student checked out successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  message: { type: 'string', example: 'Check-out successful' },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      event_id: { type: 'string' },
+                      event_name: { type: 'string' },
+                      student_id: { type: 'integer', example: 20230001 },
+                      student_name: { type: 'string' },
+                      checked_out_at: {
+                        type: 'string',
+                        format: 'date-time',
+                        example: '2025-10-15T17:30:00.000Z',
+                      },
+                      checked_out_by: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: {
+          description: 'Bad request — student has not checked in, or event_id / student_id missing',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  message: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden — Admin/CSG/Organizer only, or onboarding not complete' },
+        404: { description: 'Event or student not found' },
+        409: {
+          description: 'Student has already checked out of this event',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  message: {
+                    type: 'string',
+                    example: 'Student has already checked out of this event',
+                  },
+                },
+              },
+            },
+          },
+        },
+        500: { description: 'Internal server error' },
+      },
+    },
+  },
+};
+
 export const event = {
   ...createAndGetEvent,
   ...updateAndDeleteEvent,
@@ -2359,4 +2535,6 @@ export const event = {
   ...exportEventAttendeesToExcel,
   ...getEventAttendanceCount,
   ...postAndDraftEvent,
+  ...massCheckOut,
+  ...checkoutStudentById,
 };

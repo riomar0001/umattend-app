@@ -28,6 +28,12 @@ interface DataTableProps<TData, TValue> {
   totalRecords: number;
   isLoading: boolean;
   error?: unknown;
+  /** Called with the student ID string when the per-row Check Out button is clicked */
+  onCheckOut?: (studentId: string) => void;
+  /** Whether the event requires check-out (controls Actions column visibility) */
+  checkOutRequired?: boolean;
+  /** Student ID currently being checked out (used to show loading state on the button) */
+  loadingStudentId?: string | null;
 }
 
 type PageItem = number | 'prev-ellipsis' | 'next-ellipsis';
@@ -56,8 +62,13 @@ export function AttendanceDataTable<TData, TValue>({
   totalPages,
   totalRecords,
   isLoading,
-  error
+  error,
+  onCheckOut,
+  loadingStudentId
 }: DataTableProps<TData, TValue>) {
+  // onCheckOut / checkOutRequired / loadingStudentId are consumed by the
+  // column factory in the parent (event-attendees.tsx) and the composed
+  // columns are passed in directly, so no extra wiring is needed here.
   const [inputValue, setInputValue] = React.useState('');
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -83,7 +94,11 @@ export function AttendanceDataTable<TData, TValue>({
     onColumnVisibilityChange: setColumnVisibility,
     state: { columnFilters, columnVisibility },
     manualPagination: true,
-    pageCount: totalPages
+    pageCount: totalPages,
+    meta: {
+      onCheckOut,
+      loadingStudentId
+    }
   });
 
   const pageNumbers = getPageNumbers(page, totalPages);

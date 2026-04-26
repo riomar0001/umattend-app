@@ -2,8 +2,8 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteEventByEventIdData, DeleteEventByEventIdErrors, DeleteEventByEventIdResponses, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdErrors, DeleteEventRemoveOrganizerByEventIdResponses, GetAuthLoginHistoryData, GetAuthLoginHistoryErrors, GetAuthLoginHistoryResponses, GetEventAttendanceCountData, GetEventAttendanceCountErrors, GetEventAttendanceCountResponses, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesErrors, GetEventByEventIdAttendeesResponses, GetEventByEventIdData, GetEventByEventIdErrors, GetEventByEventIdOrganizersData, GetEventByEventIdOrganizersErrors, GetEventByEventIdOrganizersResponses, GetEventByEventIdResponses, GetEventData, GetEventErrors, GetEventExportByEventIdData, GetEventExportByEventIdErrors, GetEventExportByEventIdResponses, GetEventPastData, GetEventPastErrors, GetEventPastResponses, GetEventResponses, GetUserAttendedEventsData, GetUserAttendedEventsErrors, GetUserAttendedEventsResponses, GetUserData, GetUserErrors, GetUserEventsData, GetUserEventsErrors, GetUserEventsResponses, GetUserHostedEventsData, GetUserHostedEventsErrors, GetUserHostedEventsResponses, GetUserResponses, PatchEventByEventIdDraftData, PatchEventByEventIdDraftErrors, PatchEventByEventIdDraftResponses, PatchEventByEventIdPostData, PatchEventByEventIdPostErrors, PatchEventByEventIdPostResponses, PostAuthExchangeData, PostAuthExchangeErrors, PostAuthExchangeResponses, PostAuthLogoutData, PostAuthLogoutErrors, PostAuthLogoutResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdErrors, PostEventAddOrganizerByEventIdResponses, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeErrors, PostEventCheckInByEventIdByQrCodeResponses, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeErrors, PostEventCheckOutByEventIdByQrCodeResponses, PostEventData, PostEventErrors, PostEventResponses, PostUserOnboardingData, PostUserOnboardingErrors, PostUserOnboardingResponses, PutEventByEventIdData, PutEventByEventIdErrors, PutEventByEventIdResponses, PutUserData, PutUserErrors, PutUserResponses } from './types.gen';
-import { zDeleteEventByEventIdData, zDeleteEventByEventIdResponse, zDeleteEventRemoveOrganizerByEventIdData, zDeleteEventRemoveOrganizerByEventIdResponse, zGetAuthLoginHistoryData, zGetAuthLoginHistoryResponse, zGetEventAttendanceCountData, zGetEventAttendanceCountResponse, zGetEventByEventIdAttendeesData, zGetEventByEventIdAttendeesResponse, zGetEventByEventIdData, zGetEventByEventIdOrganizersData, zGetEventByEventIdOrganizersResponse, zGetEventByEventIdResponse, zGetEventData, zGetEventExportByEventIdData, zGetEventExportByEventIdResponse, zGetEventPastData, zGetEventPastResponse, zGetEventResponse, zGetUserAttendedEventsData, zGetUserAttendedEventsResponse, zGetUserData, zGetUserEventsData, zGetUserEventsResponse, zGetUserHostedEventsData, zGetUserHostedEventsResponse, zGetUserResponse, zPatchEventByEventIdDraftData, zPatchEventByEventIdDraftResponse, zPatchEventByEventIdPostData, zPatchEventByEventIdPostResponse, zPostAuthExchangeData, zPostAuthExchangeResponse, zPostAuthLogoutData, zPostAuthLogoutResponse, zPostAuthRefreshData, zPostAuthRefreshResponse, zPostEventAddOrganizerByEventIdData, zPostEventAddOrganizerByEventIdResponse, zPostEventCheckInByEventIdByQrCodeData, zPostEventCheckInByEventIdByQrCodeResponse, zPostEventCheckOutByEventIdByQrCodeData, zPostEventCheckOutByEventIdByQrCodeResponse, zPostEventData, zPostEventResponse, zPostUserOnboardingData, zPostUserOnboardingResponse, zPutEventByEventIdData, zPutEventByEventIdResponse, zPutUserData, zPutUserResponse } from './zod.gen';
+import type { DeleteEventByEventIdData, DeleteEventByEventIdErrors, DeleteEventByEventIdResponses, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdErrors, DeleteEventRemoveOrganizerByEventIdResponses, GetAuthLoginHistoryData, GetAuthLoginHistoryErrors, GetAuthLoginHistoryResponses, GetEventAttendanceCountData, GetEventAttendanceCountErrors, GetEventAttendanceCountResponses, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesErrors, GetEventByEventIdAttendeesResponses, GetEventByEventIdData, GetEventByEventIdErrors, GetEventByEventIdOrganizersData, GetEventByEventIdOrganizersErrors, GetEventByEventIdOrganizersResponses, GetEventByEventIdResponses, GetEventData, GetEventErrors, GetEventExportByEventIdData, GetEventExportByEventIdErrors, GetEventExportByEventIdResponses, GetEventPastData, GetEventPastErrors, GetEventPastResponses, GetEventResponses, GetUserAttendedEventsData, GetUserAttendedEventsErrors, GetUserAttendedEventsResponses, GetUserData, GetUserErrors, GetUserEventsData, GetUserEventsErrors, GetUserEventsResponses, GetUserHostedEventsData, GetUserHostedEventsErrors, GetUserHostedEventsResponses, GetUserResponses, PatchEventByEventIdDraftData, PatchEventByEventIdDraftErrors, PatchEventByEventIdDraftResponses, PatchEventByEventIdPostData, PatchEventByEventIdPostErrors, PatchEventByEventIdPostResponses, PostAuthExchangeData, PostAuthExchangeErrors, PostAuthExchangeResponses, PostAuthLogoutData, PostAuthLogoutErrors, PostAuthLogoutResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdErrors, PostEventAddOrganizerByEventIdResponses, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdErrors, PostEventByEventIdCheckoutByStudentIdResponses, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeErrors, PostEventCheckInByEventIdByQrCodeResponses, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeErrors, PostEventCheckOutByEventIdByQrCodeResponses, PostEventData, PostEventErrors, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdErrors, PostEventMassCheckOutByEventIdResponses, PostEventResponses, PostUserOnboardingData, PostUserOnboardingErrors, PostUserOnboardingResponses, PutEventByEventIdData, PutEventByEventIdErrors, PutEventByEventIdResponses, PutUserData, PutUserErrors, PutUserResponses } from './types.gen';
+import { zDeleteEventByEventIdData, zDeleteEventByEventIdResponse, zDeleteEventRemoveOrganizerByEventIdData, zDeleteEventRemoveOrganizerByEventIdResponse, zGetAuthLoginHistoryData, zGetAuthLoginHistoryResponse, zGetEventAttendanceCountData, zGetEventAttendanceCountResponse, zGetEventByEventIdAttendeesData, zGetEventByEventIdAttendeesResponse, zGetEventByEventIdData, zGetEventByEventIdOrganizersData, zGetEventByEventIdOrganizersResponse, zGetEventByEventIdResponse, zGetEventData, zGetEventExportByEventIdData, zGetEventExportByEventIdResponse, zGetEventPastData, zGetEventPastResponse, zGetEventResponse, zGetUserAttendedEventsData, zGetUserAttendedEventsResponse, zGetUserData, zGetUserEventsData, zGetUserEventsResponse, zGetUserHostedEventsData, zGetUserHostedEventsResponse, zGetUserResponse, zPatchEventByEventIdDraftData, zPatchEventByEventIdDraftResponse, zPatchEventByEventIdPostData, zPatchEventByEventIdPostResponse, zPostAuthExchangeData, zPostAuthExchangeResponse, zPostAuthLogoutData, zPostAuthLogoutResponse, zPostAuthRefreshData, zPostAuthRefreshResponse, zPostEventAddOrganizerByEventIdData, zPostEventAddOrganizerByEventIdResponse, zPostEventByEventIdCheckoutByStudentIdData, zPostEventByEventIdCheckoutByStudentIdResponse, zPostEventCheckInByEventIdByQrCodeData, zPostEventCheckInByEventIdByQrCodeResponse, zPostEventCheckOutByEventIdByQrCodeData, zPostEventCheckOutByEventIdByQrCodeResponse, zPostEventData, zPostEventMassCheckOutByEventIdData, zPostEventMassCheckOutByEventIdResponse, zPostEventResponse, zPostUserOnboardingData, zPostUserOnboardingResponse, zPutEventByEventIdData, zPutEventByEventIdResponse, zPutUserData, zPutUserResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -706,6 +706,60 @@ export class Event {
                 }
             ],
             url: '/event/{event_id}/draft',
+            ...options
+        });
+    }
+    
+    /**
+     * Mass check-out students
+     *
+     * Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only).
+     */
+    public static postEventMassCheckOutByEventId<ThrowOnError extends boolean = false>(options: Options<PostEventMassCheckOutByEventIdData, ThrowOnError>) {
+        return (options.client ?? client).post<PostEventMassCheckOutByEventIdResponses, PostEventMassCheckOutByEventIdErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zPostEventMassCheckOutByEventIdData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zPostEventMassCheckOutByEventIdResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/event/mass_check_out/{event_id}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Check out student by student ID
+     *
+     * Manually check out a specific student from an event by their numeric student ID (Admin/CSG/Organizer only). No QR code is required — intended for use from the Attendance Records management table.
+     */
+    public static postEventByEventIdCheckoutByStudentId<ThrowOnError extends boolean = false>(options: Options<PostEventByEventIdCheckoutByStudentIdData, ThrowOnError>) {
+        return (options.client ?? client).post<PostEventByEventIdCheckoutByStudentIdResponses, PostEventByEventIdCheckoutByStudentIdErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zPostEventByEventIdCheckoutByStudentIdData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zPostEventByEventIdCheckoutByStudentIdResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/event/{event_id}/checkout/{student_id}',
             ...options
         });
     }

@@ -860,12 +860,76 @@ const draftEvent = async (req: Request, res: Response): Promise<Response> => {
   }
 };
 
+const checkOutStudentById = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { event_id, student_id } = req.params;
+
+    if (!event_id) {
+      return HTTPErrorResponse(res, 400, 'event_id is required');
+    }
+
+    const studentIdNum = parseInt(student_id, 10);
+    if (!student_id || isNaN(studentIdNum)) {
+      return HTTPErrorResponse(res, 400, 'student_id must be a valid integer');
+    }
+
+    const { done_onboarding } = req.user;
+
+    if (!done_onboarding) {
+      throw new ForbiddenError('User has not completed onboarding');
+    }
+
+    const checkedOut = await eventServices.checkOutStudentById(
+      event_id,
+      studentIdNum,
+      req.user.id
+    );
+
+    if (!checkedOut) {
+      return HTTPErrorResponse(res, 500, 'Failed to create check-out record');
+    }
+
+    const responseData = {
+      event_id: checkedOut.event_id,
+      event_name: checkedOut.event.title,
+      student_id: checkedOut.student.student_id,
+      student_name: checkedOut.student.name,
+      checked_out_at: checkedOut.check_out_at,
+      checked_out_by: checkedOut.check_out_by,
+    };
+
+    return HTTPSuccessResponse(res, 200, 'Check-out successful', responseData);
+  } catch (error: unknown) {
+    if (error instanceof ConflictError) {
+      return HTTPErrorResponse(res, 409, error.message);
+    }
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
+    }
+    if (error instanceof NotFoundError) {
+      return HTTPErrorResponse(res, 404, error.message);
+    }
+    if (error instanceof ForbiddenError) {
+      return HTTPErrorResponse(res, 403, error.message);
+    }
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('Unexpected error checking out student by id', error);
+      return HTTPErrorResponse(res, 500, error);
+    }
+    return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
+  }
+};
+
 const eventController = {
   addEvent,
   deleteEvent,
   updateEvent,
   createCheckInEvent,
   createCheckOutEvent,
+  checkOutStudentById,
   massCheckOutEvent,
   addOrganizer,
   removeOrganizer,

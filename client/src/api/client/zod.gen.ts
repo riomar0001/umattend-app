@@ -748,3 +748,52 @@ export const zPatchEventByEventIdDraftResponse = z.object({
     message: z.optional(z.string()),
     data: z.optional(z.null())
 });
+
+export const zPostEventMassCheckOutByEventIdData = z.object({
+    body: z.object({
+        student_ids: z.array(z.int()),
+        checkout_time: z.optional(z.string())
+    }),
+    path: z.object({
+        event_id: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mass check-out completed
+ */
+export const zPostEventMassCheckOutByEventIdResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        updatedCount: z.optional(z.int()),
+        alreadyCheckedOut: z.optional(z.array(z.int())),
+        notCheckedIn: z.optional(z.array(z.int()))
+    }))
+});
+
+export const zPostEventByEventIdCheckoutByStudentIdData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        event_id: z.string(),
+        student_id: z.int()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Student checked out successfully
+ */
+export const zPostEventByEventIdCheckoutByStudentIdResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        event_id: z.optional(z.string()),
+        event_name: z.optional(z.string()),
+        student_id: z.optional(z.int()),
+        student_name: z.optional(z.string()),
+        checked_out_at: z.optional(z.iso.datetime()),
+        checked_out_by: z.optional(z.string())
+    }))
+});

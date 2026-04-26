@@ -633,6 +633,62 @@ const checkIfUserAttended = async (event_id: string, student_id: number) => {
   };
 };
 
+/**
+ * Directly check out a student from an event using their numeric student_id.
+ * This is used by organizers to manually check out a student from the
+ * Attendance Records table — no QR code decoding required.
+ */
+const checkOutStudentById = async (
+  event_id: string,
+  student_id: number,
+  check_out_by: string,
+  check_out_at?: Date
+) => {
+  return await prisma.$transaction(async (tx) => {
+    const event = await tx.events.findUnique({
+      where: { id: event_id },
+    });
+
+    if (!event) {
+      throw new NotFoundError('Event not found');
+    }
+
+    const student = await tx.student.findUnique({
+      where: { student_id },
+    });
+
+    if (!student) {
+      throw new NotFoundError('Student not found');
+    }
+
+    const existingCheckIn = await tx.attendance.findFirst({
+      where: { event_id, student_id },
+    });
+
+    if (!existingCheckIn) {
+      throw new BadRequestError('Student has not checked in to this event');
+    }
+
+    if (existingCheckIn.check_out_at) {
+      throw new ConflictError('Student has already checked out of this event');
+    }
+
+    return await tx.attendance.update({
+      where: { id: existingCheckIn.id },
+      data: {
+        check_out_at: check_out_at ?? new Date(),
+        check_out_by,
+      },
+      include: {
+        event: true,
+        student: true,
+        check_in_by_user: true,
+        check_out_by_user: true,
+      },
+    });
+  });
+};
+
 const eventRepository = {
   createEvent,
   deleteEvent,
@@ -640,6 +696,7 @@ const eventRepository = {
   getEventDetails,
   createCheckInEvent,
   createCheckOutEvent,
+  checkOutStudentById,
   addOrganizer,
   removeOrganizer,
   getOrganizersByEventId,

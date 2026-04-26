@@ -1857,3 +1857,141 @@ export type PatchEventByEventIdDraftResponses = {
 };
 
 export type PatchEventByEventIdDraftResponse = PatchEventByEventIdDraftResponses[keyof PatchEventByEventIdDraftResponses];
+
+export type PostEventMassCheckOutByEventIdData = {
+    body: {
+        /**
+         * Array of student IDs to check out.
+         */
+        student_ids: Array<number>;
+        /**
+         * Optional checkout time in HH:MM (Philippines time) or ISO 8601 format.
+         */
+        checkout_time?: string;
+    };
+    path: {
+        /**
+         * The unique ID of the event.
+         */
+        event_id: string;
+    };
+    query?: never;
+    url: '/event/mass_check_out/{event_id}';
+};
+
+export type PostEventMassCheckOutByEventIdErrors = {
+    /**
+     * Bad request — student_ids array is required
+     */
+    400: unknown;
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin/CSG/Organizer only
+     */
+    403: unknown;
+    /**
+     * Event not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type PostEventMassCheckOutByEventIdResponses = {
+    /**
+     * Mass check-out completed
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            updatedCount?: number;
+            /**
+             * Student IDs that were already checked out.
+             */
+            alreadyCheckedOut?: Array<number>;
+            /**
+             * Student IDs that had not checked in.
+             */
+            notCheckedIn?: Array<number>;
+        };
+    };
+};
+
+export type PostEventMassCheckOutByEventIdResponse = PostEventMassCheckOutByEventIdResponses[keyof PostEventMassCheckOutByEventIdResponses];
+
+export type PostEventByEventIdCheckoutByStudentIdData = {
+    body?: never;
+    path: {
+        /**
+         * The unique ID of the event.
+         */
+        event_id: string;
+        /**
+         * The numeric student ID to check out.
+         */
+        student_id: number;
+    };
+    query?: never;
+    url: '/event/{event_id}/checkout/{student_id}';
+};
+
+export type PostEventByEventIdCheckoutByStudentIdErrors = {
+    /**
+     * Bad request — student has not checked in, or event_id / student_id missing
+     */
+    400: {
+        success?: boolean;
+        message?: string;
+    };
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin/CSG/Organizer only, or onboarding not complete
+     */
+    403: unknown;
+    /**
+     * Event or student not found
+     */
+    404: unknown;
+    /**
+     * Student has already checked out of this event
+     */
+    409: {
+        success?: boolean;
+        message?: string;
+    };
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type PostEventByEventIdCheckoutByStudentIdError = PostEventByEventIdCheckoutByStudentIdErrors[keyof PostEventByEventIdCheckoutByStudentIdErrors];
+
+export type PostEventByEventIdCheckoutByStudentIdResponses = {
+    /**
+     * Student checked out successfully
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            event_id?: string;
+            event_name?: string;
+            student_id?: number;
+            student_name?: string;
+            checked_out_at?: string;
+            checked_out_by?: string;
+        };
+    };
+};
+
+export type PostEventByEventIdCheckoutByStudentIdResponse = PostEventByEventIdCheckoutByStudentIdResponses[keyof PostEventByEventIdCheckoutByStudentIdResponses];

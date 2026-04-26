@@ -748,6 +748,99 @@ const getTotalAttendanceByEventId = async (
   return await eventRepository.getEventAttendanceCount(event_id);
 };
 
+/**
+ * Manually check out a student from an event by their numeric student_id.
+ * Used by organizers via the Attendance Records table action.
+ */
+const checkOutStudentById = async (
+  event_id: string,
+  student_id: number,
+  check_out_by: string
+) => {
+  try {
+    if (!event_id) {
+      throw new NotFoundError('Event ID is required');
+    }
+
+    const eventDetails = await eventRepository.getEventDetails(event_id);
+    if (!eventDetails) {
+      throw new NotFoundError('Event not found');
+    }
+    if (!eventDetails.check_out_required) {
+      throw new NoCheckoutRequiredError(
+        'This event does not require check-out'
+      );
+    }
+
+    const checkedOut = await eventRepository.checkOutStudentById(
+      event_id,
+      student_id,
+      check_out_by
+    );
+
+    if (!checkedOut) {
+      throw new Error('Failed to create check-out record');
+    }
+
+    if (!checkedOut.check_out_by_user) {
+      throw new NotFoundError('Check-out record not found');
+    }
+
+    if (!checkedOut.check_out_at) {
+      throw new NotFoundError('Check-out date not found');
+    }
+
+    const studentbyUserId = await studentRepository.getUserByStudentId(
+      student_id
+    );
+
+    if (!studentbyUserId) {
+      throw new NotFoundError('Student user not found');
+    }
+
+    const checkOutBy = await studentRepository.getStudentByUserId(
+      checkedOut.check_out_by_user.id
+    );
+
+    const checkOutByName = checkOutBy ? checkOutBy.name : 'Organizer/Admin';
+
+    await sendEmail(
+      studentbyUserId?.umindanao_email,
+      'Event Check-Out Successful',
+      CHECK_OUT_EMAIL.replace('{{name}}', checkedOut.student.name)
+        .replace('{{event_name}}', checkedOut.event.title)
+        .replace('{{event_location}}', checkedOut.event.location)
+        .replace(
+          '{{event_date_and_time}}',
+          checkedOut.check_out_at.toLocaleString()
+        )
+        .replace('{{checked_out_by}}', checkOutByName)
+    );
+
+    return checkedOut;
+  } catch (error: unknown) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new Error('Unique constraint failed');
+      }
+      if (error.code === 'P2003') {
+        throw new Error('Foreign key constraint failed');
+      }
+    }
+    if (
+      error instanceof Prisma.PrismaClientValidationError &&
+      NODE_ENV === 'DEVELOPMENT'
+    ) {
+      throw new Error('Validation failed: ' + error.message);
+    }
+    console.error(error);
+    throw error;
+  }
+};
+
 const eventServices = {
   addEvent,
   deleteEvent,
@@ -755,6 +848,7 @@ const eventServices = {
   getAllEvents,
   createCheckInEvent,
   createCheckOutEvent,
+  checkOutStudentById,
   massCheckOutStudents,
   addOrganizer,
   removeOrganizer,

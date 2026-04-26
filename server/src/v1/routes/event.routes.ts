@@ -72,6 +72,14 @@ router.post(
 );
 
 router.post(
+  `/:event_id/checkout/:student_id`,
+  authMiddleware,
+  checkRole('admin', 'csg'),
+  checkOrganizer,
+  eventController.checkOutStudentById
+);
+
+router.post(
   `/add_organizer/:event_id`,
   authMiddleware,
   checkRole('admin', 'csg'),

@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import type { AttendanceRecord } from '@/types/events';
-import { columns } from './data-table/attendance-columns';
+import { createColumns } from './data-table/attendance-columns';
 import { AttendanceDataTable } from './data-table/attendance-data-table';
 import EvenAttendeesSkeleton from './event-attendees-skeleton';
 import EventAttendeesStats from './event-attendees-stats';
@@ -19,9 +19,10 @@ interface EventAttendeesProps {
   checkOutRequired: boolean;
 }
 
-export default function EventAttendees({ eventId }: EventAttendeesProps) {
+export default function EventAttendees({ eventId, checkOutRequired }: EventAttendeesProps) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null);
   const limit = 10;
 
   const {
@@ -100,6 +101,41 @@ export default function EventAttendees({ eventId }: EventAttendeesProps) {
     }
   };
 
+  /**
+   * Manually check out a single student from the Attendance Records table.
+   * The student_id stored in the AttendanceRecord is the numeric student_id string.
+   */
+  const handleCheckOut = async (studentId: string) => {
+    if (loadingStudentId) return; // prevent concurrent requests
+
+    setLoadingStudentId(studentId);
+    const toastId = toast.loading('Checking out student…');
+
+    try {
+      await Event.postEventByEventIdCheckoutByStudentId({
+        path: {
+          event_id: eventId,
+          student_id: parseInt(studentId, 10)
+        },
+        throwOnError: true
+      });
+
+      toast.dismiss(toastId);
+      toast.success('Student checked out successfully');
+      handleRefresh();
+    } catch (err: unknown) {
+      toast.dismiss(toastId);
+
+      // Extract a readable message from the error response if available
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      const msg = axiosErr?.response?.data?.message ?? 'Failed to check out student';
+      toast.error(msg);
+      console.error('Check-out error:', err);
+    } finally {
+      setLoadingStudentId(null);
+    }
+  };
+
   const attendanceRecords: AttendanceRecord[] =
     attendeesData?.data?.data
       ?.map((item) => {
@@ -125,6 +161,11 @@ export default function EventAttendees({ eventId }: EventAttendeesProps) {
 
   const totalStudentsStats = Number(attendeesStatsData?.data?.totalAttendance);
   const totalCheckedOutStats = Number(attendeesStatsData?.data?.totalCheckedOut);
+
+  // Build columns — include the Actions column only when check-out is required
+  const tableColumns = createColumns({
+    checkOutRequired
+  });
 
   if (attendeesStatsIsLoading) {
     return (
@@ -162,7 +203,7 @@ export default function EventAttendees({ eventId }: EventAttendeesProps) {
       <EventAttendeesStats totalStudents={totalStudentsStats} totalCheckedOut={totalCheckedOutStats} isLoading={attendeesStatsIsLoading} />
 
       <AttendanceDataTable
-        columns={columns}
+        columns={tableColumns}
         data={attendanceRecords}
         search={search}
         onSearchChange={setSearch}
@@ -172,6 +213,8 @@ export default function EventAttendees({ eventId }: EventAttendeesProps) {
         totalRecords={totalStudents}
         isLoading={isLoading}
         error={error}
+        onCheckOut={handleCheckOut}
+        loadingStudentId={loadingStudentId}
       />
     </div>
   );
