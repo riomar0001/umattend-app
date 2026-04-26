@@ -31,13 +31,29 @@ const formatLocation = (city?: string, region?: string, country?: string) => {
   return parts.join(', ');
 };
 
+const formatDateTime = (dateStr?: string) => {
+  if (!dateStr) return 'Unknown';
+  const d = new Date(dateStr);
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  }).format(d);
+};
+
 type LoginHistoryEntry = {
   id?: string;
+  ip_address?: string;
   browser?: string;
   os?: string;
+  device?: string;
   city?: string;
   region?: string;
   country?: string;
+  created_at?: string;
 };
 
 export const LoginHistoryTable = () => {
@@ -47,7 +63,7 @@ export const LoginHistoryTable = () => {
     retry: 1
   });
 
-  const loginHistory = (data?.data?.login_history || []).slice(0, 5) as LoginHistoryEntry[];
+  const loginHistory = (data?.data?.login_history || []).slice(0, 10) as LoginHistoryEntry[];
 
   if (isError) {
     return (
@@ -71,7 +87,7 @@ export const LoginHistoryTable = () => {
     <Card className="border-border border shadow-sm">
       <CardHeader className="border-border border-b pb-4">
         <CardTitle className="text-foreground text-lg font-semibold">Login History</CardTitle>
-        <CardDescription className="text-muted-foreground">View your 5 most recent login sessions</CardDescription>
+        <CardDescription className="text-muted-foreground">Your 10 most recent login sessions</CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
         {isLoading ? (
@@ -85,21 +101,31 @@ export const LoginHistoryTable = () => {
         ) : (
           <div className="space-y-3">
             {loginHistory.map((entry) => {
-              const login = entry as LoginHistoryEntry;
-              const location = formatLocation(login.city, login.region, login.country);
-              const browser = login.browser || 'Unknown Browser';
-              const os = login.os || 'Unknown OS';
+              const location = formatLocation(entry.city, entry.region, entry.country);
+              const browser = entry.browser || 'Unknown Browser';
+              const os = entry.os || 'Unknown OS';
+              const device = entry.device || 'Unknown Device';
+              const ipAddress = entry.ip_address || 'Unknown IP';
+              const dateTime = formatDateTime(entry.created_at);
 
               return (
-                <div key={login.id} className="border-border hover:bg-muted/50 rounded-lg border p-4">
-                  <div className="space-y-2">
+                <div key={entry.id} className="border-border hover:bg-muted/50 rounded-lg border p-4 transition-colors">
+                  {/* Date / time header */}
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-foreground text-xs font-semibold">{dateTime}</span>
+                    <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 font-mono text-xs">
+                      {ipAddress}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
                       <MapPin className="text-muted-foreground h-4 w-4 flex-shrink-0" />
                       <span className="text-muted-foreground text-sm">{location}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Monitor className="text-muted-foreground h-4 w-4 flex-shrink-0" />
-                      <span className="text-foreground text-sm">{os}</span>
+                      <span className="text-foreground text-sm">{device} · {os}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Globe className="text-muted-foreground h-4 w-4 flex-shrink-0" />

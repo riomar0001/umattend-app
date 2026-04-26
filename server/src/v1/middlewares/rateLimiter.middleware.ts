@@ -30,6 +30,12 @@ return 1
 `;
 
 function getClientIp(req: Request): string {
+  // CF-Connecting-IP is set by Cloudflare and is the most reliable real-visitor
+  // IP when the stack is Cloudflare → Nginx → Express.
+  const cfIp = req.headers['cf-connecting-ip'] as string | undefined;
+  if (cfIp) return cfIp.trim();
+
+  // Fallback: leftmost entry of X-Forwarded-For (added by Nginx/proxies)
   const forwarded = req.headers['x-forwarded-for'] as string | undefined;
   return forwarded?.split(',')[0]?.trim() ?? req.ip ?? 'unknown';
 }

@@ -338,13 +338,18 @@ const loginHistory = {
                           type: 'object',
                           properties: {
                             id: { type: 'string' },
-                            timestamp: {
+                            ip_address: { type: 'string', example: '203.0.113.42' },
+                            browser: { type: 'string', example: 'Chrome' },
+                            os: { type: 'string', example: 'Windows' },
+                            device: { type: 'string', example: 'Desktop' },
+                            city: { type: 'string', example: 'Davao City' },
+                            region: { type: 'string', example: 'Davao Region' },
+                            country: { type: 'string', example: 'Philippines' },
+                            created_at: {
                               type: 'string',
                               format: 'date-time',
                               example: '2025-01-15T10:30:00.000Z',
                             },
-                            ipAddress: { type: 'string' },
-                            userAgent: { type: 'string' },
                           },
                         },
                       },
