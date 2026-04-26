@@ -133,9 +133,18 @@ export default function CreateEventPage() {
 
       if (Array.isArray(rawMessage)) {
         const validFields = new Set([
-          'title', 'description', 'department', 'location',
-          'startDate', 'startTime', 'endDate', 'endTime',
-          'isUnlimitedCapacity', 'capacity', 'check_out_required', 'all_day',
+          'title',
+          'description',
+          'department',
+          'location',
+          'startDate',
+          'startTime',
+          'endDate',
+          'endTime',
+          'isUnlimitedCapacity',
+          'capacity',
+          'check_out_required',
+          'all_day'
         ]);
         let fieldErrorsFound = false;
 

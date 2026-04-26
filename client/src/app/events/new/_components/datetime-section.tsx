@@ -25,7 +25,16 @@ export function DateTimeSection({ control, form, timeOptions }: DateTimeSectionP
       <SectionLabel index={1} icon={<CalendarDays className="text-foreground h-4 w-4" />} title="When" />
 
       <div className="bg-card border-border space-y-1 rounded-2xl border shadow-sm backdrop-blur-sm">
-        <DateTimeRow label="Start" dateName="startDate" timeName="startTime" control={control} form={form} timeOptions={timeOptions} isFirst disabledBefore={new Date()} />
+        <DateTimeRow
+          label="Start"
+          dateName="startDate"
+          timeName="startTime"
+          control={control}
+          form={form}
+          timeOptions={timeOptions}
+          isFirst
+          disabledBefore={new Date()}
+        />
         <div className="bg-border mx-4 h-px opacity-50" />
         <DateTimeRow label="End" dateName="endDate" timeName="endTime" control={control} form={form} timeOptions={timeOptions} disabledBefore={startDate} />
       </div>
