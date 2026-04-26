@@ -108,7 +108,7 @@ const EventDetails = ({ event, onClose }: EventDetailsProps) => {
 
             {/* Title */}
             <div className="min-w-0 flex-1 pt-1">
-              <SheetTitle className="text-foreground text-xl leading-tight font-black tracking-tighter break-words sm:text-2xl">{title}</SheetTitle>
+              <SheetTitle className="text-foreground text-xl leading-tight font-black tracking-tighter break-words sm:text-4xl">{title}</SheetTitle>
             </div>
           </div>
         </div>
