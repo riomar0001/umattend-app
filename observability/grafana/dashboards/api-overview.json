@@ -5,7 +5,7 @@
   "tags": ["umattend", "api"],
   "timezone": "browser",
   "schemaVersion": 38,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "time": { "from": "now-1h", "to": "now" },
   "editable": true,
@@ -16,11 +16,35 @@
         "current": {},
         "hide": 0,
         "includeAll": false,
-        "label": "Data Source",
+        "label": "Metrics",
         "multi": false,
         "name": "datasource",
         "options": [],
         "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Logs",
+        "multi": false,
+        "name": "loki_datasource",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Traces",
+        "multi": false,
+        "name": "tempo_datasource",
+        "options": [],
+        "query": "tempo",
         "refresh": 1,
         "type": "datasource"
       }
@@ -430,6 +454,53 @@
           "expr": "100 * sum(rate(http_requests_total{status_code=~\"4..\"}[5m])) / sum(rate(http_requests_total[5m]))",
           "legendFormat": "4xx Rate",
           "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Recent Traces",
+      "type": "traces",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 28 },
+      "datasource": { "type": "tempo", "uid": "${tempo_datasource}" },
+      "options": {
+        "dedupStrategy": "none",
+        "enableNodeGraph": true,
+        "showBytesReceivedColumn": false
+      },
+      "targets": [
+        {
+          "datasource": { "type": "tempo", "uid": "${tempo_datasource}" },
+          "queryType": "traceql",
+          "query": "{resource.service.name=\"umattend-server\"}",
+          "limit": 20,
+          "tableType": "traces",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Server Logs",
+      "type": "logs",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 38 },
+      "datasource": { "type": "loki", "uid": "${loki_datasource}" },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${loki_datasource}" },
+          "expr": "{service_name=\"umattend-server\"}",
+          "maxLines": 100,
+          "refId": "A"
         }
       ]
     }

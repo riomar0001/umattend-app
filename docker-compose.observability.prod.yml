@@ -1,31 +1,14 @@
 services:
-  prometheus:
-    image: prom/prometheus:v3.4.0
-    container_name: umattend_prometheus_prod
+  otel-lgtm:
+    image: grafana/otel-lgtm:0.8.1
+    container_name: umattend_otel_lgtm_prod
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=30d'
-      - '--web.enable-lifecycle'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    volumes:
-      - ./observability/prometheus/prometheus.prod.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data_prod:/prometheus
-    expose:
-      - "9090"
-    networks:
-      - observability_net
-
-  grafana:
-    image: grafana/grafana:11.6.1
-    container_name: umattend_grafana_prod
-    restart: unless-stopped
     ports:
-      - "127.0.0.1:8080:3000"
+      - "127.0.0.1:8080:3000"   # Grafana (nginx proxies /grafana/)
+      - "127.0.0.1:4319:4317"   # OTLP gRPC — different host port from staging
+      - "127.0.0.1:4320:4318"   # OTLP HTTP — different host port from staging
     environment:
       GF_SERVER_ROOT_URL: https://umattend.site/grafana/
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
@@ -37,11 +20,13 @@ services:
       GF_SECURITY_COOKIE_SECURE: "true"
       GF_SECURITY_STRICT_TRANSPORT_SECURITY: "true"
     volumes:
+      - ./observability/prometheus/prometheus.prod.yml:/etc/prometheus/prometheus.yml:ro
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
-      - grafana_data_prod:/var/lib/grafana
-    depends_on:
-      - prometheus
+      - otel_lgtm_grafana_prod:/var/lib/grafana
+      - otel_lgtm_prometheus_prod:/prometheus
+      - otel_lgtm_loki_prod:/loki
+      - otel_lgtm_tempo_prod:/tmp/tempo
     networks:
       - observability_net
 
@@ -63,8 +48,10 @@ services:
       - observability_net
 
 volumes:
-  prometheus_data_prod:
-  grafana_data_prod:
+  otel_lgtm_grafana_prod:
+  otel_lgtm_prometheus_prod:
+  otel_lgtm_loki_prod:
+  otel_lgtm_tempo_prod:
 
 networks:
   observability_net:
