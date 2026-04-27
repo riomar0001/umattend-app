@@ -30,23 +30,21 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Only attempt token refresh on 401 Unauthorized errors (not 403 or other errors)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const { refreshToken, setAuth, logout } = useAuthStore.getState();
-
-      if (!refreshToken) {
-        logout();
-        window.location.href = '/';
-        return Promise.reject(error);
-      }
+      const { replaceAccessToken, logout } = useAuthStore.getState();
 
       try {
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, { refresh_token: refreshToken }, { withCredentials: true });
+        // Rely on the HttpOnly refresh_token cookie — no token in request body
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
 
-        const { access_token, refresh_token } = response.data.data;
-        setAuth(access_token, refresh_token);
+        const { access_token } = response.data.data;
+        replaceAccessToken(access_token);
 
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return axiosInstance(originalRequest);

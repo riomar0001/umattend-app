@@ -10,12 +10,7 @@ const router = express.Router();
 
 router.get('/google', oauthRateLimiter, authController.googleAuth);
 router.get('/google/callback', oauthRateLimiter, authController.googleCallback);
-router.post(
-  '/refresh',
-  authMiddleware,
-  loginRateLimiter,
-  authController.refreshAccessToken
-);
+router.post('/refresh', loginRateLimiter, authController.refreshAccessToken);
 router.post(
   '/logout',
   authMiddleware,

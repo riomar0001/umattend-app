@@ -20,6 +20,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   setAuth: (accessToken: string, refreshToken: string) => void;
+  replaceAccessToken: (accessToken: string) => void;
   updateUser: (user: User) => void;
   logout: () => void;
   isAdmin: () => boolean;
@@ -71,7 +72,7 @@ export const useAuthStore = create<AuthState>()(
 
       isAuthenticated: () => {
         const state = get();
-        return state.accessToken !== null && state.accessToken !== null && state.user !== null;
+        return state.accessToken !== null && state.user !== null;
       },
 
       isDoneOnboarding: () => {
@@ -80,7 +81,9 @@ export const useAuthStore = create<AuthState>()(
       }
     }),
     {
-      name: 'umattend'
+      name: 'umattend',
+      // Only persist the user profile — tokens stay in memory only to reduce XSS exposure
+      partialize: (state) => ({ user: state.user }),
     }
   )
 );

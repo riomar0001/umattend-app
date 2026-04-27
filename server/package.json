@@ -11,7 +11,7 @@
     "format:check:ci": "./node_modules/.bin/prettier --check .",
     "type-check": "tsc --noEmit",
     "start": "node --import ./dist/telemetry/tracing.js ./dist/server.js",
-    "dev": "tsx watch --import src/telemetry/tracing.ts src/server.ts",
+    "dev": "tsx watch --import ./src/telemetry/tracing.ts ./src/server.ts",
     "build": "tsup src/server.ts src/telemetry/tracing.ts --format esm --out-dir dist --clean",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",

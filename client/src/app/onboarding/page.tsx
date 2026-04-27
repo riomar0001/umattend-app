@@ -28,9 +28,8 @@ export default function OnboardingPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isDoneOnboarding = useAuthStore((state) => state.isDoneOnboarding);
   const user = useAuthStore((state) => state.user);
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const replaceAccessToken = useAuthStore((state) => state.replaceAccessToken);
   const updateUser = useAuthStore((state) => state.updateUser);
-  const refreshToken = useAuthStore((state) => state.refreshToken);
   const logout = useAuthStore((state) => state.logout);
 
   // Fetch user data to ensure we have the latest info (but not during onboarding submission)
@@ -92,13 +91,7 @@ export default function OnboardingPage() {
     ...postUserOnboardingMutation(),
     onSuccess: async (data) => {
       if (data.success && data.data?.access_token) {
-        // Update the auth store with the new access token (keep existing refresh token)
-        const currentRefreshToken = refreshToken;
-
-        // Use setAuth to update both tokens (or replaceAccessToken if only access token changed)
-        if (currentRefreshToken) {
-          setAuth(data.data.access_token, currentRefreshToken);
-        }
+        replaceAccessToken(data.data.access_token);
 
         // Fetch updated user data to get profile picture and other info
         const userDataResponse = await refetchUser();
