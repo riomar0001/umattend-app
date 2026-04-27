@@ -49,7 +49,8 @@ const originalTransaction = prisma.$transaction.bind(
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (prisma as any).$on('query', (e: any) => {
-  const level = e.duration > 10000 ? 'warn' : e.duration > 1000 ? 'warn' : 'info';
+  const level =
+    e.duration > 10000 ? 'warn' : e.duration > 1000 ? 'warn' : 'info';
   logStructured('prisma', level, '', {
     'db.query': e.query,
     'db.params': JSON.stringify(e.params),

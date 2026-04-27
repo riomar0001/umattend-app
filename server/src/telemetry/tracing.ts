@@ -8,7 +8,8 @@ import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
 
-const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318';
+const endpoint =
+  process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318';
 
 const sdk = new NodeSDK({
   resource: new Resource({

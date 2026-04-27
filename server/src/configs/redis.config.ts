@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import Redis, { Command } from 'ioredis';
 import {
   REDIS_HOST,
   REDIS_PORT,
@@ -17,9 +17,9 @@ const redis = new Redis({
 
 // Log Redis commands to OTel (captured by logging.ts and sent to Loki)
 const origSendCommand = redis.sendCommand.bind(redis);
-redis.sendCommand = function (cmd: { name: string; args: unknown[] }) {
+redis.sendCommand = function (cmd: Command) {
   const start = Date.now();
-  const result = origSendCommand(cmd);
+  const result = origSendCommand(cmd) as Promise<unknown>;
   result
     .then(() => {
       console.log(
