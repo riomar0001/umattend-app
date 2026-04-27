@@ -396,7 +396,6 @@
     },
     {
       "id": 9,
-<<<<<<< HEAD
       "title": "Queue Job Logs",
       "type": "logs",
       "gridPos": { "h": 10, "w": 24, "x": 0, "y": 28 },
@@ -417,124 +416,6 @@
           "expr": "{service_name=\"umattend-server\"} |~ \"(queue|job|bullmq|worker|completed|failed|retry)\"",
           "maxLines": 100,
           "refId": "A"
-=======
-      "title": "Current Job Counts (live from Redis)",
-      "type": "table",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 28 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "custom": {
-            "align": "auto",
-            "cellOptions": { "type": "auto" },
-            "filterable": true
-          },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Waiting" },
-            "properties": [
-              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } },
-              { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Active" },
-            "properties": [
-              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } },
-              { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "yellow", "value": null }] } }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Delayed" },
-            "properties": [
-              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } },
-              { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] } }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Completed" },
-            "properties": [
-              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } },
-              { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Failed" },
-            "properties": [
-              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } },
-              { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "cellHeight": "sm",
-        "footer": { "show": false },
-        "showHeader": true
-      },
-      "transformations": [
-        {
-          "id": "merge",
-          "options": {}
-        },
-        {
-          "id": "organize",
-          "options": {
-            "renameByName": {
-              "Value #A": "Waiting",
-              "Value #B": "Active",
-              "Value #C": "Delayed",
-              "Value #D": "Completed",
-              "Value #E": "Failed",
-              "queue": "Queue"
-            }
-          }
-        }
-      ],
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (queue) (bullmq_jobs_waiting{queue=~\"$queue\"})",
-          "legendFormat": "{{queue}}",
-          "format": "table",
-          "instant": true,
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (queue) (bullmq_jobs_active{queue=~\"$queue\"})",
-          "legendFormat": "{{queue}}",
-          "format": "table",
-          "instant": true,
-          "refId": "B"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (queue) (bullmq_jobs_delayed{queue=~\"$queue\"})",
-          "legendFormat": "{{queue}}",
-          "format": "table",
-          "instant": true,
-          "refId": "C"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (queue) (bullmq_jobs_completed{queue=~\"$queue\"})",
-          "legendFormat": "{{queue}}",
-          "format": "table",
-          "instant": true,
-          "refId": "D"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum by (queue) (bullmq_jobs_failed{queue=~\"$queue\"})",
-          "legendFormat": "{{queue}}",
-          "format": "table",
-          "instant": true,
-          "refId": "E"
->>>>>>> b07f5b5824d0cd7e9faa30e7d6da17389e991766
         }
       ]
     }
