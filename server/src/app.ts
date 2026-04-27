@@ -9,6 +9,7 @@ import helmet from 'helmet';
 import { errorHandler, notFound } from './v1/middlewares/error.middleware';
 import { cacheControl } from './v1/middlewares/cacheControl.middleware';
 import { metricsMiddleware } from './v1/middlewares/metrics.middleware';
+import { requestLogger } from './v1/middlewares/requestLogger.middleware';
 import { CustomError } from './v1/interface/error';
 
 import userRoutes from './v1/routes/user.routes';
@@ -68,6 +69,9 @@ app.use(
     credentials: true,
   })
 );
+
+// ---------- REQUEST LOGGER MIDDLEWARE ----------
+app.use(requestLogger);
 
 // ---------- REQUEST METRICS MIDDLEWARE ----------
 app.use(metricsMiddleware);

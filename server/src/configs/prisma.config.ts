@@ -1,4 +1,6 @@
 import { PrismaClient } from '@prisma/client';
+import { trace } from '@opentelemetry/api';
+import { logStructured } from '../telemetry/logging';
 
 const prisma = new PrismaClient();
 
@@ -47,6 +49,13 @@ const originalTransaction = prisma.$transaction.bind(
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (prisma as any).$on('query', (e: any) => {
+  const level = e.duration > 10000 ? 'warn' : e.duration > 1000 ? 'warn' : 'info';
+  logStructured('prisma', level, '', {
+    'db.query': e.query,
+    'db.params': JSON.stringify(e.params),
+    'db.duration_ms': e.duration,
+  });
+
   if (e.duration > 10000) {
     console.warn(`SLOW QUERY: ${e.duration}ms`, {
       timestamp: new Date().toISOString(),
@@ -57,4 +66,34 @@ const originalTransaction = prisma.$transaction.bind(
   }
 });
 
-export default prisma;
+const tracer = trace.getTracer('prisma');
+
+const prismaWithTracing = prisma.$extends({
+  query: {
+    $allModels: {
+      $allOperations: async ({ model, operation, args, query }) => {
+        const startTime = Date.now();
+        return tracer.startActiveSpan(
+          `prisma.${model}.${operation}`,
+          async (span) => {
+            try {
+              const result = await query(args);
+              const durationMs = Date.now() - startTime;
+              span.setAttribute('db.model', model);
+              span.setAttribute('db.operation', operation);
+              span.setAttribute('db.duration_ms', durationMs);
+              span.end();
+              return result;
+            } catch (e) {
+              span.recordException(e as Error);
+              span.end();
+              throw e;
+            }
+          }
+        );
+      },
+    },
+  },
+});
+
+export default prismaWithTracing;

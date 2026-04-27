@@ -15,4 +15,19 @@ const redis = new Redis({
   db: REDIS_DB,
 });
 
+// Log Redis commands to OTel (captured by logging.ts and sent to Loki)
+const origSendCommand = redis.sendCommand.bind(redis);
+redis.sendCommand = function (cmd: { name: string; args: unknown[] }) {
+  const start = Date.now();
+  const result = origSendCommand(cmd);
+  result
+    .then(() => {
+      console.log(
+        `REDIS ${cmd.name} ${cmd.args.map(String).join(' ')} ${Date.now() - start}ms`
+      );
+    })
+    .catch(() => {});
+  return result;
+};
+
 export default redis;

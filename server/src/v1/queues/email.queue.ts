@@ -14,6 +14,7 @@ import {
   bullmqJobDurationSeconds,
 } from '../../telemetry/metrics.js';
 import { startQueueMetricsPolling } from '../../telemetry/queueMetrics.js';
+import { bullmqTelemetry } from '../../telemetry/index.js';
 
 const connection = {
   host: REDIS_HOST,
@@ -27,6 +28,7 @@ const connection = {
 
 export const emailQueue = new Queue<EmailJob>('email-queue', {
   connection,
+  telemetry: bullmqTelemetry,
   defaultJobOptions: {
     attempts: 3,
     backoff: {
@@ -63,6 +65,7 @@ const emailWorker = new Worker<EmailJob>(
   },
   {
     connection,
+    telemetry: bullmqTelemetry,
     limiter: {
       max: 1,
       duration: 10000,

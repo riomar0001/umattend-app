@@ -47,6 +47,45 @@ services:
     networks:
       - observability_net
 
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.17.1
+    container_name: umattend_postgres_exporter_prod
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      DATA_SOURCE_NAME: "${POSTGRES_DSN_PROD:?POSTGRES_DSN_PROD is required}"
+    expose:
+      - "9187"
+    networks:
+      - observability_net
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.68.0
+    container_name: umattend_redis_exporter_prod
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      REDIS_ADDR: "redis://host.docker.internal:6379"
+      REDIS_PASSWORD: "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+    expose:
+      - "9121"
+    networks:
+      - observability_net
+
+  promtail:
+    image: grafana/promtail:3.5.0
+    container_name: umattend_promtail_prod
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail.yml
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./observability/promtail/promtail.prod.yml:/etc/promtail/promtail.yml:ro
+    networks:
+      - observability_net
+
 volumes:
   otel_lgtm_grafana_prod:
   otel_lgtm_prometheus_prod:

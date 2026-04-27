@@ -13,6 +13,7 @@ import {
   bullmqJobDurationSeconds,
 } from '../../telemetry/metrics.js';
 import { startQueueMetricsPolling } from '../../telemetry/queueMetrics.js';
+import { bullmqTelemetry } from '../../telemetry/index.js';
 
 const connection = {
   host: REDIS_HOST,
@@ -26,6 +27,7 @@ const connection = {
 
 export const startEventStatusQueue = new Queue('event-start-status-queue', {
   connection,
+  telemetry: bullmqTelemetry,
 });
 
 const startEventStatusWorker = new Worker(
@@ -42,7 +44,7 @@ const startEventStatusWorker = new Worker(
 
     console.log(`Event ${event_id} marked as started.`);
   },
-  { connection, concurrency: 1 }
+  { connection, telemetry: bullmqTelemetry, concurrency: 1 }
 );
 
 startEventStatusWorker.on('completed', (job) => {

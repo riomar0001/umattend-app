@@ -13,6 +13,7 @@ import {
   bullmqJobDurationSeconds,
 } from '../../telemetry/metrics.js';
 import { startQueueMetricsPolling } from '../../telemetry/queueMetrics.js';
+import { bullmqTelemetry } from '../../telemetry/index.js';
 
 const connection = {
   host: REDIS_HOST,
@@ -26,6 +27,7 @@ const connection = {
 
 export const endEventStatusQueue = new Queue('event-end-status-queue', {
   connection,
+  telemetry: bullmqTelemetry,
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: 'exponential', delay: 5000 },
@@ -47,7 +49,7 @@ const endEventStatusWorker = new Worker(
 
     console.log(`Event ${event_id} marked as done.`);
   },
-  { connection, concurrency: 1 }
+  { connection, telemetry: bullmqTelemetry, concurrency: 1 }
 );
 
 endEventStatusWorker.on('completed', (job) => {

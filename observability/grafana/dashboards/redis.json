@@ -1,0 +1,376 @@
+{
+  "id": null,
+  "uid": "umattend-redis",
+  "title": "UMAttend — Redis",
+  "tags": ["umattend", "redis"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "editable": true,
+  "graphTooltip": 1,
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Metrics",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Memory Used",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "bytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "redis_memory_used_bytes",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Connected Clients",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 100 },
+              { "color": "red", "value": 500 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "redis_connected_clients",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Commands / sec",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "ops",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(redis_commands_total[5m]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Total Keys",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(redis_db_keys)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Memory Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "bytes",
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "spanNulls": false }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "redis_memory_used_bytes",
+          "legendFormat": "used",
+          "refId": "A"
+        },
+        {
+          "expr": "redis_memory_used_rss_bytes",
+          "legendFormat": "rss",
+          "refId": "B"
+        },
+        {
+          "expr": "redis_memory_used_peak_bytes",
+          "legendFormat": "peak",
+          "refId": "C"
+        },
+        {
+          "expr": "redis_memory_max_bytes",
+          "legendFormat": "max",
+          "refId": "D"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Connected & Blocked Clients",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "spanNulls": false }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "redis_connected_clients",
+          "legendFormat": "connected",
+          "refId": "A"
+        },
+        {
+          "expr": "redis_blocked_clients",
+          "legendFormat": "blocked",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Command Rate by Type",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops",
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "spanNulls": false }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "topk(5, rate(redis_commands_total{cmd!=\"\"}[5m]))",
+          "legendFormat": "{{cmd}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Network I/O",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "Bps",
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "spanNulls": false }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "rate(redis_net_input_bytes_total[5m])",
+          "legendFormat": "in",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(redis_net_output_bytes_total[5m])",
+          "legendFormat": "out",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Keys by Database",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "spanNulls": false }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "redis_db_keys",
+          "legendFormat": "db {{db}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Keyspace Hit / Miss Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ops",
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "spanNulls": false }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "rate(redis_keyspace_hits_total[5m])",
+          "legendFormat": "hits",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(redis_keyspace_misses_total[5m])",
+          "legendFormat": "misses",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "CPU Utilization",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "percentunit",
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "spanNulls": false }
+        }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "rate(redis_cpu_sys_seconds_total[5m])",
+          "legendFormat": "sys",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(redis_cpu_user_seconds_total[5m])",
+          "legendFormat": "user",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Redis Up",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 36 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "mappings": [
+            { "type": "value", "value": "0", "text": "DOWN" },
+            { "type": "value", "value": "1", "text": "UP" }
+          ]
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "redis_up",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
