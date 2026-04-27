@@ -18,9 +18,10 @@ interface ActionsColumnProps {
   record: AttendanceRecord;
   onCheckOut?: (studentId: string) => void;
   loadingStudentId: string | null;
+  isEventEnded: boolean;
 }
 
-function ActionsColumn({ record, onCheckOut, loadingStudentId }: ActionsColumnProps) {
+function ActionsColumn({ record, onCheckOut, loadingStudentId, isEventEnded }: ActionsColumnProps) {
   const [isCheckOutDialogOpen, setIsCheckOutDialogOpen] = useState(false);
 
   const isCheckedOut = record.checkOutAt !== '-' && record.checkOutAt !== '';
@@ -68,6 +69,7 @@ function ActionsColumn({ record, onCheckOut, loadingStudentId }: ActionsColumnPr
         studentName={record.name}
         studentId={record.id}
         isLoading={isLoading}
+        isEventEnded={isEventEnded}
         onConfirm={handleConfirmCheckOut}
       />
     </>
@@ -156,9 +158,10 @@ export function createColumns({ checkOutRequired }: { checkOutRequired: boolean 
       const meta = table.options.meta as {
         onCheckOut?: (studentId: string) => void;
         loadingStudentId: string | null;
+        isEventEnded: boolean;
       };
 
-      return <ActionsColumn record={record} onCheckOut={meta?.onCheckOut} loadingStudentId={meta?.loadingStudentId ?? null} />;
+      return <ActionsColumn record={record} onCheckOut={meta?.onCheckOut} loadingStudentId={meta?.loadingStudentId ?? null} isEventEnded={meta?.isEventEnded ?? false} />;
     }
   };
 

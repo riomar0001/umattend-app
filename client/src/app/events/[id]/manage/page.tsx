@@ -149,7 +149,7 @@ export default function ManageSingleEventPage() {
           </TabsContent>
 
           <TabsContent value="attendees">
-            <EventAttendees eventId={eventId} checkOutRequired={event.checkOutRequired} />
+            <EventAttendees eventId={eventId} checkOutRequired={event.checkOutRequired} eventStartTime={apiEvent.start_time} eventEndTime={apiEvent.end_time} />
           </TabsContent>
 
           <TabsContent value="check-in">

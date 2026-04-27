@@ -84,7 +84,7 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
       onUpdate();
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
+      const err = error as { response?: { data?: { message?: string } } };      
       toast.error(err.response?.data?.message || 'Failed to update event');
     }
   });

@@ -19,8 +19,8 @@ export const EventValidSchema = {
       errorMessage: 'Event description must be a string',
     },
     isLength: {
-      options: { min: 20, max: 500 },
-      errorMessage: 'Event description must be between 20 and 500 characters',
+      options: { min: 20, max: 2000 },
+      errorMessage: 'Event description must be between 20 and 2000 characters',
     },
   },
   department: {

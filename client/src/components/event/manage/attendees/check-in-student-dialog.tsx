@@ -12,9 +12,10 @@ interface CheckInStudentDialogProps {
   onOpenChange: (open: boolean) => void;
   onConfirm: (studentId: string) => Promise<void>;
   isLoading: boolean;
+  isEventStarted?: boolean;
 }
 
-export function CheckInStudentDialog({ open, onOpenChange, onConfirm, isLoading }: CheckInStudentDialogProps) {
+export function CheckInStudentDialog({ open, onOpenChange, onConfirm, isLoading, isEventStarted = true }: CheckInStudentDialogProps) {
   const [studentId, setStudentId] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,7 +46,14 @@ export function CheckInStudentDialog({ open, onOpenChange, onConfirm, isLoading 
               </div>
               <DialogTitle>Check in Student</DialogTitle>
             </div>
-            <DialogDescription className="pt-3">Enter the 6-digit student ID to manually check them into the event.</DialogDescription>
+            <DialogDescription className="pt-3">
+              {!isEventStarted && (
+                <div className="mb-3 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-300">
+                  The event hasn&apos;t started yet. This will be recorded as an early check-in.
+                </div>
+              )}
+              Enter the 6-digit student ID to manually check them into the event.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-6">

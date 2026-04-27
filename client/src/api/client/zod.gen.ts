@@ -285,7 +285,7 @@ export const zGetEventResponse = z.object({
 export const zPostEventData = z.object({
     body: z.object({
         title: z.string().min(1).max(140).default('Annual Tech Conference 2025'),
-        description: z.string().min(20).max(500).default('Join us for an exciting day of technology talks, networking, and learning from industry experts.'),
+        description: z.string().min(20).max(2000).default('Join us for an exciting day of technology talks, networking, and learning from industry experts.'),
         department: z.string().min(3).default('College of Computer Studies'),
         location: z.string().min(3).max(140).default('Main Auditorium, Building A'),
         capacity: z.optional(z.int()).default(100),
@@ -410,7 +410,7 @@ export const zGetEventByEventIdResponse = z.object({
 export const zPutEventByEventIdData = z.object({
     body: z.object({
         title: z.string().min(1).max(140).default('Updated Annual Tech Conference 2025'),
-        description: z.string().min(20).max(500).default('Updated Join us for an exciting day of technology talks, networking, and learning from industry experts.'),
+        description: z.string().min(20).max(2000).default('Updated Join us for an exciting day of technology talks, networking, and learning from industry experts.'),
         department: z.string().min(3).default('Updated College of Computer Studies'),
         location: z.string().min(3).max(140).default('Updated Main Auditorium, Building A'),
         capacity: z.optional(z.int()).default(100),

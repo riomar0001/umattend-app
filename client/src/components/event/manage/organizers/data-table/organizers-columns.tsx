@@ -42,21 +42,15 @@ function ActionsColumn({ record, onRemoveOrganizer }: ActionsColumnProps) {
           </PopoverTrigger>
           <PopoverContent className="w-48 p-2 shadow-lg md:w-52" align="end">
             <div className="flex flex-col gap-1">
-              <Button variant="ghost" className="w-full justify-start gap-2 text-xs font-medium md:gap-3 md:text-sm" size="sm">
-                <Eye className="size-3 md:size-4" />
-                View Details
+              <Button
+                onClick={() => !record.isCreator && setIsRemoveDialogOpen(true)}
+                variant="ghost"
+                className={` dark:text-red-400 dark:hover:text-red-400 w-full justify-start gap-2 text-xs font-medium md:gap-3 md:text-sm ${!record.isCreator ? 'hover:text-destructive hover:bg-destructive/10 text-destructive ' : 'cursor-not-allowed opacity-50'}`}
+                size="sm"
+              >
+                <Trash2 className="size-3 md:size-4" />
+                Remove
               </Button>
-              {!record.isCreator && (
-                <Button
-                  onClick={() => setIsRemoveDialogOpen(true)}
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 w-full justify-start gap-2 text-xs font-medium md:gap-3 md:text-sm"
-                  size="sm"
-                >
-                  <Trash2 className="size-3 md:size-4" />
-                  Remove
-                </Button>
-              )}
             </div>
           </PopoverContent>
         </Popover>

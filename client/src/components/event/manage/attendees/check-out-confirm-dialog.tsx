@@ -10,10 +10,11 @@ interface CheckOutConfirmDialogProps {
   studentName: string;
   studentId: string;
   isLoading: boolean;
+  isEventEnded?: boolean;
   onConfirm: () => void;
 }
 
-export function CheckOutConfirmDialog({ open, onOpenChange, studentName, studentId, isLoading, onConfirm }: CheckOutConfirmDialogProps) {
+export function CheckOutConfirmDialog({ open, onOpenChange, studentName, studentId, isLoading, isEventEnded, onConfirm }: CheckOutConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
@@ -25,6 +26,11 @@ export function CheckOutConfirmDialog({ open, onOpenChange, studentName, student
             <DialogTitle>Check Out Student</DialogTitle>
           </div>
           <DialogDescription className="pt-3">
+            {isEventEnded && (
+              <div className="mb-3 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive dark:text-red-300">
+                The event has already ended. Are you sure you want to check out this student?
+              </div>
+            )}
             Are you sure you want to manually check out <span className="text-foreground font-semibold">{studentName}</span>{' '}
             <span className="text-muted-foreground text-xs">(ID: {studentId})</span>?
             <br />

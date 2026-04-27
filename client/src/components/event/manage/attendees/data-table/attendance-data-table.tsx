@@ -34,6 +34,8 @@ interface DataTableProps<TData, TValue> {
   checkOutRequired?: boolean;
   /** Student ID currently being checked out (used to show loading state on the button) */
   loadingStudentId?: string | null;
+  /** Whether the event has already ended (shows extra warning in check-out dialog) */
+  isEventEnded?: boolean;
 }
 
 type PageItem = number | 'prev-ellipsis' | 'next-ellipsis';
@@ -64,7 +66,8 @@ export function AttendanceDataTable<TData, TValue>({
   isLoading,
   error,
   onCheckOut,
-  loadingStudentId
+  loadingStudentId,
+  isEventEnded
 }: DataTableProps<TData, TValue>) {
   // onCheckOut / checkOutRequired / loadingStudentId are consumed by the
   // column factory in the parent (event-attendees.tsx) and the composed
@@ -97,7 +100,8 @@ export function AttendanceDataTable<TData, TValue>({
     pageCount: totalPages,
     meta: {
       onCheckOut,
-      loadingStudentId
+      loadingStudentId,
+      isEventEnded
     }
   });
 

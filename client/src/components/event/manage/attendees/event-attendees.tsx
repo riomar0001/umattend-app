@@ -18,9 +18,11 @@ import { formatDateTime } from '@/lib/utils';
 interface EventAttendeesProps {
   eventId: string;
   checkOutRequired: boolean;
+  eventStartTime?: string;
+  eventEndTime?: string;
 }
 
-export default function EventAttendees({ eventId, checkOutRequired }: EventAttendeesProps) {
+export default function EventAttendees({ eventId, checkOutRequired, eventStartTime, eventEndTime }: EventAttendeesProps) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null);
@@ -199,6 +201,10 @@ export default function EventAttendees({ eventId, checkOutRequired }: EventAtten
   const totalStudentsStats = Number(attendeesStatsData?.data?.totalAttendance);
   const totalCheckedOutStats = Number(attendeesStatsData?.data?.totalCheckedOut);
 
+  const now = new Date();
+  const isEventStarted = eventStartTime ? new Date(eventStartTime) <= now : true;
+  const isEventEnded = eventEndTime ? new Date(eventEndTime) < now : false;
+
   // Build columns — include the Actions column only when check-out is required
   const tableColumns = createColumns({
     checkOutRequired
@@ -228,8 +234,8 @@ export default function EventAttendees({ eventId, checkOutRequired }: EventAtten
             className="flex-1 gap-2 bg-transparent text-sm font-semibold shadow-sm sm:flex-none"
           >
             <UserPlus className="size-4" />
-            <span className="xs:inline hidden">Check in Student</span>
-            <span className="xs:hidden">Check in</span>
+            <span className="xs:inline hidden">{isEventStarted ? 'Check in Student' : 'Early Check In'}</span>
+            <span className="xs:hidden">{isEventStarted ? 'Check in' : 'Early In'}</span>
           </Button>
           <Button onClick={handleRefresh} variant="outline" className="flex-1 gap-2 bg-transparent text-sm font-semibold shadow-sm sm:flex-none">
             Refresh
@@ -261,9 +267,10 @@ export default function EventAttendees({ eventId, checkOutRequired }: EventAtten
         error={error}
         onCheckOut={handleCheckOut}
         loadingStudentId={loadingStudentId}
+        isEventEnded={isEventEnded}
       />
 
-      <CheckInStudentDialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen} onConfirm={handleCheckIn} isLoading={isCheckingIn} />
+      <CheckInStudentDialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen} onConfirm={handleCheckIn} isLoading={isCheckingIn} isEventStarted={isEventStarted} />
     </div>
   );
 }
