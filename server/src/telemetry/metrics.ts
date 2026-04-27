@@ -1,4 +1,4 @@
-import { Counter, Histogram } from 'prom-client';
+import { Counter, Gauge, Histogram } from 'prom-client';
 import register from './index.js';
 
 export const httpRequestsTotal = new Counter({
@@ -35,5 +35,40 @@ export const bullmqJobDurationSeconds = new Histogram({
   help: 'BullMQ job processing duration in seconds',
   labelNames: ['queue'],
   buckets: [0.1, 0.5, 1, 2, 5, 10, 30, 60, 120],
+  registers: [register],
+});
+
+export const bullmqJobsWaiting = new Gauge({
+  name: 'bullmq_jobs_waiting',
+  help: 'Number of BullMQ jobs currently waiting',
+  labelNames: ['queue'],
+  registers: [register],
+});
+
+export const bullmqJobsActive = new Gauge({
+  name: 'bullmq_jobs_active',
+  help: 'Number of BullMQ jobs currently active',
+  labelNames: ['queue'],
+  registers: [register],
+});
+
+export const bullmqJobsDelayed = new Gauge({
+  name: 'bullmq_jobs_delayed',
+  help: 'Number of BullMQ jobs currently delayed',
+  labelNames: ['queue'],
+  registers: [register],
+});
+
+export const bullmqJobsCompleted = new Gauge({
+  name: 'bullmq_jobs_completed',
+  help: 'Number of BullMQ jobs completed (from Redis)',
+  labelNames: ['queue'],
+  registers: [register],
+});
+
+export const bullmqJobsFailed = new Gauge({
+  name: 'bullmq_jobs_failed',
+  help: 'Number of BullMQ jobs failed (from Redis)',
+  labelNames: ['queue'],
   registers: [register],
 });
