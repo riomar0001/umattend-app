@@ -11,9 +11,9 @@ export async function register() {
 
   const sdk = new NodeSDK({
     resource: new Resource({
-      [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? 'umattend-client',
+      [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? 'umattend-client'
     }),
-    traceExporter: new OTLPTraceExporter({ url: `${endpoint}/v1/traces` }),
+    traceExporter: new OTLPTraceExporter({ url: `${endpoint}/v1/traces` })
   });
 
   sdk.start();

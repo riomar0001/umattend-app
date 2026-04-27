@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowUpDown, MoreVertical, Eye, Trash2 } from 'lucide-react';
+import { ArrowUpDown, MoreVertical, Trash2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { RemoveOrganizerDialog } from '@/components/event/manage/organizers/remove-organizer-dialog';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ function ActionsColumn({ record, onRemoveOrganizer }: ActionsColumnProps) {
               <Button
                 onClick={() => !record.isCreator && setIsRemoveDialogOpen(true)}
                 variant="ghost"
-                className={` dark:text-red-400 dark:hover:text-red-400 w-full justify-start gap-2 text-xs font-medium md:gap-3 md:text-sm ${!record.isCreator ? 'hover:text-destructive hover:bg-destructive/10 text-destructive ' : 'cursor-not-allowed opacity-50'}`}
+                className={`w-full justify-start gap-2 text-xs font-medium md:gap-3 md:text-sm dark:text-red-400 dark:hover:text-red-400 ${!record.isCreator ? 'hover:text-destructive hover:bg-destructive/10 text-destructive' : 'cursor-not-allowed opacity-50'}`}
                 size="sm"
               >
                 <Trash2 className="size-3 md:size-4" />

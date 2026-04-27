@@ -34,7 +34,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>
           <Suspense fallback={null}>{children}</Suspense>
-          <Toaster theme='system'  richColors position="top-right" />
+          <Toaster theme="system" richColors position="top-right" />
         </Providers>
       </body>
     </html>

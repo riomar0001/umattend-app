@@ -27,7 +27,7 @@ export function CheckOutConfirmDialog({ open, onOpenChange, studentName, student
           </div>
           <DialogDescription className="pt-3">
             {isEventEnded && (
-              <div className="mb-3 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive dark:text-red-300">
+              <div className="border-destructive/20 bg-destructive/10 text-destructive mb-3 rounded-md border px-3 py-2 text-sm dark:text-red-300">
                 The event has already ended. Are you sure you want to check out this student?
               </div>
             )}

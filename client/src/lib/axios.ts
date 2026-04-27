@@ -37,11 +37,7 @@ axiosInstance.interceptors.response.use(
 
       try {
         // Rely on the HttpOnly refresh_token cookie — no token in request body
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {}, { withCredentials: true });
 
         const { access_token } = response.data.data;
         replaceAccessToken(access_token);

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 
 interface ProtectedRouteProps {
@@ -26,11 +26,7 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
       // Attempt a silent refresh using the HttpOnly refresh_token cookie.
       if (user) {
         try {
-          const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-            {},
-            { withCredentials: true }
-          );
+          const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {}, { withCredentials: true });
           const { access_token } = response.data.data;
           replaceAccessToken(access_token);
           setIsChecking(false);
@@ -44,7 +40,7 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
     };
 
     check();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isChecking || !isAuthenticated()) {

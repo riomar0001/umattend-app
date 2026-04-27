@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'umattend',
       // Only persist the user profile — tokens stay in memory only to reduce XSS exposure
-      partialize: (state) => ({ user: state.user }),
+      partialize: (state) => ({ user: state.user })
     }
   )
 );

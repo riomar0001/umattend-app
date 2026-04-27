@@ -161,7 +161,14 @@ export function createColumns({ checkOutRequired }: { checkOutRequired: boolean 
         isEventEnded: boolean;
       };
 
-      return <ActionsColumn record={record} onCheckOut={meta?.onCheckOut} loadingStudentId={meta?.loadingStudentId ?? null} isEventEnded={meta?.isEventEnded ?? false} />;
+      return (
+        <ActionsColumn
+          record={record}
+          onCheckOut={meta?.onCheckOut}
+          loadingStudentId={meta?.loadingStudentId ?? null}
+          isEventEnded={meta?.isEventEnded ?? false}
+        />
+      );
     }
   };
 

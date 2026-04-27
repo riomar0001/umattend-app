@@ -270,7 +270,13 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
         isEventEnded={isEventEnded}
       />
 
-      <CheckInStudentDialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen} onConfirm={handleCheckIn} isLoading={isCheckingIn} isEventStarted={isEventStarted} />
+      <CheckInStudentDialog
+        open={isCheckInDialogOpen}
+        onOpenChange={setIsCheckInDialogOpen}
+        onConfirm={handleCheckIn}
+        isLoading={isCheckingIn}
+        isEventStarted={isEventStarted}
+      />
     </div>
   );
 }
