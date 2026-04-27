@@ -1,0 +1,69 @@
+services:
+  prometheus:
+    image: prom/prometheus:v3.4.0
+    container_name: umattend_prometheus_staging
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    volumes:
+      - ./observability/prometheus/prometheus.staging.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data_staging:/prometheus
+    expose:
+      - "9090"
+    networks:
+      - observability_net
+
+  grafana:
+    image: grafana/grafana:11.6.1
+    container_name: umattend_grafana_staging
+    restart: unless-stopped
+    ports:
+      - "8088:3000"
+    environment:
+      GF_SERVER_ROOT_URL: https://staging.umattend.site/grafana
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-changeme}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data_staging:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - observability_net
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    container_name: umattend_node_exporter_staging
+    restart: unless-stopped
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    expose:
+      - "9100"
+    networks:
+      - observability_net
+
+volumes:
+  prometheus_data_staging:
+  grafana_data_staging:
+
+networks:
+  observability_net:
+    driver: bridge

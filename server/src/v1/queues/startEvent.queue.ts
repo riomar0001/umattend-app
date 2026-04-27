@@ -6,6 +6,11 @@ import {
   REDIS_USERNAME,
   REDIS_PASSWORD,
 } from '../../constants/redis.constants';
+import {
+  bullmqJobsCompletedTotal,
+  bullmqJobsFailedTotal,
+  bullmqJobDurationSeconds,
+} from '../../telemetry/metrics.js';
 
 const connection = {
   host: REDIS_HOST,
@@ -39,8 +44,16 @@ const startEventStatusWorker = new Worker(
 
 startEventStatusWorker.on('completed', (job) => {
   console.log(`Start job completed for event ${job.data.event_id}`);
+  bullmqJobsCompletedTotal.inc({ queue: 'event-start-status-queue' });
+  if (job.finishedOn && job.processedOn) {
+    bullmqJobDurationSeconds.observe(
+      { queue: 'event-start-status-queue' },
+      (job.finishedOn - job.processedOn) / 1000
+    );
+  }
 });
 
 startEventStatusWorker.on('failed', (job, err) => {
   console.error(`Start job failed for event ${job?.data?.event_id}:`, err);
+  bullmqJobsFailedTotal.inc({ queue: 'event-start-status-queue' });
 });

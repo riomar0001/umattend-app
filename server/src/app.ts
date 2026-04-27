@@ -8,15 +8,29 @@ import helmet from 'helmet';
 
 import { errorHandler, notFound } from './v1/middlewares/error.middleware';
 import { cacheControl } from './v1/middlewares/cacheControl.middleware';
+import { metricsMiddleware } from './v1/middlewares/metrics.middleware';
 
 import userRoutes from './v1/routes/user.routes';
 import authRoutes from './v1/routes/auth.routes';
 import eventRoutes from './v1/routes/event.routes';
 import docsRoutes from './v1/routes/docs.routes';
 import healthRoutes from './v1/routes/health.routes';
+import metricsRoutes from './v1/routes/metrics.routes';
 import { NODE_ENV, ALLOWED_ORIGINS } from './constants/app.constants';
+import register from './telemetry/index';
 
 const app = express();
+
+// ---------- METRICS ENDPOINT (Prometheus scrape — no auth, host-internal only) ----------
+// Not proxied by nginx; Prometheus reaches this directly via host.docker.internal:<PORT>
+app.get('/metrics', async (_req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (err) {
+    res.status(500).end(String(err));
+  }
+});
 
 // ---------- SECURITY & PERFORMANCE MIDDLEWARE ----------
 app.set('trust proxy', 1);
@@ -52,11 +66,15 @@ app.use(
   })
 );
 
+// ---------- REQUEST METRICS MIDDLEWARE ----------
+app.use(metricsMiddleware);
+
 // ---------- API ROUTES ----------
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/event', eventRoutes);
+app.use('/api/v1/metrics', metricsRoutes);
 if (NODE_ENV !== 'PRODUCTION') {
   app.use('/api/v1/docs', docsRoutes);
 }

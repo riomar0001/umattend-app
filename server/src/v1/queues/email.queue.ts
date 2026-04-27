@@ -7,6 +7,11 @@ import {
   REDIS_USERNAME,
   REDIS_PASSWORD,
 } from '../../constants/redis.constants';
+import {
+  bullmqJobsCompletedTotal,
+  bullmqJobsFailedTotal,
+  bullmqJobDurationSeconds,
+} from '../../telemetry/metrics.js';
 
 const connection = {
   host: REDIS_HOST,
@@ -64,6 +69,13 @@ const emailWorker = new Worker<EmailJob>(
 
 emailWorker.on('completed', (job) => {
   console.log(`Job ${job.id} completed for ${job.data.to}`);
+  bullmqJobsCompletedTotal.inc({ queue: 'email-queue' });
+  if (job.finishedOn && job.processedOn) {
+    bullmqJobDurationSeconds.observe(
+      { queue: 'email-queue' },
+      (job.finishedOn - job.processedOn) / 1000
+    );
+  }
 });
 
 emailWorker.on('failed', (job, err) => {
@@ -71,4 +83,5 @@ emailWorker.on('failed', (job, err) => {
     `Job ${job?.id} failed after ${job?.attemptsMade} attempts:`,
     err
   );
+  bullmqJobsFailedTotal.inc({ queue: 'email-queue' });
 });

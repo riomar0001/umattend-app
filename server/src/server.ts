@@ -1,4 +1,5 @@
 import './configs/dotenv.config';
+import './telemetry/index'; // initialise prom-client default metrics before anything else
 import app from './app';
 import './cron/cleanupExpiredTokens';
 const PORT = process.env.PORT;
