@@ -27,7 +27,7 @@ services:
     ports:
       - "8088:3000"
     environment:
-      GF_SERVER_ROOT_URL: https://staging.umattend.site/grafana
+      GF_SERVER_ROOT_URL: https://staging.umattend.site/grafana/
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-changeme}
