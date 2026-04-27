@@ -5,18 +5,21 @@ import {
   REDIS_PORT,
   REDIS_USERNAME,
   REDIS_PASSWORD,
+  REDIS_DB,
 } from '../../constants/redis.constants';
 import {
   bullmqJobsCompletedTotal,
   bullmqJobsFailedTotal,
   bullmqJobDurationSeconds,
 } from '../../telemetry/metrics.js';
+import { startQueueMetricsPolling } from '../../telemetry/queueMetrics.js';
 
 const connection = {
   host: REDIS_HOST,
   port: Number(REDIS_PORT),
   username: REDIS_USERNAME,
   password: REDIS_PASSWORD,
+  db: REDIS_DB,
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
 };
@@ -62,3 +65,5 @@ endEventStatusWorker.on('failed', (job, err) => {
   console.error(`Job failed for event ${job?.data?.event_id}:`, err);
   bullmqJobsFailedTotal.inc({ queue: 'event-end-status-queue' });
 });
+
+startQueueMetricsPolling(endEventStatusQueue, 'event-end-status-queue');
