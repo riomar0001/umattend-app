@@ -24,7 +24,7 @@ const statusConfig = (status: EventStatus) => {
 };
 
 const EventContent = ({ event, isLast = false, onCardClick }: EventContentProps) => {
-  const { title, date, dayOfWeek, startTime, endTime, endDate, endDayOfWeek, location, hasLocation = false, checkin_count, checkout_count, is_draft } = event;
+  const { title, date, dayOfWeek, startTime, endTime, endDate, location, hasLocation = false, checkin_count, checkout_count, is_draft } = event;
   const eventStatus = event.eventStatus || 'upcoming';
 
   const dateParts = date ? date.split(' ') : [];
@@ -77,11 +77,11 @@ const EventContent = ({ event, isLast = false, onCardClick }: EventContentProps)
           )}
           <span className="text-border/60 text-[10px]">·</span>
           <span className="text-xs">
-            <span className="text-foreground/80 font-semibold">From</span>{' '}
-            <span className="text-foreground/80 font-medium">{startTime}</span>
+            <span className="text-foreground/80 font-semibold">From</span> <span className="text-foreground/80 font-medium">{startTime}</span>
             {endTime && (
               <span className="text-muted-foreground">
-                {' '}· <span className="font-medium">To</span> {endTime}, {endDate}
+                {' '}
+                · <span className="font-medium">To</span> {endTime}, {endDate}
               </span>
             )}
           </span>

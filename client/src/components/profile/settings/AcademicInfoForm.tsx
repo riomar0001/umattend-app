@@ -123,7 +123,7 @@ export const AcademicInfoForm = () => {
                   </FormLabel>
                   <Select value={field.value} onValueChange={handleDepartmentChange}>
                     <FormControl>
-                      <SelectTrigger className="border-border hover:border-foreground/20 bg-background h-11 w-full text-left text-sm break-words !whitespace-normal transition-colors [&>span]:line-clamp-2 [&>span]:text-left [&>span]:leading-normal [&>span]:break-words [&>span]:whitespace-normal">
+                      <SelectTrigger className="border-border hover:border-foreground/20 bg-background !h-auto w-full text-left text-sm break-words !whitespace-normal transition-colors [&>span]:line-clamp-2 [&>span]:text-left [&>span]:leading-normal [&>span]:break-words [&>span]:whitespace-normal">
                         <SelectValue placeholder="Select your department" />
                       </SelectTrigger>
                     </FormControl>
@@ -162,7 +162,7 @@ export const AcademicInfoForm = () => {
                     disabled={!selectedDepartment}
                   >
                     <FormControl>
-                      <SelectTrigger className="border-border hover:border-foreground/20 bg-background h-11 w-full text-left text-sm break-words !whitespace-normal transition-colors disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-2 [&>span]:text-left [&>span]:leading-normal [&>span]:break-words [&>span]:whitespace-normal">
+                      <SelectTrigger className="border-border hover:border-foreground/20 bg-background !h-auto w-full text-left text-sm break-words !whitespace-normal transition-colors disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-2 [&>span]:text-left [&>span]:leading-normal [&>span]:break-words [&>span]:whitespace-normal">
                         <SelectValue placeholder={selectedDepartment ? 'Select your program' : 'Please select a department first'} />
                       </SelectTrigger>
                     </FormControl>

@@ -67,7 +67,8 @@ export function PreviewSidebar({ values, isDraft = false }: PreviewSidebarProps)
                   <CalendarDays className="text-foreground mt-0.5 h-4 w-4 shrink-0" />
                   <div className="text-foreground text-sm">
                     <p className="font-semibold">
-                      <span className="text-primary font-bold">From</span> {formatDate(startDate)}{startTime && ` at ${startTime}`}
+                      <span className="text-primary font-bold">From</span> {formatDate(startDate)}
+                      {startTime && ` at ${startTime}`}
                     </p>
                     {(endDate || endTime) && (
                       <p className="text-muted-foreground text-xs">
