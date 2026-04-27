@@ -17,7 +17,7 @@ module.exports = {
         NODE_ENV: 'staging',
         PORT: 4001,
         OTEL_SERVICE_NAME: 'umattend-server-staging',
-        OTEL_EXPORTER_OTLP_ENDPOINT: 'http://localhost:4318',
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'http://localhost:4321',
       },
     },
     {
@@ -49,7 +49,7 @@ module.exports = {
         PORT: 3001,
         HOSTNAME: '127.0.0.1',
         OTEL_SERVICE_NAME: 'umattend-client-staging',
-        OTEL_EXPORTER_OTLP_ENDPOINT: 'http://localhost:4318',
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'http://localhost:4321',
       },
     },
     {
