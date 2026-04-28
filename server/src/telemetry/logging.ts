@@ -1,4 +1,5 @@
-const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318';
+const endpoint =
+  process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318';
 const logsUrl = `${endpoint}/v1/logs`;
 
 const _log = console.log.bind(console);
@@ -7,7 +8,9 @@ const _error = console.error.bind(console);
 
 interface LogBody {
   resourceLogs: Array<{
-    resource: { attributes: Array<{ key: string; value: { stringValue: string } }> };
+    resource: {
+      attributes: Array<{ key: string; value: { stringValue: string } }>;
+    };
     scopeLogs: Array<{
       scope: { name: string };
       logRecords: Array<{
@@ -20,7 +23,12 @@ interface LogBody {
   }>;
 }
 
-function sendLogs(scope: string, severity: number, severityText: string, body: string): void {
+function sendLogs(
+  scope: string,
+  severity: number,
+  severityText: string,
+  body: string
+): void {
   const payload: LogBody = {
     resourceLogs: [
       {
@@ -28,7 +36,9 @@ function sendLogs(scope: string, severity: number, severityText: string, body: s
           attributes: [
             {
               key: 'service.name',
-              value: { stringValue: process.env.OTEL_SERVICE_NAME ?? 'umattend-server' },
+              value: {
+                stringValue: process.env.OTEL_SERVICE_NAME ?? 'umattend-server',
+              },
             },
           ],
         },
@@ -56,16 +66,29 @@ function sendLogs(scope: string, severity: number, severityText: string, body: s
   }).catch(() => {});
 }
 
-function emitLog(level: 'log' | 'warn' | 'error', severity: number, args: unknown[]): void {
+function emitLog(
+  level: 'log' | 'warn' | 'error',
+  severity: number,
+  args: unknown[]
+): void {
   const body = args
     .map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a)))
     .join(' ');
   sendLogs('console', severity, level.toUpperCase(), body);
 }
 
-console.log = (...args: unknown[]) => { _log(...args); emitLog('log', 9, args); };
-console.warn = (...args: unknown[]) => { _warn(...args); emitLog('warn', 13, args); };
-console.error = (...args: unknown[]) => { _error(...args); emitLog('error', 17, args); };
+console.log = (...args: unknown[]) => {
+  _log(...args);
+  emitLog('log', 9, args);
+};
+console.warn = (...args: unknown[]) => {
+  _warn(...args);
+  emitLog('warn', 13, args);
+};
+console.error = (...args: unknown[]) => {
+  _error(...args);
+  emitLog('error', 17, args);
+};
 
 /** Emit a structured log record to Loki via OTLP — call from middleware or other modules. */
 export function logStructured(
