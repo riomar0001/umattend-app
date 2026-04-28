@@ -248,6 +248,44 @@ const updateEvent = async (req: Request, res: Response) => {
   }
 };
 
+// ---------------------------------------------------------------------------
+// Rate Limits
+// ---------------------------------------------------------------------------
+
+const getRateLimits = async (req: Request, res: Response) => {
+  try {
+    const limits = await adminService.getRateLimits();
+    return HTTPSuccessResponse(res, 200, 'Rate limits retrieved', { entries: limits });
+  } catch (error) {
+    if (NODE_ENV === 'DEVELOPMENT') console.error('getRateLimits error:', error);
+    return HTTPErrorResponse(res, 500, 'Internal server error');
+  }
+};
+
+const deleteRateLimit = async (req: Request, res: Response) => {
+  try {
+    const { key } = req.params;
+    await adminService.deleteRateLimit(key);
+    return HTTPSuccessResponse(res, 200, 'Rate limit cleared', { key });
+  } catch (error) {
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
+    }
+    if (NODE_ENV === 'DEVELOPMENT') console.error('deleteRateLimit error:', error);
+    return HTTPErrorResponse(res, 500, 'Internal server error');
+  }
+};
+
+const deleteAllRateLimits = async (_req: Request, res: Response) => {
+  try {
+    const removed = await adminService.deleteAllRateLimits();
+    return HTTPSuccessResponse(res, 200, 'All rate limits cleared', { removed });
+  } catch (error) {
+    if (NODE_ENV === 'DEVELOPMENT') console.error('deleteAllRateLimits error:', error);
+    return HTTPErrorResponse(res, 500, 'Internal server error');
+  }
+};
+
 const adminController = {
   getQueues,
   getFailedJobs,
@@ -261,6 +299,9 @@ const adminController = {
   deleteUser,
   getAllEvents,
   updateEvent,
+  getRateLimits,
+  deleteRateLimit,
+  deleteAllRateLimits,
 };
 
 export default adminController;

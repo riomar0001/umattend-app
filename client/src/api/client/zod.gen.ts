@@ -1019,15 +1019,27 @@ export const zGetAdminUsersResponse = z.object({
             umindanao_email: z.optional(z.string()),
             role: z.optional(z.string()),
             done_onboarding: z.optional(z.boolean()),
-            last_login_at: z.optional(z.iso.datetime()),
+            last_login_at: z.optional(z.union([
+                z.iso.datetime(),
+                z.null()
+            ])),
             created_at: z.optional(z.iso.datetime()),
             updated_at: z.optional(z.iso.datetime()),
-            student: z.optional(z.object({
-                student_id: z.optional(z.number()),
-                name: z.optional(z.string()),
-                department: z.optional(z.string()),
-                program: z.optional(z.string())
-            }))
+            student: z.optional(z.union([
+                z.object({
+                    student_id: z.optional(z.number()),
+                    name: z.optional(z.string()),
+                    department: z.optional(z.union([
+                        z.string(),
+                        z.null()
+                    ])),
+                    program: z.optional(z.union([
+                        z.string(),
+                        z.null()
+                    ]))
+                }),
+                z.null()
+            ]))
         }))),
         pagination: z.optional(z.object({
             page: z.optional(z.int()),
@@ -1085,13 +1097,79 @@ export const zPatchAdminUsersByUserIdRoleResponse = z.object({
             id: z.optional(z.string()),
             umindanao_email: z.optional(z.string()),
             role: z.optional(z.string()),
-            student: z.optional(z.object({
-                student_id: z.optional(z.number()),
-                name: z.optional(z.string()),
-                department: z.optional(z.string()),
-                program: z.optional(z.string())
-            }))
+            student: z.optional(z.union([
+                z.object({
+                    student_id: z.optional(z.number()),
+                    name: z.optional(z.string()),
+                    department: z.optional(z.union([
+                        z.string(),
+                        z.null()
+                    ])),
+                    program: z.optional(z.union([
+                        z.string(),
+                        z.null()
+                    ]))
+                }),
+                z.null()
+            ]))
         }))
+    }))
+});
+
+export const zDeleteAdminRateLimitsData = z.object({
+    body: z.optional(z.never()),
+    path: z.optional(z.never()),
+    query: z.optional(z.never())
+});
+
+/**
+ * All rate limits cleared
+ */
+export const zDeleteAdminRateLimitsResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        removed: z.optional(z.number())
+    }))
+});
+
+export const zGetAdminRateLimitsData = z.object({
+    body: z.optional(z.never()),
+    path: z.optional(z.never()),
+    query: z.optional(z.never())
+});
+
+/**
+ * Rate limits retrieved
+ */
+export const zGetAdminRateLimitsResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        entries: z.optional(z.array(z.object({
+            key: z.optional(z.string()),
+            count: z.optional(z.number()),
+            ttl: z.optional(z.number())
+        })))
+    }))
+});
+
+export const zDeleteAdminRateLimitsByKeyData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        key: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Rate limit cleared
+ */
+export const zDeleteAdminRateLimitsByKeyResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        key: z.optional(z.string())
     }))
 });
 
@@ -1123,8 +1201,14 @@ export const zGetAdminEventsResponse = z.object({
                 z.null()
             ])),
             all_day: z.optional(z.boolean()),
-            start_time: z.optional(z.iso.datetime()),
-            end_time: z.optional(z.iso.datetime()),
+            start_time: z.optional(z.union([
+                z.iso.datetime(),
+                z.null()
+            ])),
+            end_time: z.optional(z.union([
+                z.iso.datetime(),
+                z.null()
+            ])),
             check_out_required: z.optional(z.boolean()),
             is_started: z.optional(z.boolean()),
             is_done: z.optional(z.boolean()),

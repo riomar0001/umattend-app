@@ -2423,15 +2423,15 @@ export type GetAdminUsersResponses = {
                 umindanao_email?: string;
                 role?: string;
                 done_onboarding?: boolean;
-                last_login_at?: string;
+                last_login_at?: string | null;
                 created_at?: string;
                 updated_at?: string;
                 student?: {
                     student_id?: number;
                     name?: string;
-                    department?: string;
-                    program?: string;
-                };
+                    department?: string | null;
+                    program?: string | null;
+                } | null;
             }>;
             pagination?: {
                 page?: number;
@@ -2551,15 +2551,139 @@ export type PatchAdminUsersByUserIdRoleResponses = {
                 student?: {
                     student_id?: number;
                     name?: string;
-                    department?: string;
-                    program?: string;
-                };
+                    department?: string | null;
+                    program?: string | null;
+                } | null;
             };
         };
     };
 };
 
 export type PatchAdminUsersByUserIdRoleResponse = PatchAdminUsersByUserIdRoleResponses[keyof PatchAdminUsersByUserIdRoleResponses];
+
+export type DeleteAdminRateLimitsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/admin/rate-limits';
+};
+
+export type DeleteAdminRateLimitsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type DeleteAdminRateLimitsResponses = {
+    /**
+     * All rate limits cleared
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            removed?: number;
+        };
+    };
+};
+
+export type DeleteAdminRateLimitsResponse = DeleteAdminRateLimitsResponses[keyof DeleteAdminRateLimitsResponses];
+
+export type GetAdminRateLimitsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/admin/rate-limits';
+};
+
+export type GetAdminRateLimitsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type GetAdminRateLimitsResponses = {
+    /**
+     * Rate limits retrieved
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            entries?: Array<{
+                key?: string;
+                count?: number;
+                ttl?: number;
+            }>;
+        };
+    };
+};
+
+export type GetAdminRateLimitsResponse = GetAdminRateLimitsResponses[keyof GetAdminRateLimitsResponses];
+
+export type DeleteAdminRateLimitsByKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Rate limit Redis key (e.g. rateLimit:ip:192.168.1.1)
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/admin/rate-limits/{key}';
+};
+
+export type DeleteAdminRateLimitsByKeyErrors = {
+    /**
+     * Bad request — invalid key
+     */
+    400: unknown;
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type DeleteAdminRateLimitsByKeyResponses = {
+    /**
+     * Rate limit cleared
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            key?: string;
+        };
+    };
+};
+
+export type DeleteAdminRateLimitsByKeyResponse = DeleteAdminRateLimitsByKeyResponses[keyof DeleteAdminRateLimitsByKeyResponses];
 
 export type GetAdminEventsData = {
     body?: never;
@@ -2612,8 +2736,8 @@ export type GetAdminEventsResponses = {
                 location?: string;
                 capacity?: number | null;
                 all_day?: boolean;
-                start_time?: string;
-                end_time?: string;
+                start_time?: string | null;
+                end_time?: string | null;
                 check_out_required?: boolean;
                 is_started?: boolean;
                 is_done?: boolean;

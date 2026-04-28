@@ -6,7 +6,7 @@ import authService from '../services/auth.service';
 
 const WINDOW_MS = 60_000;
 const IP_LIMIT = 300;
-const ACCOUNT_IP_LIMIT = 10;
+const ACCOUNT_IP_LIMIT = 300;
 
 // Check-in/check-out limits: tuned for fast organizer scanning (a busy
 // queue is realistically <2 scans/sec) while still catching automated

@@ -3,6 +3,7 @@ import { NotFoundError, ConflictError, BadRequestError } from '../../utils/custo
 import { emailQueue } from '../queues/email.queue';
 import { startEventStatusQueue } from '../queues/startEvent.queue';
 import { endEventStatusQueue } from '../queues/endEvent.queue';
+import redis from '../../configs/redis.config';
 import adminRepository from '../repositories/admin.repository';
 import eventRepository from '../repositories/event.repository';
 
@@ -16,7 +17,7 @@ const QUEUE_MAP: Record<string, Queue> = {
 
 function resolveQueue(name: string): Queue {
   const q = QUEUE_MAP[name];
-  if (!q) throw new NotFoundError(`Queue "${name}" not found`);
+  if (!q) { throw new NotFoundError(`Queue "${name}" not found`); }
   return q;
 }
 
@@ -86,7 +87,7 @@ const getFailedJobs = async (
 const retryJob = async (queueName: string, jobId: string) => {
   const queue = resolveQueue(queueName);
   const job = await queue.getJob(jobId);
-  if (!job) throw new NotFoundError(`Job "${jobId}" not found`);
+  if (!job) {throw new NotFoundError(`Job "${jobId}" not found`);}
   await job.retry();
   return { jobId, retried: true };
 };
@@ -94,7 +95,7 @@ const retryJob = async (queueName: string, jobId: string) => {
 const removeJob = async (queueName: string, jobId: string) => {
   const queue = resolveQueue(queueName);
   const job = await queue.getJob(jobId);
-  if (!job) throw new NotFoundError(`Job "${jobId}" not found`);
+  if (!job) {throw new NotFoundError(`Job "${jobId}" not found`);}
   await job.remove();
   return { jobId, removed: true };
 };
@@ -117,7 +118,7 @@ const cleanAllFailed = async (queueName: string) => {
   while (true) {
     const batchRemoved = await queue.clean(0, BATCH, 'failed');
     removed += batchRemoved.length;
-    if (batchRemoved.length < BATCH) break;
+    if (batchRemoved.length < BATCH) {break;}
   }
 
   return { removed };
@@ -146,7 +147,7 @@ const getAllUsers = async (page: number, limit: number, search?: string) => {
 
 const getUserById = async (userId: string) => {
   const user = await adminRepository.findUserById(userId);
-  if (!user) throw new NotFoundError('User not found');
+  if (!user) {throw new NotFoundError('User not found');}
   return user;
 };
 
@@ -158,14 +159,14 @@ const updateUserRole = async (userId: string, role: string) => {
   }
 
   const existing = await adminRepository.findUserById(userId);
-  if (!existing) throw new NotFoundError('User not found');
+  if (!existing) {throw new NotFoundError('User not found');}
 
   return await adminRepository.updateUserRole(userId, role);
 };
 
 const softDeleteUser = async (userId: string) => {
   const existing = await adminRepository.findUserById(userId);
-  if (!existing) throw new NotFoundError('User not found');
+  if (!existing) {throw new NotFoundError('User not found');}
   if (existing.deleted_at) {
     throw new ConflictError('User is already deleted');
   }
@@ -201,10 +202,76 @@ const getAllEvents = async (
 
 const updateEvent = async (eventId: string, eventData: any) => {
   const existing = await eventRepository.getEventDetails(eventId);
-  if (!existing) throw new NotFoundError('Event not found');
+  if (!existing) {throw new NotFoundError('Event not found');}
 
   // Admin override — bypasses the created_by check in eventService.updateEvent
   return await eventRepository.updateEvent(eventId, eventData);
+};
+
+// ---------------------------------------------------------------------------
+// Rate Limits
+// ---------------------------------------------------------------------------
+
+interface RateLimitEntry {
+  key: string;
+  count: number;
+  ttl: number;
+}
+
+const RATE_LIMIT_PREFIX = 'rateLimit:';
+
+const getRateLimits = async (): Promise<RateLimitEntry[]> => {
+  const keys: string[] = [];
+
+  // Use SCAN for production safety — avoids blocking Redis on large key spaces
+  let cursor = '0';
+  do {
+    const [next, batch] = await redis.scan(
+      cursor,
+      'MATCH',
+      `${RATE_LIMIT_PREFIX}*`,
+      'COUNT',
+      100
+    );
+    cursor = next;
+    keys.push(...batch);
+  } while (cursor !== '0');
+
+  if (keys.length === 0) {return [];}
+
+  const pipeline = redis.pipeline();
+  keys.forEach((k) => {
+    pipeline.zcard(k);
+    pipeline.ttl(k);
+  });
+  const results = (await pipeline.exec()) ?? [];
+
+  const entries: RateLimitEntry[] = [];
+  for (let i = 0; i < keys.length; i++) {
+    const count = results[i * 2]?.[1] as number | null;
+    const ttl = results[i * 2 + 1]?.[1] as number | null;
+    entries.push({
+      key: keys[i],
+      count: count ?? 0,
+      ttl: ttl ?? -1,
+    });
+  }
+
+  return entries;
+};
+
+const deleteRateLimit = async (key: string): Promise<void> => {
+  // Only allow deleting rate limit keys for safety
+  if (!key.startsWith(RATE_LIMIT_PREFIX)) {
+    throw new BadRequestError('Invalid rate limit key');
+  }
+  await redis.del(key);
+};
+
+const deleteAllRateLimits = async (): Promise<number> => {
+  const keys = await redis.keys(`${RATE_LIMIT_PREFIX}*`);
+  if (keys.length === 0) {return 0;}
+  return await redis.del(...keys);
 };
 
 const adminService = {
@@ -220,6 +287,9 @@ const adminService = {
   softDeleteUser,
   getAllEvents,
   updateEvent,
+  getRateLimits,
+  deleteRateLimit,
+  deleteAllRateLimits,
 };
 
 export default adminService;

@@ -5,7 +5,7 @@ import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
 import { Admin, Authentication, Event, type Options, User } from '../sdk.gen';
-import type { DeleteAdminQueuesByQueueNameFailedByJobIdData, DeleteAdminQueuesByQueueNameFailedByJobIdResponse, DeleteAdminQueuesByQueueNameFailedData, DeleteAdminQueuesByQueueNameFailedResponse, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdResponse, DeleteEventByEventIdData, DeleteEventByEventIdError, DeleteEventByEventIdResponse, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdError, DeleteEventRemoveOrganizerByEventIdResponse, GetAdminEventsData, GetAdminEventsResponse, GetAdminQueuesByQueueNameFailedData, GetAdminQueuesByQueueNameFailedResponse, GetAdminQueuesData, GetAdminUsersData, GetAdminUsersResponse, GetAuthLoginHistoryData, GetEventAttendanceCountData, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesError, GetEventByEventIdAttendeesResponse, GetEventByEventIdData, GetEventByEventIdOrganizersData, GetEventData, GetEventExportByEventIdData, GetEventPastData, GetUserAttendedEventsData, GetUserData, GetUserEventsData, GetUserHostedEventsData, PatchAdminEventsByEventIdData, PatchAdminEventsByEventIdResponse, PatchAdminUsersByUserIdRoleData, PatchAdminUsersByUserIdRoleResponse, PatchEventByEventIdDraftData, PatchEventByEventIdDraftResponse, PatchEventByEventIdPostData, PatchEventByEventIdPostResponse, PostAdminQueuesByQueueNameFailedByJobIdRetryData, PostAdminQueuesByQueueNameFailedByJobIdRetryResponse, PostAdminQueuesByQueueNameFailedRetryAllData, PostAdminQueuesByQueueNameFailedRetryAllResponse, PostAuthExchangeData, PostAuthExchangeError, PostAuthExchangeResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthRefreshData, PostAuthRefreshError, PostAuthRefreshResponse, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdError, PostEventAddOrganizerByEventIdResponse, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdError, PostEventByEventIdCheckinByStudentIdResponse, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdError, PostEventByEventIdCheckoutByStudentIdResponse, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeError, PostEventCheckInByEventIdByQrCodeResponse, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeError, PostEventCheckOutByEventIdByQrCodeResponse, PostEventData, PostEventError, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdResponse, PostEventResponse, PostUserOnboardingData, PostUserOnboardingError, PostUserOnboardingResponse, PutEventByEventIdData, PutEventByEventIdError, PutEventByEventIdResponse, PutUserData, PutUserError, PutUserResponse } from '../types.gen';
+import type { DeleteAdminQueuesByQueueNameFailedByJobIdData, DeleteAdminQueuesByQueueNameFailedByJobIdResponse, DeleteAdminQueuesByQueueNameFailedData, DeleteAdminQueuesByQueueNameFailedResponse, DeleteAdminRateLimitsByKeyData, DeleteAdminRateLimitsByKeyResponse, DeleteAdminRateLimitsData, DeleteAdminRateLimitsResponse, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdResponse, DeleteEventByEventIdData, DeleteEventByEventIdError, DeleteEventByEventIdResponse, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdError, DeleteEventRemoveOrganizerByEventIdResponse, GetAdminEventsData, GetAdminEventsResponse, GetAdminQueuesByQueueNameFailedData, GetAdminQueuesByQueueNameFailedResponse, GetAdminQueuesData, GetAdminRateLimitsData, GetAdminUsersData, GetAdminUsersResponse, GetAuthLoginHistoryData, GetEventAttendanceCountData, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesError, GetEventByEventIdAttendeesResponse, GetEventByEventIdData, GetEventByEventIdOrganizersData, GetEventData, GetEventExportByEventIdData, GetEventPastData, GetUserAttendedEventsData, GetUserData, GetUserEventsData, GetUserHostedEventsData, PatchAdminEventsByEventIdData, PatchAdminEventsByEventIdResponse, PatchAdminUsersByUserIdRoleData, PatchAdminUsersByUserIdRoleResponse, PatchEventByEventIdDraftData, PatchEventByEventIdDraftResponse, PatchEventByEventIdPostData, PatchEventByEventIdPostResponse, PostAdminQueuesByQueueNameFailedByJobIdRetryData, PostAdminQueuesByQueueNameFailedByJobIdRetryResponse, PostAdminQueuesByQueueNameFailedRetryAllData, PostAdminQueuesByQueueNameFailedRetryAllResponse, PostAuthExchangeData, PostAuthExchangeError, PostAuthExchangeResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthRefreshData, PostAuthRefreshError, PostAuthRefreshResponse, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdError, PostEventAddOrganizerByEventIdResponse, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdError, PostEventByEventIdCheckinByStudentIdResponse, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdError, PostEventByEventIdCheckoutByStudentIdResponse, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeError, PostEventCheckInByEventIdByQrCodeResponse, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeError, PostEventCheckOutByEventIdByQrCodeResponse, PostEventData, PostEventError, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdResponse, PostEventResponse, PostUserOnboardingData, PostUserOnboardingError, PostUserOnboardingResponse, PutEventByEventIdData, PutEventByEventIdError, PutEventByEventIdResponse, PutUserData, PutUserError, PutUserResponse } from '../types.gen';
 
 /**
  * Refresh access token
@@ -927,6 +927,66 @@ export const patchAdminUsersByUserIdRoleMutation = (options?: Partial<Options<Pa
     const mutationOptions: UseMutationOptions<PatchAdminUsersByUserIdRoleResponse, AxiosError<DefaultError>, Options<PatchAdminUsersByUserIdRoleData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await Admin.patchAdminUsersByUserIdRole({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Clear all rate limits
+ *
+ * Removes all rate limit entries from Redis, unblocking all throttled IPs and users. Admin only.
+ */
+export const deleteAdminRateLimitsMutation = (options?: Partial<Options<DeleteAdminRateLimitsData>>): UseMutationOptions<DeleteAdminRateLimitsResponse, AxiosError<DefaultError>, Options<DeleteAdminRateLimitsData>> => {
+    const mutationOptions: UseMutationOptions<DeleteAdminRateLimitsResponse, AxiosError<DefaultError>, Options<DeleteAdminRateLimitsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await Admin.deleteAdminRateLimits({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getAdminRateLimitsQueryKey = (options?: Options<GetAdminRateLimitsData>) => createQueryKey('getAdminRateLimits', options);
+
+/**
+ * List all active rate limit entries
+ *
+ * Scans Redis for all active sliding-window rate limit keys and returns their current count and TTL. Admin only.
+ */
+export const getAdminRateLimitsOptions = (options?: Options<GetAdminRateLimitsData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await Admin.getAdminRateLimits({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getAdminRateLimitsQueryKey(options)
+    });
+};
+
+/**
+ * Clear a specific rate limit
+ *
+ * Deletes a single rate limit entry from Redis by its key, unblocking that specific IP or user. Admin only.
+ */
+export const deleteAdminRateLimitsByKeyMutation = (options?: Partial<Options<DeleteAdminRateLimitsByKeyData>>): UseMutationOptions<DeleteAdminRateLimitsByKeyResponse, AxiosError<DefaultError>, Options<DeleteAdminRateLimitsByKeyData>> => {
+    const mutationOptions: UseMutationOptions<DeleteAdminRateLimitsByKeyResponse, AxiosError<DefaultError>, Options<DeleteAdminRateLimitsByKeyData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await Admin.deleteAdminRateLimitsByKey({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

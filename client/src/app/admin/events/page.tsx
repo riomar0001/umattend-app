@@ -1,79 +1,78 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  FileText,
-  Globe,
-} from 'lucide-react';
+import { Eye, Globe, FileText } from 'lucide-react';
 import Link from 'next/link';
-
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
-import { Spinner } from '@/components/ui/spinner';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  getAdminEventsOptions,
-  patchEventByEventIdPostMutation,
-  patchEventByEventIdDraftMutation,
-} from '@/api/client/@tanstack/react-query.gen';
+import { Button } from '@/components/ui/button';
+import { DataTable } from '@/components/ui/data-table';
+import { getAdminEventsOptions, patchEventByEventIdPostMutation, patchEventByEventIdDraftMutation } from '@/api/client/@tanstack/react-query.gen';
 
-function formatDate(dateStr: string | null) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-PH', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface AdminEvent {
+  id: string;
+  title: string;
+  description: string;
+  department: string;
+  location: string;
+  capacity: number | null;
+  all_day: boolean;
+  start_time: string | null;
+  end_time: string | null;
+  check_out_required: boolean;
+  is_started: boolean;
+  is_done: boolean;
+  is_draft: boolean;
+  created_by: string;
+  created_by_name: string;
+  checkin_count: number;
+  checkout_count: number;
+}
+
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+interface AdminEventsResponse {
+  data: AdminEvent[];
+  pagination: Pagination;
 }
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
   upcoming: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   ongoing: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  done: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+  done: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
 };
 
-function getStatus(event: any) {
-  if (event.is_draft) return 'draft' as const;
-  if (event.is_done) return 'done' as const;
-  if (event.is_started && !event.is_done) return 'ongoing' as const;
-  return 'upcoming' as const;
+function getStatus(event: AdminEvent) {
+  if (event.is_draft) return 'draft';
+  if (event.is_done) return 'done';
+  if (event.is_started && !event.is_done) return 'ongoing';
+  return 'upcoming';
 }
+
+const Th = ({ label }: { label: string }) => <div className="text-foreground text-xs font-medium md:text-sm">{label}</div>;
 
 export default function AdminEventsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [togglingId, setTogglingId] = useState<string | null>(null);
-
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    const timeout = setTimeout(() => {
-      setDebouncedSearch(value);
-      setPage(1);
-    }, 400);
-    return () => clearTimeout(timeout);
-  };
 
   const { data, isLoading, isError, error } = useQuery({
     ...getAdminEventsOptions({
-      query: { page, limit: 20, search: debouncedSearch || undefined },
-    }),
+      query: { page, limit: 20, search: search || undefined }
+    })
   });
 
   const postMutation = useMutation({
@@ -83,10 +82,10 @@ export default function AdminEventsPage() {
       setTogglingId(null);
       queryClient.invalidateQueries({ queryKey: getAdminEventsOptions({}).queryKey });
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to publish event');
+    onError: (err) => {
+      toast.error((err as Error)?.message || 'Failed to publish');
       setTogglingId(null);
-    },
+    }
   });
 
   const draftMutation = useMutation({
@@ -96,184 +95,126 @@ export default function AdminEventsPage() {
       setTogglingId(null);
       queryClient.invalidateQueries({ queryKey: getAdminEventsOptions({}).queryKey });
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to draft event');
+    onError: (err) => {
+      toast.error((err as Error)?.message || 'Failed to draft');
       setTogglingId(null);
-    },
+    }
   });
 
-  const handleToggle = (event: any) => {
+  const handleToggle = (event: AdminEvent) => {
     setTogglingId(event.id);
     if (event.is_draft) {
-      postMutation.mutate({ path: { event_id: event.id } } as any);
+      postMutation.mutate({ path: { event_id: event.id } });
     } else {
-      draftMutation.mutate({ path: { event_id: event.id } } as any);
+      draftMutation.mutate({ path: { event_id: event.id } });
     }
   };
 
-  const events = (data?.data as any)?.data ?? [];
-  const pagination = (data?.data as any)?.pagination ?? { page: 1, total: 0, totalPages: 1 };
-  const currentPage = pagination.page || 1;
-  const pageTotal = pagination.total || 0;
-  const pagePages = pagination.totalPages || 1;
+  const responseData = data?.data as AdminEventsResponse | undefined;
+  const events = responseData?.data ?? [];
+  const pagination = responseData?.pagination ?? { page: 1, limit: 20, total: 0, totalPages: 1 };
+
+  const columns: ColumnDef<AdminEvent>[] = [
+    {
+      accessorKey: 'title',
+      header: () => <Th label="Title" />,
+      cell: ({ row }) => <div className="max-w-[220px] truncate text-xs font-medium md:text-sm">{row.getValue('title')}</div>
+    },
+    {
+      accessorKey: 'department',
+      header: () => <Th label="Department" />,
+      cell: ({ row }) => <div className="text-muted-foreground max-w-[160px] truncate text-xs md:text-sm">{row.getValue('department') || '—'}</div>
+    },
+    {
+      accessorKey: 'created_by_name',
+      header: () => <Th label="Created By" />,
+      cell: ({ row }) => <div className="text-xs md:text-sm">{row.getValue('created_by_name') || '—'}</div>
+    },
+    {
+      accessorKey: 'start_time',
+      header: () => <Th label="Start" />,
+      cell: ({ row }) => {
+        const d = row.original.start_time;
+        return <div className="text-xs md:text-sm">{d ? new Date(d).toLocaleDateString('en-PH') : '—'}</div>;
+      }
+    },
+    {
+      accessorKey: 'end_time',
+      header: () => <Th label="End" />,
+      cell: ({ row }) => {
+        const d = row.original.end_time;
+        return <div className="text-xs md:text-sm">{d ? new Date(d).toLocaleDateString('en-PH') : '—'}</div>;
+      }
+    },
+    {
+      accessorKey: 'status',
+      header: () => <Th label="Status" />,
+      cell: ({ row }) => {
+        const status = getStatus(row.original);
+        return (
+          <Badge variant="secondary" className={STATUS_STYLES[status]}>
+            {status}
+          </Badge>
+        );
+      }
+    },
+    {
+      accessorKey: 'checkin_count',
+      header: () => <Th label="Attendance" />,
+      cell: ({ row }) => (
+        <div className="text-xs">
+          <span>{row.original.checkin_count ?? 0}</span>
+          {row.original.check_out_required && <span className="text-muted-foreground"> | {row.original.checkout_count ?? 0} out</span>}
+        </div>
+      )
+    },
+    {
+      id: 'actions',
+      header: () => <div className="text-right text-xs font-medium md:text-sm">Actions</div>,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            title={row.original.is_draft ? 'Publish event' : 'Move to drafts'}
+            disabled={togglingId === row.original.id}
+            onClick={() => handleToggle(row.original)}
+          >
+            {row.original.is_draft ? <Globe className="h-4 w-4 text-green-500" /> : <FileText className="h-4 w-4 text-amber-500" />}
+          </Button>
+          <Link href={`/events/${row.original.id}/manage`}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" title="View event">
+              <Eye className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      )
+    }
+  ];
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Events</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            View and manage all events. Includes drafts not visible to regular users.
-          </p>
-        </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <Input
-            placeholder="Search by title or description..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-          />
-        </div>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold tracking-tight">Events</h1>
+        <p className="text-muted-foreground mt-1 text-sm">View and manage all events. Includes drafts not visible to regular users.</p>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Spinner className="h-8 w-8" />
-        </div>
-      ) : isError ? (
-        <div className="text-muted-foreground py-20 text-center">
-          <p className="text-lg font-medium">Failed to load events</p>
-          <p className="mt-1 text-sm">{(error as any)?.message || 'An error occurred'}</p>
-          <Button
-            className="mt-4"
-            variant="outline"
-            onClick={() =>
-              queryClient.invalidateQueries({ queryKey: getAdminEventsOptions({}).queryKey })
-            }
-          >
-            Retry
-          </Button>
-        </div>
-      ) : events.length === 0 ? (
-        <div className="text-muted-foreground py-20 text-center">
-          <p className="text-lg font-medium">No events found</p>
-          <p className="mt-1 text-sm">
-            {debouncedSearch ? 'Try a different search term.' : 'No events registered yet.'}
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="border-border rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead className="hidden md:table-cell">Department</TableHead>
-                  <TableHead className="hidden lg:table-cell">Created By</TableHead>
-                  <TableHead className="hidden sm:table-cell">Start</TableHead>
-                  <TableHead className="hidden sm:table-cell">End</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden lg:table-cell">Attendance</TableHead>
-                  <TableHead className="w-[100px] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {events.map((event: any) => {
-                  const status = getStatus(event);
-                  return (
-                    <TableRow key={event.id}>
-                      <TableCell className="font-medium max-w-[200px] truncate">
-                        {event.title}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground hidden md:table-cell max-w-[160px] truncate">
-                        {event.department || '—'}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {event.created_by_name || '—'}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell text-xs">
-                        {formatDate(event.start_time)}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell text-xs">
-                        {formatDate(event.end_time)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className={STATUS_STYLES[status]}>
-                          {status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <span className="text-sm">{event.checkin_count ?? 0}</span>
-                        {event.check_out_required && (
-                          <span className="text-muted-foreground text-xs">
-                            {' '}| {event.checkout_count ?? 0} out
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            title={event.is_draft ? 'Publish event' : 'Move to drafts'}
-                            disabled={togglingId === event.id}
-                            onClick={() => handleToggle(event)}
-                          >
-                            {event.is_draft ? (
-                              <Globe className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <FileText className="h-4 w-4 text-amber-500" />
-                            )}
-                          </Button>
-                          <Link href={`/events/${event.id}/manage`}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" title="View event">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-
-          {pagePages > 1 && (
-            <div className="mt-4 flex items-center justify-between">
-              <p className="text-muted-foreground text-sm">
-                Showing {Math.min((currentPage - 1) * 20 + 1, pageTotal)}–
-                {Math.min(currentPage * 20, pageTotal)} of {pageTotal}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage <= 1}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <span className="hidden sm:inline">Previous</span>
-                </Button>
-                <span className="text-sm font-medium">
-                  {currentPage} / {pagePages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage >= pagePages}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  <span className="hidden sm:inline">Next</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+      <DataTable
+        columns={columns}
+        data={events}
+        searchPlaceholder="Search by title or description..."
+        searchValue={search}
+        onSearchChange={setSearch}
+        page={pagination.page}
+        onPageChange={setPage}
+        pageSize={20}
+        totalPages={pagination.totalPages}
+        totalRecords={pagination.total}
+        isLoading={isLoading}
+        error={isError ? error : undefined}
+        emptyMessage={search ? 'No events match your search.' : 'No events registered yet.'}
+      />
     </div>
   );
 }

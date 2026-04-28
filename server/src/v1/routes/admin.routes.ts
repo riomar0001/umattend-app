@@ -86,4 +86,20 @@ router.patch(
   adminController.updateEvent
 );
 
+// ---------------------------------------------------------------------------
+// Rate Limits
+// ---------------------------------------------------------------------------
+
+// GET /rate-limits — list all active rate limit entries
+console.log('[admin.routes] registering rate-limit routes');
+router.get('/rate-limits', adminController.getRateLimits);
+// fallback test
+router.get('/ratelimits', (_req, res) => { res.json({ ok: true, path: 'ratelimits' }); });
+
+// DELETE /rate-limits — clear all rate limits
+router.delete('/rate-limits', adminController.deleteAllRateLimits);
+
+// DELETE /rate-limits/:key — clear a specific rate limit entry
+router.delete('/rate-limits/:key', adminController.deleteRateLimit);
+
 export default router;

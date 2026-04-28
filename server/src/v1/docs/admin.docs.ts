@@ -420,8 +420,10 @@ const getAllUsers = {
                             role: { type: 'string' },
                             done_onboarding: { type: 'boolean' },
                             last_login_at: {
-                              type: 'string',
-                              format: 'date-time',
+                              oneOf: [
+                                { type: 'string', format: 'date-time' },
+                                { type: 'null' },
+                              ],
                             },
                             created_at: {
                               type: 'string',
@@ -432,13 +434,22 @@ const getAllUsers = {
                               format: 'date-time',
                             },
                             student: {
-                              type: 'object',
-                              properties: {
-                                student_id: { type: 'number' },
-                                name: { type: 'string' },
-                                department: { type: 'string' },
-                                program: { type: 'string' },
-                              },
+                              oneOf: [
+                                {
+                                  type: 'object',
+                                  properties: {
+                                    student_id: { type: 'number' },
+                                    name: { type: 'string' },
+                                    department: {
+                                      oneOf: [{ type: 'string' }, { type: 'null' }],
+                                    },
+                                    program: {
+                                      oneOf: [{ type: 'string' }, { type: 'null' }],
+                                    },
+                                  },
+                                },
+                                { type: 'null' },
+                              ],
                             },
                           },
                         },
@@ -505,14 +516,23 @@ const getUserById = {
                           done_onboarding: { type: 'boolean' },
                           created_at: { type: 'string', format: 'date-time' },
                           student: {
-                            type: 'object',
-                            properties: {
-                              student_id: { type: 'number' },
-                              name: { type: 'string' },
-                              department: { type: 'string' },
-                              program: { type: 'string' },
-                              profile_picture: { type: 'string' },
-                            },
+                            oneOf: [
+                              {
+                                type: 'object',
+                                properties: {
+                                  student_id: { type: 'number' },
+                                  name: { type: 'string' },
+                                  department: {
+                                    oneOf: [{ type: 'string' }, { type: 'null' }],
+                                  },
+                                  program: {
+                                    oneOf: [{ type: 'string' }, { type: 'null' }],
+                                  },
+                                  profile_picture: { type: 'string' },
+                                },
+                              },
+                              { type: 'null' },
+                            ],
                           },
                         },
                       },
@@ -587,13 +607,22 @@ const updateUserRole = {
                           umindanao_email: { type: 'string' },
                           role: { type: 'string' },
                           student: {
-                            type: 'object',
-                            properties: {
-                              student_id: { type: 'number' },
-                              name: { type: 'string' },
-                              department: { type: 'string' },
-                              program: { type: 'string' },
-                            },
+                            oneOf: [
+                              {
+                                type: 'object',
+                                properties: {
+                                  student_id: { type: 'number' },
+                                  name: { type: 'string' },
+                                  department: {
+                                    oneOf: [{ type: 'string' }, { type: 'null' }],
+                                  },
+                                  program: {
+                                    oneOf: [{ type: 'string' }, { type: 'null' }],
+                                  },
+                                },
+                              },
+                              { type: 'null' },
+                            ],
                           },
                         },
                       },
@@ -664,6 +693,135 @@ const deleteUser = {
 };
 
 // ---------------------------------------------------------------------------
+// Rate Limits
+// ---------------------------------------------------------------------------
+
+const getRateLimits = {
+  '/admin/rate-limits': {
+    get: {
+      tags: ['Admin'],
+      summary: 'List all active rate limit entries',
+      description:
+        'Scans Redis for all active sliding-window rate limit keys and returns their current count and TTL. Admin only.',
+      security: [{ bearerAuth: [] }],
+      responses: {
+        200: {
+          description: 'Rate limits retrieved',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  message: { type: 'string', example: 'Rate limits retrieved' },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      entries: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            key: { type: 'string', example: 'rateLimit:ip:192.168.1.1' },
+                            count: { type: 'number', example: 5 },
+                            ttl: { type: 'number', example: 42 },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden — Admin only' },
+        500: { description: 'Internal server error' },
+      },
+    },
+    delete: {
+      tags: ['Admin'],
+      summary: 'Clear all rate limits',
+      description: 'Removes all rate limit entries from Redis, unblocking all throttled IPs and users. Admin only.',
+      security: [{ bearerAuth: [] }],
+      responses: {
+        200: {
+          description: 'All rate limits cleared',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  message: { type: 'string', example: 'All rate limits cleared' },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      removed: { type: 'number', example: 12 },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden — Admin only' },
+        500: { description: 'Internal server error' },
+      },
+    },
+  },
+};
+
+const deleteRateLimit = {
+  '/admin/rate-limits/{key}': {
+    delete: {
+      tags: ['Admin'],
+      summary: 'Clear a specific rate limit',
+      description:
+        'Deletes a single rate limit entry from Redis by its key, unblocking that specific IP or user. Admin only.',
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          in: 'path',
+          name: 'key',
+          required: true,
+          schema: { type: 'string' },
+          description: 'Rate limit Redis key (e.g. rateLimit:ip:192.168.1.1)',
+        },
+      ],
+      responses: {
+        200: {
+          description: 'Rate limit cleared',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  message: { type: 'string', example: 'Rate limit cleared' },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      key: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: { description: 'Bad request — invalid key' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden — Admin only' },
+        500: { description: 'Internal server error' },
+      },
+    },
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Events
 // ---------------------------------------------------------------------------
 
@@ -724,12 +882,16 @@ const getAllEvents = {
                             capacity: { oneOf: [{ type: 'number' }, { type: 'null' }] },
                             all_day: { type: 'boolean' },
                             start_time: {
-                              type: 'string',
-                              format: 'date-time',
+                              oneOf: [
+                                { type: 'string', format: 'date-time' },
+                                { type: 'null' },
+                              ],
                             },
                             end_time: {
-                              type: 'string',
-                              format: 'date-time',
+                              oneOf: [
+                                { type: 'string', format: 'date-time' },
+                                { type: 'null' },
+                              ],
                             },
                             check_out_required: { type: 'boolean' },
                             is_started: { type: 'boolean' },
@@ -855,6 +1017,8 @@ export const admin = {
   ...getUserById,
   ...updateUserRole,
   ...deleteUser,
+  ...getRateLimits,
+  ...deleteRateLimit,
   ...getAllEvents,
   ...updateEvent,
 };

@@ -2,8 +2,8 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteAdminQueuesByQueueNameFailedByJobIdData, DeleteAdminQueuesByQueueNameFailedByJobIdErrors, DeleteAdminQueuesByQueueNameFailedByJobIdResponses, DeleteAdminQueuesByQueueNameFailedData, DeleteAdminQueuesByQueueNameFailedErrors, DeleteAdminQueuesByQueueNameFailedResponses, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdErrors, DeleteAdminUsersByUserIdResponses, DeleteEventByEventIdData, DeleteEventByEventIdErrors, DeleteEventByEventIdResponses, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdErrors, DeleteEventRemoveOrganizerByEventIdResponses, GetAdminEventsData, GetAdminEventsErrors, GetAdminEventsResponses, GetAdminQueuesByQueueNameFailedData, GetAdminQueuesByQueueNameFailedErrors, GetAdminQueuesByQueueNameFailedResponses, GetAdminQueuesData, GetAdminQueuesErrors, GetAdminQueuesResponses, GetAdminUsersData, GetAdminUsersErrors, GetAdminUsersResponses, GetAuthLoginHistoryData, GetAuthLoginHistoryErrors, GetAuthLoginHistoryResponses, GetEventAttendanceCountData, GetEventAttendanceCountErrors, GetEventAttendanceCountResponses, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesErrors, GetEventByEventIdAttendeesResponses, GetEventByEventIdData, GetEventByEventIdErrors, GetEventByEventIdOrganizersData, GetEventByEventIdOrganizersErrors, GetEventByEventIdOrganizersResponses, GetEventByEventIdResponses, GetEventData, GetEventErrors, GetEventExportByEventIdData, GetEventExportByEventIdErrors, GetEventExportByEventIdResponses, GetEventPastData, GetEventPastErrors, GetEventPastResponses, GetEventResponses, GetUserAttendedEventsData, GetUserAttendedEventsErrors, GetUserAttendedEventsResponses, GetUserData, GetUserErrors, GetUserEventsData, GetUserEventsErrors, GetUserEventsResponses, GetUserHostedEventsData, GetUserHostedEventsErrors, GetUserHostedEventsResponses, GetUserResponses, PatchAdminEventsByEventIdData, PatchAdminEventsByEventIdErrors, PatchAdminEventsByEventIdResponses, PatchAdminUsersByUserIdRoleData, PatchAdminUsersByUserIdRoleErrors, PatchAdminUsersByUserIdRoleResponses, PatchEventByEventIdDraftData, PatchEventByEventIdDraftErrors, PatchEventByEventIdDraftResponses, PatchEventByEventIdPostData, PatchEventByEventIdPostErrors, PatchEventByEventIdPostResponses, PostAdminQueuesByQueueNameFailedByJobIdRetryData, PostAdminQueuesByQueueNameFailedByJobIdRetryErrors, PostAdminQueuesByQueueNameFailedByJobIdRetryResponses, PostAdminQueuesByQueueNameFailedRetryAllData, PostAdminQueuesByQueueNameFailedRetryAllErrors, PostAdminQueuesByQueueNameFailedRetryAllResponses, PostAuthExchangeData, PostAuthExchangeErrors, PostAuthExchangeResponses, PostAuthLogoutData, PostAuthLogoutErrors, PostAuthLogoutResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdErrors, PostEventAddOrganizerByEventIdResponses, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdErrors, PostEventByEventIdCheckinByStudentIdResponses, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdErrors, PostEventByEventIdCheckoutByStudentIdResponses, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeErrors, PostEventCheckInByEventIdByQrCodeResponses, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeErrors, PostEventCheckOutByEventIdByQrCodeResponses, PostEventData, PostEventErrors, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdErrors, PostEventMassCheckOutByEventIdResponses, PostEventResponses, PostUserOnboardingData, PostUserOnboardingErrors, PostUserOnboardingResponses, PutEventByEventIdData, PutEventByEventIdErrors, PutEventByEventIdResponses, PutUserData, PutUserErrors, PutUserResponses } from './types.gen';
-import { zDeleteAdminQueuesByQueueNameFailedByJobIdData, zDeleteAdminQueuesByQueueNameFailedByJobIdResponse, zDeleteAdminQueuesByQueueNameFailedData, zDeleteAdminQueuesByQueueNameFailedResponse, zDeleteAdminUsersByUserIdData, zDeleteAdminUsersByUserIdResponse, zDeleteEventByEventIdData, zDeleteEventByEventIdResponse, zDeleteEventRemoveOrganizerByEventIdData, zDeleteEventRemoveOrganizerByEventIdResponse, zGetAdminEventsData, zGetAdminEventsResponse, zGetAdminQueuesByQueueNameFailedData, zGetAdminQueuesByQueueNameFailedResponse, zGetAdminQueuesData, zGetAdminQueuesResponse, zGetAdminUsersData, zGetAdminUsersResponse, zGetAuthLoginHistoryData, zGetAuthLoginHistoryResponse, zGetEventAttendanceCountData, zGetEventAttendanceCountResponse, zGetEventByEventIdAttendeesData, zGetEventByEventIdAttendeesResponse, zGetEventByEventIdData, zGetEventByEventIdOrganizersData, zGetEventByEventIdOrganizersResponse, zGetEventByEventIdResponse, zGetEventData, zGetEventExportByEventIdData, zGetEventExportByEventIdResponse, zGetEventPastData, zGetEventPastResponse, zGetEventResponse, zGetUserAttendedEventsData, zGetUserAttendedEventsResponse, zGetUserData, zGetUserEventsData, zGetUserEventsResponse, zGetUserHostedEventsData, zGetUserHostedEventsResponse, zGetUserResponse, zPatchAdminEventsByEventIdData, zPatchAdminEventsByEventIdResponse, zPatchAdminUsersByUserIdRoleData, zPatchAdminUsersByUserIdRoleResponse, zPatchEventByEventIdDraftData, zPatchEventByEventIdDraftResponse, zPatchEventByEventIdPostData, zPatchEventByEventIdPostResponse, zPostAdminQueuesByQueueNameFailedByJobIdRetryData, zPostAdminQueuesByQueueNameFailedByJobIdRetryResponse, zPostAdminQueuesByQueueNameFailedRetryAllData, zPostAdminQueuesByQueueNameFailedRetryAllResponse, zPostAuthExchangeData, zPostAuthExchangeResponse, zPostAuthLogoutData, zPostAuthLogoutResponse, zPostAuthRefreshData, zPostAuthRefreshResponse, zPostEventAddOrganizerByEventIdData, zPostEventAddOrganizerByEventIdResponse, zPostEventByEventIdCheckinByStudentIdData, zPostEventByEventIdCheckinByStudentIdResponse, zPostEventByEventIdCheckoutByStudentIdData, zPostEventByEventIdCheckoutByStudentIdResponse, zPostEventCheckInByEventIdByQrCodeData, zPostEventCheckInByEventIdByQrCodeResponse, zPostEventCheckOutByEventIdByQrCodeData, zPostEventCheckOutByEventIdByQrCodeResponse, zPostEventData, zPostEventMassCheckOutByEventIdData, zPostEventMassCheckOutByEventIdResponse, zPostEventResponse, zPostUserOnboardingData, zPostUserOnboardingResponse, zPutEventByEventIdData, zPutEventByEventIdResponse, zPutUserData, zPutUserResponse } from './zod.gen';
+import type { DeleteAdminQueuesByQueueNameFailedByJobIdData, DeleteAdminQueuesByQueueNameFailedByJobIdErrors, DeleteAdminQueuesByQueueNameFailedByJobIdResponses, DeleteAdminQueuesByQueueNameFailedData, DeleteAdminQueuesByQueueNameFailedErrors, DeleteAdminQueuesByQueueNameFailedResponses, DeleteAdminRateLimitsByKeyData, DeleteAdminRateLimitsByKeyErrors, DeleteAdminRateLimitsByKeyResponses, DeleteAdminRateLimitsData, DeleteAdminRateLimitsErrors, DeleteAdminRateLimitsResponses, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdErrors, DeleteAdminUsersByUserIdResponses, DeleteEventByEventIdData, DeleteEventByEventIdErrors, DeleteEventByEventIdResponses, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdErrors, DeleteEventRemoveOrganizerByEventIdResponses, GetAdminEventsData, GetAdminEventsErrors, GetAdminEventsResponses, GetAdminQueuesByQueueNameFailedData, GetAdminQueuesByQueueNameFailedErrors, GetAdminQueuesByQueueNameFailedResponses, GetAdminQueuesData, GetAdminQueuesErrors, GetAdminQueuesResponses, GetAdminRateLimitsData, GetAdminRateLimitsErrors, GetAdminRateLimitsResponses, GetAdminUsersData, GetAdminUsersErrors, GetAdminUsersResponses, GetAuthLoginHistoryData, GetAuthLoginHistoryErrors, GetAuthLoginHistoryResponses, GetEventAttendanceCountData, GetEventAttendanceCountErrors, GetEventAttendanceCountResponses, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesErrors, GetEventByEventIdAttendeesResponses, GetEventByEventIdData, GetEventByEventIdErrors, GetEventByEventIdOrganizersData, GetEventByEventIdOrganizersErrors, GetEventByEventIdOrganizersResponses, GetEventByEventIdResponses, GetEventData, GetEventErrors, GetEventExportByEventIdData, GetEventExportByEventIdErrors, GetEventExportByEventIdResponses, GetEventPastData, GetEventPastErrors, GetEventPastResponses, GetEventResponses, GetUserAttendedEventsData, GetUserAttendedEventsErrors, GetUserAttendedEventsResponses, GetUserData, GetUserErrors, GetUserEventsData, GetUserEventsErrors, GetUserEventsResponses, GetUserHostedEventsData, GetUserHostedEventsErrors, GetUserHostedEventsResponses, GetUserResponses, PatchAdminEventsByEventIdData, PatchAdminEventsByEventIdErrors, PatchAdminEventsByEventIdResponses, PatchAdminUsersByUserIdRoleData, PatchAdminUsersByUserIdRoleErrors, PatchAdminUsersByUserIdRoleResponses, PatchEventByEventIdDraftData, PatchEventByEventIdDraftErrors, PatchEventByEventIdDraftResponses, PatchEventByEventIdPostData, PatchEventByEventIdPostErrors, PatchEventByEventIdPostResponses, PostAdminQueuesByQueueNameFailedByJobIdRetryData, PostAdminQueuesByQueueNameFailedByJobIdRetryErrors, PostAdminQueuesByQueueNameFailedByJobIdRetryResponses, PostAdminQueuesByQueueNameFailedRetryAllData, PostAdminQueuesByQueueNameFailedRetryAllErrors, PostAdminQueuesByQueueNameFailedRetryAllResponses, PostAuthExchangeData, PostAuthExchangeErrors, PostAuthExchangeResponses, PostAuthLogoutData, PostAuthLogoutErrors, PostAuthLogoutResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdErrors, PostEventAddOrganizerByEventIdResponses, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdErrors, PostEventByEventIdCheckinByStudentIdResponses, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdErrors, PostEventByEventIdCheckoutByStudentIdResponses, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeErrors, PostEventCheckInByEventIdByQrCodeResponses, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeErrors, PostEventCheckOutByEventIdByQrCodeResponses, PostEventData, PostEventErrors, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdErrors, PostEventMassCheckOutByEventIdResponses, PostEventResponses, PostUserOnboardingData, PostUserOnboardingErrors, PostUserOnboardingResponses, PutEventByEventIdData, PutEventByEventIdErrors, PutEventByEventIdResponses, PutUserData, PutUserErrors, PutUserResponses } from './types.gen';
+import { zDeleteAdminQueuesByQueueNameFailedByJobIdData, zDeleteAdminQueuesByQueueNameFailedByJobIdResponse, zDeleteAdminQueuesByQueueNameFailedData, zDeleteAdminQueuesByQueueNameFailedResponse, zDeleteAdminRateLimitsByKeyData, zDeleteAdminRateLimitsByKeyResponse, zDeleteAdminRateLimitsData, zDeleteAdminRateLimitsResponse, zDeleteAdminUsersByUserIdData, zDeleteAdminUsersByUserIdResponse, zDeleteEventByEventIdData, zDeleteEventByEventIdResponse, zDeleteEventRemoveOrganizerByEventIdData, zDeleteEventRemoveOrganizerByEventIdResponse, zGetAdminEventsData, zGetAdminEventsResponse, zGetAdminQueuesByQueueNameFailedData, zGetAdminQueuesByQueueNameFailedResponse, zGetAdminQueuesData, zGetAdminQueuesResponse, zGetAdminRateLimitsData, zGetAdminRateLimitsResponse, zGetAdminUsersData, zGetAdminUsersResponse, zGetAuthLoginHistoryData, zGetAuthLoginHistoryResponse, zGetEventAttendanceCountData, zGetEventAttendanceCountResponse, zGetEventByEventIdAttendeesData, zGetEventByEventIdAttendeesResponse, zGetEventByEventIdData, zGetEventByEventIdOrganizersData, zGetEventByEventIdOrganizersResponse, zGetEventByEventIdResponse, zGetEventData, zGetEventExportByEventIdData, zGetEventExportByEventIdResponse, zGetEventPastData, zGetEventPastResponse, zGetEventResponse, zGetUserAttendedEventsData, zGetUserAttendedEventsResponse, zGetUserData, zGetUserEventsData, zGetUserEventsResponse, zGetUserHostedEventsData, zGetUserHostedEventsResponse, zGetUserResponse, zPatchAdminEventsByEventIdData, zPatchAdminEventsByEventIdResponse, zPatchAdminUsersByUserIdRoleData, zPatchAdminUsersByUserIdRoleResponse, zPatchEventByEventIdDraftData, zPatchEventByEventIdDraftResponse, zPatchEventByEventIdPostData, zPatchEventByEventIdPostResponse, zPostAdminQueuesByQueueNameFailedByJobIdRetryData, zPostAdminQueuesByQueueNameFailedByJobIdRetryResponse, zPostAdminQueuesByQueueNameFailedRetryAllData, zPostAdminQueuesByQueueNameFailedRetryAllResponse, zPostAuthExchangeData, zPostAuthExchangeResponse, zPostAuthLogoutData, zPostAuthLogoutResponse, zPostAuthRefreshData, zPostAuthRefreshResponse, zPostEventAddOrganizerByEventIdData, zPostEventAddOrganizerByEventIdResponse, zPostEventByEventIdCheckinByStudentIdData, zPostEventByEventIdCheckinByStudentIdResponse, zPostEventByEventIdCheckoutByStudentIdData, zPostEventByEventIdCheckoutByStudentIdResponse, zPostEventCheckInByEventIdByQrCodeData, zPostEventCheckInByEventIdByQrCodeResponse, zPostEventCheckOutByEventIdByQrCodeData, zPostEventCheckOutByEventIdByQrCodeResponse, zPostEventData, zPostEventMassCheckOutByEventIdData, zPostEventMassCheckOutByEventIdResponse, zPostEventResponse, zPostUserOnboardingData, zPostUserOnboardingResponse, zPutEventByEventIdData, zPutEventByEventIdResponse, zPutUserData, zPutUserResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -1017,6 +1017,81 @@ export class Admin {
                 'Content-Type': 'application/json',
                 ...options.headers
             }
+        });
+    }
+    
+    /**
+     * Clear all rate limits
+     *
+     * Removes all rate limit entries from Redis, unblocking all throttled IPs and users. Admin only.
+     */
+    public static deleteAdminRateLimits<ThrowOnError extends boolean = false>(options?: Options<DeleteAdminRateLimitsData, ThrowOnError>) {
+        return (options?.client ?? client).delete<DeleteAdminRateLimitsResponses, DeleteAdminRateLimitsErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zDeleteAdminRateLimitsData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zDeleteAdminRateLimitsResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/rate-limits',
+            ...options
+        });
+    }
+    
+    /**
+     * List all active rate limit entries
+     *
+     * Scans Redis for all active sliding-window rate limit keys and returns their current count and TTL. Admin only.
+     */
+    public static getAdminRateLimits<ThrowOnError extends boolean = false>(options?: Options<GetAdminRateLimitsData, ThrowOnError>) {
+        return (options?.client ?? client).get<GetAdminRateLimitsResponses, GetAdminRateLimitsErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zGetAdminRateLimitsData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zGetAdminRateLimitsResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/rate-limits',
+            ...options
+        });
+    }
+    
+    /**
+     * Clear a specific rate limit
+     *
+     * Deletes a single rate limit entry from Redis by its key, unblocking that specific IP or user. Admin only.
+     */
+    public static deleteAdminRateLimitsByKey<ThrowOnError extends boolean = false>(options: Options<DeleteAdminRateLimitsByKeyData, ThrowOnError>) {
+        return (options.client ?? client).delete<DeleteAdminRateLimitsByKeyResponses, DeleteAdminRateLimitsByKeyErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zDeleteAdminRateLimitsByKeyData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zDeleteAdminRateLimitsByKeyResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/rate-limits/{key}',
+            ...options
         });
     }
     

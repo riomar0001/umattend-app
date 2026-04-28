@@ -38,7 +38,6 @@ const findAllUsers = async (page: number, limit: number, search?: string) => {
         last_login_at: true,
         created_at: true,
         updated_at: true,
-        deleted_at: true,
         student: {
           select: {
             student_id: true,
