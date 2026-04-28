@@ -136,8 +136,8 @@ const verifyGoogleToken = async (token: string) => {
       name: payload.name,
       profile_picture: payload.picture,
     };
-    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   } catch (error) {
+    console.error('Failed to verify Google token:', error);
     throw new Error('Invalid Google token');
   }
 };
@@ -166,8 +166,8 @@ const validateState = (state: string) => {
     }
 
     return true;
-    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   } catch (error) {
+    console.error('Failed to validate state parameter:', error);
     return false;
   }
 };

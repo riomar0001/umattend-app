@@ -13,7 +13,8 @@ export function metricsMiddleware(
 
   res.on('finish', () => {
     const durationSeconds = Number(process.hrtime.bigint() - start) / 1e9;
-    const route = (req.route?.path as string | undefined) ?? req.path ?? 'unknown';
+    const route =
+      (req.route?.path as string | undefined) ?? req.path ?? 'unknown';
     const labels = {
       method: req.method,
       route,

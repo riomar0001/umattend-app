@@ -22,7 +22,9 @@ const getQueues = async (_req: Request, res: Response) => {
     const queues = await adminService.getAllQueues();
     return HTTPSuccessResponse(res, 200, 'Queues retrieved', queues);
   } catch (error) {
-    if (NODE_ENV === 'DEVELOPMENT') console.error('getQueues error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('getQueues error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -39,7 +41,9 @@ const getFailedJobs = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
-    if (NODE_ENV === 'DEVELOPMENT') console.error('getFailedJobs error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('getFailedJobs error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -53,7 +57,9 @@ const retryFailedJob = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
-    if (NODE_ENV === 'DEVELOPMENT') console.error('retryFailedJob error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('retryFailedJob error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -67,7 +73,9 @@ const deleteFailedJob = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
-    if (NODE_ENV === 'DEVELOPMENT') console.error('deleteFailedJob error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('deleteFailedJob error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -81,7 +89,9 @@ const retryAllFailedJobs = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
-    if (NODE_ENV === 'DEVELOPMENT') console.error('retryAllFailedJobs error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('retryAllFailedJobs error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -95,7 +105,9 @@ const cleanAllFailedJobs = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
-    if (NODE_ENV === 'DEVELOPMENT') console.error('cleanAllFailedJobs error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('cleanAllFailedJobs error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -113,7 +125,9 @@ const getAllUsers = async (req: Request, res: Response) => {
     const result = await adminService.getAllUsers(page, limit, search);
     return HTTPSuccessResponse(res, 200, 'Users retrieved', result);
   } catch (error) {
-    if (NODE_ENV === 'DEVELOPMENT') console.error('getAllUsers error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('getAllUsers error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -127,7 +141,9 @@ const getUserById = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
-    if (NODE_ENV === 'DEVELOPMENT') console.error('getUserById error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('getUserById error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -143,7 +159,9 @@ const updateUserRole = async (req: Request, res: Response) => {
     const { role } = matchedData(req);
 
     const updated = await adminService.updateUserRole(userId, role);
-    return HTTPSuccessResponse(res, 200, 'User role updated', { user: updated });
+    return HTTPSuccessResponse(res, 200, 'User role updated', {
+      user: updated,
+    });
   } catch (error) {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
@@ -151,7 +169,9 @@ const updateUserRole = async (req: Request, res: Response) => {
     if (error instanceof BadRequestError) {
       return HTTPErrorResponse(res, 400, error.message);
     }
-    if (NODE_ENV === 'DEVELOPMENT') console.error('updateUserRole error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('updateUserRole error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -168,7 +188,9 @@ const deleteUser = async (req: Request, res: Response) => {
     if (error instanceof ConflictError) {
       return HTTPErrorResponse(res, 409, error.message);
     }
-    if (NODE_ENV === 'DEVELOPMENT') console.error('deleteUser error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('deleteUser error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -186,7 +208,9 @@ const getAllEvents = async (req: Request, res: Response) => {
     const result = await adminService.getAllEvents(page, limit, search);
     return HTTPSuccessResponse(res, 200, 'Events retrieved', result);
   } catch (error) {
-    if (NODE_ENV === 'DEVELOPMENT') console.error('getAllEvents error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('getAllEvents error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -216,7 +240,7 @@ const updateEvent = async (req: Request, res: Response) => {
       end_time,
       check_out_required,
       is_done,
-    } = data as any;
+    } = data as Record<string, unknown>;
 
     const existing = await eventRepository.getEventDetails(eventId);
     if (!existing) {
@@ -243,7 +267,9 @@ const updateEvent = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
-    if (NODE_ENV === 'DEVELOPMENT') console.error('updateEvent error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('updateEvent error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -255,9 +281,13 @@ const updateEvent = async (req: Request, res: Response) => {
 const getRateLimits = async (req: Request, res: Response) => {
   try {
     const limits = await adminService.getRateLimits();
-    return HTTPSuccessResponse(res, 200, 'Rate limits retrieved', { entries: limits });
+    return HTTPSuccessResponse(res, 200, 'Rate limits retrieved', {
+      entries: limits,
+    });
   } catch (error) {
-    if (NODE_ENV === 'DEVELOPMENT') console.error('getRateLimits error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('getRateLimits error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -271,7 +301,9 @@ const deleteRateLimit = async (req: Request, res: Response) => {
     if (error instanceof BadRequestError) {
       return HTTPErrorResponse(res, 400, error.message);
     }
-    if (NODE_ENV === 'DEVELOPMENT') console.error('deleteRateLimit error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('deleteRateLimit error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };
@@ -279,9 +311,13 @@ const deleteRateLimit = async (req: Request, res: Response) => {
 const deleteAllRateLimits = async (_req: Request, res: Response) => {
   try {
     const removed = await adminService.deleteAllRateLimits();
-    return HTTPSuccessResponse(res, 200, 'All rate limits cleared', { removed });
+    return HTTPSuccessResponse(res, 200, 'All rate limits cleared', {
+      removed,
+    });
   } catch (error) {
-    if (NODE_ENV === 'DEVELOPMENT') console.error('deleteAllRateLimits error:', error);
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('deleteAllRateLimits error:', error);
+    }
     return HTTPErrorResponse(res, 500, 'Internal server error');
   }
 };

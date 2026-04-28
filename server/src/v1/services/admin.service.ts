@@ -1,5 +1,9 @@
 import { Queue, Job } from 'bullmq';
-import { NotFoundError, ConflictError, BadRequestError } from '../../utils/customErrors';
+import {
+  NotFoundError,
+  ConflictError,
+  BadRequestError,
+} from '../../utils/customErrors';
 import { emailQueue } from '../queues/email.queue';
 import { startEventStatusQueue } from '../queues/startEvent.queue';
 import { endEventStatusQueue } from '../queues/endEvent.queue';
@@ -18,7 +22,9 @@ const QUEUE_MAP: Record<string, Queue> = {
 
 function resolveQueue(name: string): Queue {
   const q = QUEUE_MAP[name];
-  if (!q) { throw new NotFoundError(`Queue "${name}" not found`); }
+  if (!q) {
+    throw new NotFoundError(`Queue "${name}" not found`);
+  }
   return q;
 }
 
@@ -67,7 +73,7 @@ const getFailedJobs = async (
     name: job.name,
     data: job.data,
     failedReason: job.failedReason,
-    stacktrace: (job as any).stacktrace ?? [],
+    stacktrace: job.stacktrace ?? [],
     attemptsMade: job.attemptsMade,
     timestamp: job.timestamp,
     finishedOn: job.finishedOn,
@@ -88,7 +94,9 @@ const getFailedJobs = async (
 const retryJob = async (queueName: string, jobId: string) => {
   const queue = resolveQueue(queueName);
   const job = await queue.getJob(jobId);
-  if (!job) {throw new NotFoundError(`Job "${jobId}" not found`);}
+  if (!job) {
+    throw new NotFoundError(`Job "${jobId}" not found`);
+  }
   await job.retry();
   return { jobId, retried: true };
 };
@@ -96,7 +104,9 @@ const retryJob = async (queueName: string, jobId: string) => {
 const removeJob = async (queueName: string, jobId: string) => {
   const queue = resolveQueue(queueName);
   const job = await queue.getJob(jobId);
-  if (!job) {throw new NotFoundError(`Job "${jobId}" not found`);}
+  if (!job) {
+    throw new NotFoundError(`Job "${jobId}" not found`);
+  }
   await job.remove();
   return { jobId, removed: true };
 };
@@ -115,11 +125,13 @@ const cleanAllFailed = async (queueName: string) => {
   let removed = 0;
 
   // clean() removes up to `limit` jobs older than `grace` ms. Loop to remove all.
-  // eslint-disable-next-line no-constant-condition
+
   while (true) {
     const batchRemoved = await queue.clean(0, BATCH, 'failed');
     removed += batchRemoved.length;
-    if (batchRemoved.length < BATCH) {break;}
+    if (batchRemoved.length < BATCH) {
+      break;
+    }
   }
 
   return { removed };
@@ -148,7 +160,9 @@ const getAllUsers = async (page: number, limit: number, search?: string) => {
 
 const getUserById = async (userId: string) => {
   const user = await adminRepository.findUserById(userId);
-  if (!user) {throw new NotFoundError('User not found');}
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
   return user;
 };
 
@@ -160,14 +174,18 @@ const updateUserRole = async (userId: string, role: string) => {
   }
 
   const existing = await adminRepository.findUserById(userId);
-  if (!existing) {throw new NotFoundError('User not found');}
+  if (!existing) {
+    throw new NotFoundError('User not found');
+  }
 
   return await adminRepository.updateUserRole(userId, role);
 };
 
 const softDeleteUser = async (userId: string) => {
   const existing = await adminRepository.findUserById(userId);
-  if (!existing) {throw new NotFoundError('User not found');}
+  if (!existing) {
+    throw new NotFoundError('User not found');
+  }
   if (existing.deleted_at) {
     throw new ConflictError('User is already deleted');
   }
@@ -179,11 +197,7 @@ const softDeleteUser = async (userId: string) => {
 // Events
 // ---------------------------------------------------------------------------
 
-const getAllEvents = async (
-  page: number,
-  limit: number,
-  search?: string
-) => {
+const getAllEvents = async (page: number, limit: number, search?: string) => {
   const { data, total } = await adminRepository.findAllEvents(
     page,
     limit,
@@ -201,12 +215,20 @@ const getAllEvents = async (
   };
 };
 
-const updateEvent = async (eventId: string, eventData: any) => {
+const updateEvent = async (
+  eventId: string,
+  eventData: Record<string, unknown>
+) => {
   const existing = await eventRepository.getEventDetails(eventId);
-  if (!existing) {throw new NotFoundError('Event not found');}
+  if (!existing) {
+    throw new NotFoundError('Event not found');
+  }
 
   // Admin override — bypasses the created_by check in eventService.updateEvent
-  return await eventRepository.updateEvent(eventId, eventData);
+  return await eventRepository.updateEvent(
+    eventId,
+    eventData as unknown as Parameters<typeof eventRepository.updateEvent>[1]
+  );
 };
 
 // ---------------------------------------------------------------------------
@@ -255,7 +277,9 @@ const getRateLimits = async (): Promise<RateLimitEntry[]> => {
     keys.push(...batch);
   } while (cursor !== '0');
 
-  if (keys.length === 0) {return [];}
+  if (keys.length === 0) {
+    return [];
+  }
 
   // Run cleanup+count for each key in parallel. Each EVAL atomically evicts
   // expired entries before counting, so the admin page shows per-request
@@ -264,11 +288,17 @@ const getRateLimits = async (): Promise<RateLimitEntry[]> => {
     keys.map((k) =>
       redis
         .eval(adminCountScript, 1, k, String(Date.now()), String(WINDOW_MS))
-        .then(([count, ttl]: any) => ({
-          key: k,
-          count: typeof count === 'number' ? count : Number(count ?? 0),
-          ttl: typeof ttl === 'number' ? Math.ceil(ttl / 1000) : Number(ttl ?? -1),
-        }))
+        .then((result) => {
+          const [count, ttl] = result as [number, number];
+          return {
+            key: k,
+            count: typeof count === 'number' ? count : Number(count ?? 0),
+            ttl:
+              typeof ttl === 'number'
+                ? Math.ceil(ttl / 1000)
+                : Number(ttl ?? -1),
+          };
+        })
         .catch(() => ({ key: k, count: 0, ttl: -1 }))
     )
   );
@@ -287,7 +317,9 @@ const deleteRateLimit = async (key: string): Promise<void> => {
 
 const deleteAllRateLimits = async (): Promise<number> => {
   const keys = await redis.keys(`${RATE_LIMIT_PREFIX}*`);
-  if (keys.length === 0) {return 0;}
+  if (keys.length === 0) {
+    return 0;
+  }
   return await redis.del(...keys);
 };
 

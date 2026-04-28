@@ -1,36 +1,17 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { Trash2, Globe, User } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  getAdminRateLimitsOptions,
-  deleteAdminRateLimitsMutation,
-  deleteAdminRateLimitsByKeyMutation,
-} from '@/api/client/@tanstack/react-query.gen';
+import { getAdminRateLimitsOptions, deleteAdminRateLimitsMutation, deleteAdminRateLimitsByKeyMutation } from '@/api/client/@tanstack/react-query.gen';
 
 // ---------------------------------------------------------------------------
 // Types & constants
@@ -55,7 +36,7 @@ const CATEGORY_META: Record<string, { label: string; limit: number; group: 'ip' 
   oauth: { label: 'OAuth', limit: 300, group: 'ip' },
   account: { label: 'Login', limit: 10, group: 'user' },
   checkin: { label: 'Check-in', limit: 0, group: 'user' },
-  refresh: { label: 'Refresh', limit: 0, group: 'user' },
+  refresh: { label: 'Refresh', limit: 0, group: 'user' }
 };
 
 function parseEntry(entry: RateLimitEntry): ParsedEntry {
@@ -102,7 +83,7 @@ export default function AdminRateLimitsPage() {
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     ...getAdminRateLimitsOptions(),
-    refetchInterval: 15_000,
+    refetchInterval: 15_000
   });
 
   const deleteKey = useMutation({
@@ -111,7 +92,7 @@ export default function AdminRateLimitsPage() {
       toast.success('Rate limit cleared');
       queryClient.invalidateQueries({ queryKey: getAdminRateLimitsOptions({}).queryKey });
     },
-    onError: (err) => toast.error((err as Error)?.message || 'Failed to clear'),
+    onError: (err) => toast.error((err as Error)?.message || 'Failed to clear')
   });
 
   const deleteAll = useMutation({
@@ -121,16 +102,16 @@ export default function AdminRateLimitsPage() {
       setDeleteAllDialog(false);
       queryClient.invalidateQueries({ queryKey: getAdminRateLimitsOptions({}).queryKey });
     },
-    onError: (err) => toast.error((err as Error)?.message || 'Failed to clear all'),
+    onError: (err) => toast.error((err as Error)?.message || 'Failed to clear all')
   });
 
-  const rawEntries: RateLimitEntry[] = data?.data?.entries ?? [];
+  const rawEntries: RateLimitEntry[] = useMemo(() => data?.data?.entries ?? [], [data?.data?.entries]);
 
   const { ipEntries, userEntries } = useMemo(() => {
     const parsed = rawEntries.map(parseEntry);
     return {
       ipEntries: parsed.filter((e) => e.group === 'ip'),
-      userEntries: parsed.filter((e) => e.group === 'user'),
+      userEntries: parsed.filter((e) => e.group === 'user')
     };
   }, [rawEntries]);
 
@@ -170,7 +151,9 @@ export default function AdminRateLimitsPage() {
                     <span className="font-mono text-xs">{entry.target || '—'}</span>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="text-xs">{entry.label}</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {entry.label}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <span className={isNear ? 'font-medium text-amber-500' : ''}>{count}</span>
@@ -187,9 +170,7 @@ export default function AdminRateLimitsPage() {
                       <span className="text-muted-foreground text-xs">{pct}%</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
-                    {(entry.ttl ?? -1) > 0 ? `${entry.ttl}s` : '—'}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">{(entry.ttl ?? -1) > 0 ? `${entry.ttl}s` : '—'}</TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
@@ -224,12 +205,7 @@ export default function AdminRateLimitsPage() {
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
             Refresh
           </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={deleteAll.isPending || total === 0}
-            onClick={() => setDeleteAllDialog(true)}
-          >
+          <Button variant="destructive" size="sm" disabled={deleteAll.isPending || total === 0} onClick={() => setDeleteAllDialog(true)}>
             <Trash2 className="mr-1 h-4 w-4" />
             Clear All
           </Button>
@@ -328,20 +304,13 @@ export default function AdminRateLimitsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Clear All Rate Limits</DialogTitle>
-            <DialogDescription>
-              This will remove all {total} rate limit entries from Redis, unblocking all
-              currently throttled IPs and users.
-            </DialogDescription>
+            <DialogDescription>This will remove all {total} rate limit entries from Redis, unblocking all currently throttled IPs and users.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteAllDialog(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              disabled={deleteAll.isPending}
-              onClick={() => deleteAll.mutate({})}
-            >
+            <Button variant="destructive" disabled={deleteAll.isPending} onClick={() => deleteAll.mutate({})}>
               {deleteAll.isPending ? 'Clearing...' : 'Clear All'}
             </Button>
           </DialogFooter>

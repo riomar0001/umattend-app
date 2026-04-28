@@ -28,10 +28,7 @@ router.post(
 );
 
 // DELETE /queues/:queueName/failed — clean all failed (before :jobId)
-router.delete(
-  '/queues/:queueName/failed',
-  adminController.cleanAllFailedJobs
-);
+router.delete('/queues/:queueName/failed', adminController.cleanAllFailedJobs);
 
 // GET /queues/:queueName/failed — paginated failed jobs
 router.get(
@@ -94,7 +91,9 @@ router.patch(
 console.log('[admin.routes] registering rate-limit routes');
 router.get('/rate-limits', adminController.getRateLimits);
 // fallback test
-router.get('/ratelimits', (_req, res) => { res.json({ ok: true, path: 'ratelimits' }); });
+router.get('/ratelimits', (_req, res) => {
+  res.json({ ok: true, path: 'ratelimits' });
+});
 
 // DELETE /rate-limits — clear all rate limits
 router.delete('/rate-limits', adminController.deleteAllRateLimits);

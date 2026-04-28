@@ -6,6 +6,11 @@ import { checkRole } from '../middlewares/role.middleware';
 const router = Router();
 
 router.get('/', getHealth);
-router.get('/detailed', authMiddleware, checkRole('admin', 'csg'), getHealthDetailed);
+router.get(
+  '/detailed',
+  authMiddleware,
+  checkRole('admin', 'csg'),
+  getHealthDetailed
+);
 
 export default router;

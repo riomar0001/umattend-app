@@ -3,7 +3,8 @@ import { CustomError } from '@/v1/interface/error';
 import { NODE_ENV } from '../../constants/app.constants';
 
 export const errorHandler = (err: CustomError, req: Request, res: Response) => {
-  const statusCode = err.statusCode ?? (res.statusCode >= 400 ? res.statusCode : 500);
+  const statusCode =
+    err.statusCode ?? (res.statusCode >= 400 ? res.statusCode : 500);
 
   const response = {
     success: false,

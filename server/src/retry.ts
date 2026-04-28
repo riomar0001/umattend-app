@@ -17,12 +17,17 @@ const queueEvents = new QueueEvents(queueName, { connection });
 async function waitForJobResult(jobId: string) {
   return new Promise<{
     status: 'completed' | 'failed';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    result?: any;
+
+    result?: unknown;
     failedReason?: unknown;
   }>((resolve) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const onCompleted = ({ jobId: completedId, returnvalue }: any) => {
+    const onCompleted = ({
+      jobId: completedId,
+      returnvalue,
+    }: {
+      jobId: string;
+      returnvalue: unknown;
+    }) => {
       if (completedId === jobId) {
         queueEvents.off('completed', onCompleted);
         queueEvents.off('failed', onFailed);
@@ -30,8 +35,13 @@ async function waitForJobResult(jobId: string) {
       }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const onFailed = ({ jobId: failedId, failedReason }: any) => {
+    const onFailed = ({
+      jobId: failedId,
+      failedReason,
+    }: {
+      jobId: string;
+      failedReason: string;
+    }) => {
       if (failedId === jobId) {
         queueEvents.off('completed', onCompleted);
         queueEvents.off('failed', onFailed);
@@ -46,7 +56,6 @@ async function waitForJobResult(jobId: string) {
 
 // Helper to sleep
 function sleep(ms: number) {
-  // eslint-disable-next-line no-undef
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 

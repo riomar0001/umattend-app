@@ -68,7 +68,11 @@ const getFailedJobs = {
           required: true,
           schema: {
             type: 'string',
-            enum: ['email-queue', 'event-start-status-queue', 'event-end-status-queue'],
+            enum: [
+              'email-queue',
+              'event-start-status-queue',
+              'event-end-status-queue',
+            ],
           },
           description: 'Queue name',
         },
@@ -159,7 +163,11 @@ const getFailedJobs = {
           required: true,
           schema: {
             type: 'string',
-            enum: ['email-queue', 'event-start-status-queue', 'event-end-status-queue'],
+            enum: [
+              'email-queue',
+              'event-start-status-queue',
+              'event-end-status-queue',
+            ],
           },
           description: 'Queue name',
         },
@@ -208,7 +216,11 @@ const retryFailedJob = {
           required: true,
           schema: {
             type: 'string',
-            enum: ['email-queue', 'event-start-status-queue', 'event-end-status-queue'],
+            enum: [
+              'email-queue',
+              'event-start-status-queue',
+              'event-end-status-queue',
+            ],
           },
           description: 'Queue name',
         },
@@ -266,7 +278,11 @@ const deleteFailedJob = {
           required: true,
           schema: {
             type: 'string',
-            enum: ['email-queue', 'event-start-status-queue', 'event-end-status-queue'],
+            enum: [
+              'email-queue',
+              'event-start-status-queue',
+              'event-end-status-queue',
+            ],
           },
           description: 'Queue name',
         },
@@ -324,7 +340,11 @@ const retryAllFailedJobs = {
           required: true,
           schema: {
             type: 'string',
-            enum: ['email-queue', 'event-start-status-queue', 'event-end-status-queue'],
+            enum: [
+              'email-queue',
+              'event-start-status-queue',
+              'event-end-status-queue',
+            ],
           },
           description: 'Queue name',
         },
@@ -441,10 +461,16 @@ const getAllUsers = {
                                     student_id: { type: 'number' },
                                     name: { type: 'string' },
                                     department: {
-                                      oneOf: [{ type: 'string' }, { type: 'null' }],
+                                      oneOf: [
+                                        { type: 'string' },
+                                        { type: 'null' },
+                                      ],
                                     },
                                     program: {
-                                      oneOf: [{ type: 'string' }, { type: 'null' }],
+                                      oneOf: [
+                                        { type: 'string' },
+                                        { type: 'null' },
+                                      ],
                                     },
                                   },
                                 },
@@ -483,7 +509,8 @@ const getUserById = {
     get: {
       tags: ['Admin'],
       summary: 'Get user by ID',
-      description: 'Returns full user details including student info. Admin only.',
+      description:
+        'Returns full user details including student info. Admin only.',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -523,10 +550,16 @@ const getUserById = {
                                   student_id: { type: 'number' },
                                   name: { type: 'string' },
                                   department: {
-                                    oneOf: [{ type: 'string' }, { type: 'null' }],
+                                    oneOf: [
+                                      { type: 'string' },
+                                      { type: 'null' },
+                                    ],
                                   },
                                   program: {
-                                    oneOf: [{ type: 'string' }, { type: 'null' }],
+                                    oneOf: [
+                                      { type: 'string' },
+                                      { type: 'null' },
+                                    ],
                                   },
                                   profile_picture: { type: 'string' },
                                 },
@@ -614,10 +647,16 @@ const updateUserRole = {
                                   student_id: { type: 'number' },
                                   name: { type: 'string' },
                                   department: {
-                                    oneOf: [{ type: 'string' }, { type: 'null' }],
+                                    oneOf: [
+                                      { type: 'string' },
+                                      { type: 'null' },
+                                    ],
                                   },
                                   program: {
-                                    oneOf: [{ type: 'string' }, { type: 'null' }],
+                                    oneOf: [
+                                      { type: 'string' },
+                                      { type: 'null' },
+                                    ],
                                   },
                                 },
                               },
@@ -722,7 +761,10 @@ const getRateLimits = {
                         items: {
                           type: 'object',
                           properties: {
-                            key: { type: 'string', example: 'rateLimit:ip:192.168.1.1' },
+                            key: {
+                              type: 'string',
+                              example: 'rateLimit:ip:192.168.1.1',
+                            },
                             count: { type: 'number', example: 5 },
                             ttl: { type: 'number', example: 42 },
                           },
@@ -743,7 +785,8 @@ const getRateLimits = {
     delete: {
       tags: ['Admin'],
       summary: 'Clear all rate limits',
-      description: 'Removes all rate limit entries from Redis, unblocking all throttled IPs and users. Admin only.',
+      description:
+        'Removes all rate limit entries from Redis, unblocking all throttled IPs and users. Admin only.',
       security: [{ bearerAuth: [] }],
       responses: {
         200: {
@@ -754,7 +797,10 @@ const getRateLimits = {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: true },
-                  message: { type: 'string', example: 'All rate limits cleared' },
+                  message: {
+                    type: 'string',
+                    example: 'All rate limits cleared',
+                  },
                   data: {
                     type: 'object',
                     properties: {
@@ -879,7 +925,9 @@ const getAllEvents = {
                             description: { type: 'string' },
                             department: { type: 'string' },
                             location: { type: 'string' },
-                            capacity: { oneOf: [{ type: 'number' }, { type: 'null' }] },
+                            capacity: {
+                              oneOf: [{ type: 'number' }, { type: 'null' }],
+                            },
                             all_day: { type: 'boolean' },
                             start_time: {
                               oneOf: [

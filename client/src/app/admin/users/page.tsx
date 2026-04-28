@@ -72,7 +72,6 @@ export default function AdminUsersPage() {
     })
   });
 
-
   const roleMutation = useMutation({
     ...patchAdminUsersByUserIdRoleMutation(),
     onSuccess: () => {

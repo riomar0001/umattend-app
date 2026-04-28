@@ -10,7 +10,7 @@ const originalTransaction = prisma.$transaction.bind(
   prisma
 ) as typeof prisma.$transaction;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- monkey-patching Prisma's $transaction to add instrumentation; the overloaded union type is too complex to replicate
 (prisma.$transaction as any) = function <T>(
   queries: Parameters<typeof prisma.$transaction>[0],
   options?: TransactionOptions
@@ -47,7 +47,7 @@ const originalTransaction = prisma.$transaction.bind(
     });
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma $on event type is narrowed to `never` after $extends; the runtime API accepts 'query'
 (prisma as any).$on('query', (e: any) => {
   const level =
     e.duration > 10000 ? 'warn' : e.duration > 1000 ? 'warn' : 'info';

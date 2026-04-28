@@ -81,7 +81,9 @@ async function checkSlidingWindow(
 function getUserIdFromRefreshToken(req: Request): string | undefined {
   const refreshToken =
     (req.cookies?.refresh_token as string) ?? req.body?.refresh_token;
-  if (!refreshToken) return undefined;
+  if (!refreshToken) {
+    return undefined;
+  }
 
   try {
     const decoded = jwt.decode(refreshToken) as { user_id?: string } | null;
@@ -100,8 +102,7 @@ export const loginRateLimiter = async (
   next: NextFunction
 ): Promise<void> => {
   const ip = getClientIp(req);
-  const userId =
-    req.user?.id ?? getUserIdFromRefreshToken(req);
+  const userId = req.user?.id ?? getUserIdFromRefreshToken(req);
 
   const checks: Promise<boolean>[] = [
     checkSlidingWindow(`rateLimit:ip:${ip}`, IP_LIMIT),
@@ -145,8 +146,7 @@ export const refreshRateLimiter = async (
   next: NextFunction
 ): Promise<void> => {
   const ip = getClientIp(req);
-  const userId =
-    req.user?.id ?? getUserIdFromRefreshToken(req);
+  const userId = req.user?.id ?? getUserIdFromRefreshToken(req);
 
   const checks: Promise<boolean>[] = [
     checkSlidingWindow(`rateLimit:refresh:ip:${ip}`, REFRESH_IP_LIMIT),
@@ -154,7 +154,10 @@ export const refreshRateLimiter = async (
 
   if (userId) {
     checks.push(
-      checkSlidingWindow(`rateLimit:refresh:user:${userId}`, REFRESH_ACCOUNT_LIMIT)
+      checkSlidingWindow(
+        `rateLimit:refresh:user:${userId}`,
+        REFRESH_ACCOUNT_LIMIT
+      )
     );
   }
 
@@ -164,7 +167,8 @@ export const refreshRateLimiter = async (
     res.status(429).json({
       status: 429,
       success: false,
-      message: 'Too many refresh requests from this IP. Please try again later.',
+      message:
+        'Too many refresh requests from this IP. Please try again later.',
     });
     return;
   }
@@ -173,7 +177,8 @@ export const refreshRateLimiter = async (
     res.status(429).json({
       status: 429,
       success: false,
-      message: 'Too many refresh requests for this account. Please try again later.',
+      message:
+        'Too many refresh requests for this account. Please try again later.',
     });
     return;
   }

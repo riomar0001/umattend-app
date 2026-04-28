@@ -170,7 +170,10 @@ export default function AdminQueuesPage() {
       cell: ({ row }) => {
         const reason = row.original.failedReason;
         return (
-          <div className="max-w-[260px] truncate hover:text-wrap text-xs text-red-600 dark:text-red-400 border p-1 rounded-sm bg-secondary/30" title={reason ?? ''}>
+          <div
+            className="bg-secondary/30 max-w-[260px] truncate rounded-sm border p-1 text-xs text-red-600 hover:text-wrap dark:text-red-400"
+            title={reason ?? ''}
+          >
             {reason || 'Unknown'}
           </div>
         );
@@ -311,7 +314,7 @@ export default function AdminQueuesPage() {
         data={failedJobs}
         searchPlaceholder="Search jobs..."
         searchValue=""
-        onSearchChange={() => { }}
+        onSearchChange={() => {}}
         page={pagination.page}
         onPageChange={setFailedPageState}
         pageSize={10}
