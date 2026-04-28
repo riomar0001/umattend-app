@@ -15,7 +15,11 @@ import { postAuthLogoutMutation } from '@/api/client/@tanstack/react-query.gen';
 import { getInitials, formatTimeWithTimezone } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 
-const Navbar = () => {
+interface NavbarProps {
+  sidebarTrigger?: React.ReactNode;
+}
+
+const Navbar = ({ sidebarTrigger }: NavbarProps) => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [now, setNow] = useState<Date>(new Date());
@@ -63,6 +67,7 @@ const Navbar = () => {
     <header className="border-border bg-background/40 sticky top-0 z-50 border-b backdrop-blur-md">
       <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-4 sm:gap-8">
+          {sidebarTrigger}
           <div className="hover:bg-muted rounded-md bg-transparent p-2 transition-colors lg:hidden" onClick={() => setIsMobileMenuOpen(true)}>
             <Menu size={18} />
           </div>

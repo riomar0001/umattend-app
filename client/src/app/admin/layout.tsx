@@ -3,16 +3,26 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Users,
-  Calendar,
-  MessageSquareWarning,
-} from 'lucide-react';
+import { Users, Calendar, MessageSquareWarning } from 'lucide-react';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import ProtectedRoute from '@/components/protected-routes';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarRail,
+} from '@/components/ui/sidebar';
 
 const ADMIN_TABS = [
   { href: '/admin/users', label: 'Users', icon: Users },
@@ -54,68 +64,55 @@ export default function AdminLayout({
 
   return (
     <ProtectedRoute>
-      <div>
-        <Navbar />
-        <div className="bg-background relative min-h-screen">
-          <div className="border-border/40 flex min-h-[calc(100vh-57px)]">
-            <aside className="border-border/40 hidden w-56 shrink-0 border-r md:block">
-              <div className="flex flex-col gap-1 px-3 py-4">
-                <div className="mb-3 px-3">
-                  <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                    Admin Panel
-                  </h2>
-                </div>
+      <SidebarProvider>
+        <Sidebar collapsible="icon" variant="sidebar">
+          <SidebarHeader className="px-3 py-4">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton size="lg" asChild>
+                  <Link href="/admin">
+                    <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-md">
+                      <Users className="size-4" />
+                    </div>
+                    <div className="flex flex-col gap-0.5 leading-none">
+                      <span className="font-semibold">Admin Panel</span>
+                    </div>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarHeader>
+
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Management</SidebarGroupLabel>
+              <SidebarMenu>
                 {ADMIN_TABS.map((tab) => {
                   const Icon = tab.icon;
                   const isActive = pathname.startsWith(tab.href);
                   return (
-                    <Link
-                      key={tab.href}
-                      href={tab.href}
-                      className={cn(
-                        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {tab.label}
-                    </Link>
+                    <SidebarMenuItem key={tab.href}>
+                      <SidebarMenuButton asChild isActive={isActive}>
+                        <Link href={tab.href}>
+                          <Icon />
+                          <span>{tab.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   );
                 })}
-              </div>
-            </aside>
+              </SidebarMenu>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
 
-            <div className="border-border/40 fixed bottom-0 left-0 right-0 z-40 border-t bg-background md:hidden">
-              <nav className="flex justify-around py-2">
-                {ADMIN_TABS.map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = pathname.startsWith(tab.href);
-                  return (
-                    <Link
-                      key={tab.href}
-                      href={tab.href}
-                      className={cn(
-                        'flex flex-col items-center gap-0.5 px-3 py-1 text-xs font-medium transition-colors',
-                        isActive ? 'text-primary' : 'text-muted-foreground'
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {tab.label === 'Dead Letter Queue' ? 'Queue' : tab.label}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-
-            <main className="flex-1 overflow-x-auto pb-16 md:pb-0">
-              {children}
-            </main>
-          </div>
-        </div>
-        <Footer />
-      </div>
+        <SidebarInset>
+          <Navbar sidebarTrigger={<SidebarTrigger className="-ml-1" />} />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </SidebarInset>
+        <SidebarRail />
+      </SidebarProvider>
     </ProtectedRoute>
   );
 }
