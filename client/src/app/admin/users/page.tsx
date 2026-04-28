@@ -71,6 +71,7 @@ export default function AdminUsersPage() {
       query: { page, limit: 20, search: search || undefined }
     })
   });
+  
 
   const roleMutation = useMutation({
     ...patchAdminUsersByUserIdRoleMutation(),
@@ -104,9 +105,21 @@ export default function AdminUsersPage() {
       cell: ({ row }) => <div className="text-xs font-medium md:text-sm">{row.original.student?.name || '—'}</div>
     },
     {
+      accessorKey: 'student_id',
+      header: () => <Th label="Student ID" />,
+      accessorFn: (row) => row.student?.student_id,
+      cell: ({ row }) => <div className="text-xs md:text-sm">{row.original.student?.student_id ?? '—'}</div>
+    },
+    {
       accessorKey: 'umindanao_email',
       header: () => <Th label="Email" />,
-      cell: ({ row }) => <div className="text-muted-foreground max-w-[200px] truncate text-xs md:text-sm">{row.getValue('umindanao_email')}</div>
+      cell: ({ row }) => <div className="text-muted-foreground max-w-[200px] text-xs md:text-sm">{row.getValue('umindanao_email')}</div>
+    },
+    {
+      accessorKey: 'department',
+      header: () => <Th label="Department" />,
+      accessorFn: (row) => row.student?.department,
+      cell: ({ row }) => <div className="text-muted-foreground max-w-[180px] text-xs md:text-sm">{row.original.student?.department || '—'}</div>
     },
     {
       accessorKey: 'role',
@@ -143,18 +156,6 @@ export default function AdminUsersPage() {
           </Badge>
         );
       }
-    },
-    {
-      accessorKey: 'student_id',
-      header: () => <Th label="Student ID" />,
-      accessorFn: (row) => row.student?.student_id,
-      cell: ({ row }) => <div className="text-xs md:text-sm">{row.original.student?.student_id ?? '—'}</div>
-    },
-    {
-      accessorKey: 'department',
-      header: () => <Th label="Department" />,
-      accessorFn: (row) => row.student?.department,
-      cell: ({ row }) => <div className="text-muted-foreground max-w-[180px] truncate text-xs md:text-sm">{row.original.student?.department || '—'}</div>
     },
     {
       accessorKey: 'created_at',

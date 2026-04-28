@@ -45,8 +45,13 @@ axiosInstance.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        logout();
-        window.location.href = '/';
+        // Only log out when the refresh token itself is rejected (401).
+        // Server errors (5xx), HMR restarts, and network blips should NOT
+        // kill the session — the client will retry on the next request.
+        if (axios.isAxiosError(refreshError) && refreshError.response?.status === 401) {
+          logout();
+          window.location.href = '/';
+        }
         return Promise.reject(refreshError);
       }
     }

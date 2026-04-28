@@ -123,7 +123,7 @@ export default function AdminEventsPage() {
     {
       accessorKey: 'department',
       header: () => <Th label="Department" />,
-      cell: ({ row }) => <div className="text-muted-foreground max-w-[160px] truncate text-xs md:text-sm">{row.getValue('department') || '—'}</div>
+      cell: ({ row }) => <div className="text-muted-foreground max-w-[160px] text-xs md:text-sm">{row.getValue('department') || '—'}</div>
     },
     {
       accessorKey: 'created_by_name',

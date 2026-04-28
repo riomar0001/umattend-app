@@ -15,6 +15,7 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
   const { isAdmin, isAuthenticated } = useAuthStore();
   const [hasHydrated, setHasHydrated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [bypassAuth, setBypassAuth] = useState(false);
 
   // Wait for zustand persist to rehydrate from localStorage before checking auth
   useEffect(() => {
@@ -43,9 +44,18 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
           state.replaceAccessToken(response.data.data.access_token);
           setIsChecking(false);
         })
-        .catch(() => {
-          state.logout();
-          router.push('/');
+        .catch((err) => {
+          // Only log out when the refresh token itself is rejected (401).
+          // Server 5xx, HMR restarts, and network errors should not kill
+          // the session — render the page with the persisted user profile.
+          // Individual API calls will trigger a retry via the axios interceptor.
+          if (axios.isAxiosError(err) && err.response?.status === 401) {
+            state.logout();
+            router.push('/');
+          } else {
+            setIsChecking(false);
+            setBypassAuth(true);
+          }
         });
     } else {
       router.push('/');
@@ -60,7 +70,7 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
     );
   }
 
-  if (!isAuthenticated()) {
+  if (!isAuthenticated() && !bypassAuth) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"></div>
