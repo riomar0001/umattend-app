@@ -5,9 +5,14 @@ import redis from '../../configs/redis.config';
 import { FRONTEND_URL } from '../../constants/app.constants';
 import authService from '../services/auth.service';
 
-const WINDOW_MS = 60_000;
+export const WINDOW_MS = 60_000;
 const IP_LIMIT = 300;
 const ACCOUNT_LIMIT = 10;
+
+// Refresh endpoint — tokens are long-lived and clients refresh
+// automatically, so higher limits to avoid UX friction.
+const REFRESH_IP_LIMIT = 1000;
+const REFRESH_ACCOUNT_LIMIT = 30;
 
 // Check-in/check-out limits: tuned for fast organizer scanning (a busy
 // queue is realistically <2 scans/sec) while still catching automated
@@ -124,6 +129,51 @@ export const loginRateLimiter = async (
       status: 429,
       success: false,
       message: 'Too many requests for this account. Please try again later.',
+    });
+    return;
+  }
+
+  next();
+};
+
+// Refresh endpoint — per-IP + per-account with generous IP budget since
+// clients refresh automatically. The per-account cap catches token-abuse
+// loops while the IP cap prevents one device from starving others.
+export const refreshRateLimiter = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const ip = getClientIp(req);
+  const userId =
+    req.user?.id ?? getUserIdFromRefreshToken(req);
+
+  const checks: Promise<boolean>[] = [
+    checkSlidingWindow(`rateLimit:refresh:ip:${ip}`, REFRESH_IP_LIMIT),
+  ];
+
+  if (userId) {
+    checks.push(
+      checkSlidingWindow(`rateLimit:refresh:user:${userId}`, REFRESH_ACCOUNT_LIMIT)
+    );
+  }
+
+  const results = await Promise.all(checks);
+
+  if (results[0] === false) {
+    res.status(429).json({
+      status: 429,
+      success: false,
+      message: 'Too many refresh requests from this IP. Please try again later.',
+    });
+    return;
+  }
+
+  if (results[1] === false) {
+    res.status(429).json({
+      status: 429,
+      success: false,
+      message: 'Too many refresh requests for this account. Please try again later.',
     });
     return;
   }

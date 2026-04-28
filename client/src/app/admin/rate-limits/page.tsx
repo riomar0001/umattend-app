@@ -55,6 +55,7 @@ const CATEGORY_META: Record<string, { label: string; limit: number; group: 'ip' 
   oauth: { label: 'OAuth', limit: 300, group: 'ip' },
   account: { label: 'Login', limit: 10, group: 'user' },
   checkin: { label: 'Check-in', limit: 0, group: 'user' },
+  refresh: { label: 'Refresh', limit: 0, group: 'user' },
 };
 
 function parseEntry(entry: RateLimitEntry): ParsedEntry {
@@ -70,17 +71,17 @@ function parseEntry(entry: RateLimitEntry): ParsedEntry {
   let limit: number;
   let target: string;
 
-  if (category === 'checkin') {
-    // rateLimit:checkin:ip:<ip> or rateLimit:checkin:user:<userId>
+  if (category === 'checkin' || category === 'refresh') {
+    // rateLimit:<category>:ip:<ip> or rateLimit:<category>:user:<userId>
     const secondColon = rawTarget.indexOf(':');
     const sub = secondColon > -1 ? rawTarget.slice(0, secondColon) : rawTarget;
     target = secondColon > -1 ? rawTarget.slice(secondColon + 1) : rawTarget;
     if (sub === 'ip') {
       group = 'ip';
-      limit = 600;
+      limit = category === 'refresh' ? 1000 : 600;
     } else {
       group = 'user';
-      limit = 120;
+      limit = category === 'refresh' ? 30 : 120;
     }
   } else {
     const meta = CATEGORY_META[category];

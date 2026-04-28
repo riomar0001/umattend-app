@@ -6,6 +6,7 @@ import { endEventStatusQueue } from '../queues/endEvent.queue';
 import redis from '../../configs/redis.config';
 import adminRepository from '../repositories/admin.repository';
 import eventRepository from '../repositories/event.repository';
+import { WINDOW_MS } from '../middlewares/rateLimiter.middleware';
 
 const VALID_ROLES = ['student', 'admin', 'csg', 'instructor', 'organizer'];
 
@@ -220,6 +221,23 @@ interface RateLimitEntry {
 
 const RATE_LIMIT_PREFIX = 'rateLimit:';
 
+const adminCountScript = `
+local key = KEYS[1]
+local now = tonumber(ARGV[1])
+local window_ms = tonumber(ARGV[2])
+
+redis.call('ZREMRANGEBYSCORE', key, 0, now - window_ms)
+local count = redis.call('ZCARD', key)
+
+if count == 0 then
+  redis.call('DEL', key)
+  return {0, -2}
+end
+
+local ttl = redis.call('PTTL', key)
+return {count, ttl}
+`;
+
 const getRateLimits = async (): Promise<RateLimitEntry[]> => {
   const keys: string[] = [];
 
@@ -239,25 +257,24 @@ const getRateLimits = async (): Promise<RateLimitEntry[]> => {
 
   if (keys.length === 0) {return [];}
 
-  const pipeline = redis.pipeline();
-  keys.forEach((k) => {
-    pipeline.zcard(k);
-    pipeline.ttl(k);
-  });
-  const results = (await pipeline.exec()) ?? [];
+  // Run cleanup+count for each key in parallel. Each EVAL atomically evicts
+  // expired entries before counting, so the admin page shows per-request
+  // decrements instead of the whole key vanishing at once.
+  const results = await Promise.all(
+    keys.map((k) =>
+      redis
+        .eval(adminCountScript, 1, k, String(Date.now()), String(WINDOW_MS))
+        .then(([count, ttl]: any) => ({
+          key: k,
+          count: typeof count === 'number' ? count : Number(count ?? 0),
+          ttl: typeof ttl === 'number' ? Math.ceil(ttl / 1000) : Number(ttl ?? -1),
+        }))
+        .catch(() => ({ key: k, count: 0, ttl: -1 }))
+    )
+  );
 
-  const entries: RateLimitEntry[] = [];
-  for (let i = 0; i < keys.length; i++) {
-    const count = results[i * 2]?.[1] as number | null;
-    const ttl = results[i * 2 + 1]?.[1] as number | null;
-    entries.push({
-      key: keys[i],
-      count: count ?? 0,
-      ttl: ttl ?? -1,
-    });
-  }
-
-  return entries;
+  // Filter out empty keys that were deleted by the cleanup script (ttl === -2)
+  return results.filter((e) => e.ttl !== -2);
 };
 
 const deleteRateLimit = async (key: string): Promise<void> => {

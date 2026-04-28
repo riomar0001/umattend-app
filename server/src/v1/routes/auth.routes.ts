@@ -4,13 +4,14 @@ import { authMiddleware } from '../middlewares/auth.middleware';
 import {
   loginRateLimiter,
   oauthRateLimiter,
+  refreshRateLimiter,
 } from '../middlewares/rateLimiter.middleware';
 
 const router = express.Router();
 
 router.get('/google', oauthRateLimiter, authController.googleAuth);
 router.get('/google/callback', oauthRateLimiter, authController.googleCallback);
-router.post('/refresh', loginRateLimiter, authController.refreshAccessToken);
+router.post('/refresh', refreshRateLimiter, authController.refreshAccessToken);
 router.post(
   '/logout',
   authMiddleware,
