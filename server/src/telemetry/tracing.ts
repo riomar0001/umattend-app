@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import './logging.js';
 
 import { NodeSDK } from '@opentelemetry/sdk-node';
