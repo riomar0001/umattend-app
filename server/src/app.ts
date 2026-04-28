@@ -15,6 +15,7 @@ import { CustomError } from './v1/interface/error';
 import userRoutes from './v1/routes/user.routes';
 import authRoutes from './v1/routes/auth.routes';
 import eventRoutes from './v1/routes/event.routes';
+import adminRoutes from './v1/routes/admin.routes';
 import docsRoutes from './v1/routes/docs.routes';
 import healthRoutes from './v1/routes/health.routes';
 import metricsRoutes from './v1/routes/metrics.routes';
@@ -81,6 +82,7 @@ app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/event', eventRoutes);
+app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/metrics', metricsRoutes);
 if (NODE_ENV !== 'PRODUCTION') {
   app.use('/api/v1/docs', docsRoutes);

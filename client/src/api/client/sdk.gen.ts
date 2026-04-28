@@ -2,8 +2,8 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteEventByEventIdData, DeleteEventByEventIdErrors, DeleteEventByEventIdResponses, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdErrors, DeleteEventRemoveOrganizerByEventIdResponses, GetAuthLoginHistoryData, GetAuthLoginHistoryErrors, GetAuthLoginHistoryResponses, GetEventAttendanceCountData, GetEventAttendanceCountErrors, GetEventAttendanceCountResponses, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesErrors, GetEventByEventIdAttendeesResponses, GetEventByEventIdData, GetEventByEventIdErrors, GetEventByEventIdOrganizersData, GetEventByEventIdOrganizersErrors, GetEventByEventIdOrganizersResponses, GetEventByEventIdResponses, GetEventData, GetEventErrors, GetEventExportByEventIdData, GetEventExportByEventIdErrors, GetEventExportByEventIdResponses, GetEventPastData, GetEventPastErrors, GetEventPastResponses, GetEventResponses, GetUserAttendedEventsData, GetUserAttendedEventsErrors, GetUserAttendedEventsResponses, GetUserData, GetUserErrors, GetUserEventsData, GetUserEventsErrors, GetUserEventsResponses, GetUserHostedEventsData, GetUserHostedEventsErrors, GetUserHostedEventsResponses, GetUserResponses, PatchEventByEventIdDraftData, PatchEventByEventIdDraftErrors, PatchEventByEventIdDraftResponses, PatchEventByEventIdPostData, PatchEventByEventIdPostErrors, PatchEventByEventIdPostResponses, PostAuthExchangeData, PostAuthExchangeErrors, PostAuthExchangeResponses, PostAuthLogoutData, PostAuthLogoutErrors, PostAuthLogoutResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdErrors, PostEventAddOrganizerByEventIdResponses, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdErrors, PostEventByEventIdCheckinByStudentIdResponses, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdErrors, PostEventByEventIdCheckoutByStudentIdResponses, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeErrors, PostEventCheckInByEventIdByQrCodeResponses, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeErrors, PostEventCheckOutByEventIdByQrCodeResponses, PostEventData, PostEventErrors, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdErrors, PostEventMassCheckOutByEventIdResponses, PostEventResponses, PostUserOnboardingData, PostUserOnboardingErrors, PostUserOnboardingResponses, PutEventByEventIdData, PutEventByEventIdErrors, PutEventByEventIdResponses, PutUserData, PutUserErrors, PutUserResponses } from './types.gen';
-import { zDeleteEventByEventIdData, zDeleteEventByEventIdResponse, zDeleteEventRemoveOrganizerByEventIdData, zDeleteEventRemoveOrganizerByEventIdResponse, zGetAuthLoginHistoryData, zGetAuthLoginHistoryResponse, zGetEventAttendanceCountData, zGetEventAttendanceCountResponse, zGetEventByEventIdAttendeesData, zGetEventByEventIdAttendeesResponse, zGetEventByEventIdData, zGetEventByEventIdOrganizersData, zGetEventByEventIdOrganizersResponse, zGetEventByEventIdResponse, zGetEventData, zGetEventExportByEventIdData, zGetEventExportByEventIdResponse, zGetEventPastData, zGetEventPastResponse, zGetEventResponse, zGetUserAttendedEventsData, zGetUserAttendedEventsResponse, zGetUserData, zGetUserEventsData, zGetUserEventsResponse, zGetUserHostedEventsData, zGetUserHostedEventsResponse, zGetUserResponse, zPatchEventByEventIdDraftData, zPatchEventByEventIdDraftResponse, zPatchEventByEventIdPostData, zPatchEventByEventIdPostResponse, zPostAuthExchangeData, zPostAuthExchangeResponse, zPostAuthLogoutData, zPostAuthLogoutResponse, zPostAuthRefreshData, zPostAuthRefreshResponse, zPostEventAddOrganizerByEventIdData, zPostEventAddOrganizerByEventIdResponse, zPostEventByEventIdCheckinByStudentIdData, zPostEventByEventIdCheckinByStudentIdResponse, zPostEventByEventIdCheckoutByStudentIdData, zPostEventByEventIdCheckoutByStudentIdResponse, zPostEventCheckInByEventIdByQrCodeData, zPostEventCheckInByEventIdByQrCodeResponse, zPostEventCheckOutByEventIdByQrCodeData, zPostEventCheckOutByEventIdByQrCodeResponse, zPostEventData, zPostEventMassCheckOutByEventIdData, zPostEventMassCheckOutByEventIdResponse, zPostEventResponse, zPostUserOnboardingData, zPostUserOnboardingResponse, zPutEventByEventIdData, zPutEventByEventIdResponse, zPutUserData, zPutUserResponse } from './zod.gen';
+import type { DeleteAdminQueuesByQueueNameFailedByJobIdData, DeleteAdminQueuesByQueueNameFailedByJobIdErrors, DeleteAdminQueuesByQueueNameFailedByJobIdResponses, DeleteAdminQueuesByQueueNameFailedData, DeleteAdminQueuesByQueueNameFailedErrors, DeleteAdminQueuesByQueueNameFailedResponses, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdErrors, DeleteAdminUsersByUserIdResponses, DeleteEventByEventIdData, DeleteEventByEventIdErrors, DeleteEventByEventIdResponses, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdErrors, DeleteEventRemoveOrganizerByEventIdResponses, GetAdminEventsData, GetAdminEventsErrors, GetAdminEventsResponses, GetAdminQueuesByQueueNameFailedData, GetAdminQueuesByQueueNameFailedErrors, GetAdminQueuesByQueueNameFailedResponses, GetAdminQueuesData, GetAdminQueuesErrors, GetAdminQueuesResponses, GetAdminUsersData, GetAdminUsersErrors, GetAdminUsersResponses, GetAuthLoginHistoryData, GetAuthLoginHistoryErrors, GetAuthLoginHistoryResponses, GetEventAttendanceCountData, GetEventAttendanceCountErrors, GetEventAttendanceCountResponses, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesErrors, GetEventByEventIdAttendeesResponses, GetEventByEventIdData, GetEventByEventIdErrors, GetEventByEventIdOrganizersData, GetEventByEventIdOrganizersErrors, GetEventByEventIdOrganizersResponses, GetEventByEventIdResponses, GetEventData, GetEventErrors, GetEventExportByEventIdData, GetEventExportByEventIdErrors, GetEventExportByEventIdResponses, GetEventPastData, GetEventPastErrors, GetEventPastResponses, GetEventResponses, GetUserAttendedEventsData, GetUserAttendedEventsErrors, GetUserAttendedEventsResponses, GetUserData, GetUserErrors, GetUserEventsData, GetUserEventsErrors, GetUserEventsResponses, GetUserHostedEventsData, GetUserHostedEventsErrors, GetUserHostedEventsResponses, GetUserResponses, PatchAdminEventsByEventIdData, PatchAdminEventsByEventIdErrors, PatchAdminEventsByEventIdResponses, PatchAdminUsersByUserIdRoleData, PatchAdminUsersByUserIdRoleErrors, PatchAdminUsersByUserIdRoleResponses, PatchEventByEventIdDraftData, PatchEventByEventIdDraftErrors, PatchEventByEventIdDraftResponses, PatchEventByEventIdPostData, PatchEventByEventIdPostErrors, PatchEventByEventIdPostResponses, PostAdminQueuesByQueueNameFailedByJobIdRetryData, PostAdminQueuesByQueueNameFailedByJobIdRetryErrors, PostAdminQueuesByQueueNameFailedByJobIdRetryResponses, PostAdminQueuesByQueueNameFailedRetryAllData, PostAdminQueuesByQueueNameFailedRetryAllErrors, PostAdminQueuesByQueueNameFailedRetryAllResponses, PostAuthExchangeData, PostAuthExchangeErrors, PostAuthExchangeResponses, PostAuthLogoutData, PostAuthLogoutErrors, PostAuthLogoutResponses, PostAuthRefreshData, PostAuthRefreshErrors, PostAuthRefreshResponses, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdErrors, PostEventAddOrganizerByEventIdResponses, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdErrors, PostEventByEventIdCheckinByStudentIdResponses, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdErrors, PostEventByEventIdCheckoutByStudentIdResponses, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeErrors, PostEventCheckInByEventIdByQrCodeResponses, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeErrors, PostEventCheckOutByEventIdByQrCodeResponses, PostEventData, PostEventErrors, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdErrors, PostEventMassCheckOutByEventIdResponses, PostEventResponses, PostUserOnboardingData, PostUserOnboardingErrors, PostUserOnboardingResponses, PutEventByEventIdData, PutEventByEventIdErrors, PutEventByEventIdResponses, PutUserData, PutUserErrors, PutUserResponses } from './types.gen';
+import { zDeleteAdminQueuesByQueueNameFailedByJobIdData, zDeleteAdminQueuesByQueueNameFailedByJobIdResponse, zDeleteAdminQueuesByQueueNameFailedData, zDeleteAdminQueuesByQueueNameFailedResponse, zDeleteAdminUsersByUserIdData, zDeleteAdminUsersByUserIdResponse, zDeleteEventByEventIdData, zDeleteEventByEventIdResponse, zDeleteEventRemoveOrganizerByEventIdData, zDeleteEventRemoveOrganizerByEventIdResponse, zGetAdminEventsData, zGetAdminEventsResponse, zGetAdminQueuesByQueueNameFailedData, zGetAdminQueuesByQueueNameFailedResponse, zGetAdminQueuesData, zGetAdminQueuesResponse, zGetAdminUsersData, zGetAdminUsersResponse, zGetAuthLoginHistoryData, zGetAuthLoginHistoryResponse, zGetEventAttendanceCountData, zGetEventAttendanceCountResponse, zGetEventByEventIdAttendeesData, zGetEventByEventIdAttendeesResponse, zGetEventByEventIdData, zGetEventByEventIdOrganizersData, zGetEventByEventIdOrganizersResponse, zGetEventByEventIdResponse, zGetEventData, zGetEventExportByEventIdData, zGetEventExportByEventIdResponse, zGetEventPastData, zGetEventPastResponse, zGetEventResponse, zGetUserAttendedEventsData, zGetUserAttendedEventsResponse, zGetUserData, zGetUserEventsData, zGetUserEventsResponse, zGetUserHostedEventsData, zGetUserHostedEventsResponse, zGetUserResponse, zPatchAdminEventsByEventIdData, zPatchAdminEventsByEventIdResponse, zPatchAdminUsersByUserIdRoleData, zPatchAdminUsersByUserIdRoleResponse, zPatchEventByEventIdDraftData, zPatchEventByEventIdDraftResponse, zPatchEventByEventIdPostData, zPatchEventByEventIdPostResponse, zPostAdminQueuesByQueueNameFailedByJobIdRetryData, zPostAdminQueuesByQueueNameFailedByJobIdRetryResponse, zPostAdminQueuesByQueueNameFailedRetryAllData, zPostAdminQueuesByQueueNameFailedRetryAllResponse, zPostAuthExchangeData, zPostAuthExchangeResponse, zPostAuthLogoutData, zPostAuthLogoutResponse, zPostAuthRefreshData, zPostAuthRefreshResponse, zPostEventAddOrganizerByEventIdData, zPostEventAddOrganizerByEventIdResponse, zPostEventByEventIdCheckinByStudentIdData, zPostEventByEventIdCheckinByStudentIdResponse, zPostEventByEventIdCheckoutByStudentIdData, zPostEventByEventIdCheckoutByStudentIdResponse, zPostEventCheckInByEventIdByQrCodeData, zPostEventCheckInByEventIdByQrCodeResponse, zPostEventCheckOutByEventIdByQrCodeData, zPostEventCheckOutByEventIdByQrCodeResponse, zPostEventData, zPostEventMassCheckOutByEventIdData, zPostEventMassCheckOutByEventIdResponse, zPostEventResponse, zPostUserOnboardingData, zPostUserOnboardingResponse, zPutEventByEventIdData, zPutEventByEventIdResponse, zPutUserData, zPutUserResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -786,6 +786,291 @@ export class Event {
             ],
             url: '/event/{event_id}/checkout/{student_id}',
             ...options
+        });
+    }
+}
+
+export class Admin {
+    /**
+     * List all queues with job counts
+     *
+     * Returns all BullMQ queues (email, start-event, end-event) with their current job counts (waiting, active, delayed, completed, failed). Admin only.
+     */
+    public static getAdminQueues<ThrowOnError extends boolean = false>(options?: Options<GetAdminQueuesData, ThrowOnError>) {
+        return (options?.client ?? client).get<GetAdminQueuesResponses, GetAdminQueuesErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zGetAdminQueuesData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zGetAdminQueuesResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/queues',
+            ...options
+        });
+    }
+    
+    /**
+     * Clean all failed jobs
+     *
+     * Removes all failed jobs from the specified queue. Admin only.
+     */
+    public static deleteAdminQueuesByQueueNameFailed<ThrowOnError extends boolean = false>(options: Options<DeleteAdminQueuesByQueueNameFailedData, ThrowOnError>) {
+        return (options.client ?? client).delete<DeleteAdminQueuesByQueueNameFailedResponses, DeleteAdminQueuesByQueueNameFailedErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zDeleteAdminQueuesByQueueNameFailedData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zDeleteAdminQueuesByQueueNameFailedResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/queues/{queueName}/failed',
+            ...options
+        });
+    }
+    
+    /**
+     * Get failed jobs for a queue
+     *
+     * Returns a paginated list of failed jobs for the specified queue. Admin only.
+     */
+    public static getAdminQueuesByQueueNameFailed<ThrowOnError extends boolean = false>(options: Options<GetAdminQueuesByQueueNameFailedData, ThrowOnError>) {
+        return (options.client ?? client).get<GetAdminQueuesByQueueNameFailedResponses, GetAdminQueuesByQueueNameFailedErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zGetAdminQueuesByQueueNameFailedData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zGetAdminQueuesByQueueNameFailedResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/queues/{queueName}/failed',
+            ...options
+        });
+    }
+    
+    /**
+     * Retry a single failed job
+     *
+     * Retries the specified failed job by its ID. Admin only.
+     */
+    public static postAdminQueuesByQueueNameFailedByJobIdRetry<ThrowOnError extends boolean = false>(options: Options<PostAdminQueuesByQueueNameFailedByJobIdRetryData, ThrowOnError>) {
+        return (options.client ?? client).post<PostAdminQueuesByQueueNameFailedByJobIdRetryResponses, PostAdminQueuesByQueueNameFailedByJobIdRetryErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zPostAdminQueuesByQueueNameFailedByJobIdRetryData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zPostAdminQueuesByQueueNameFailedByJobIdRetryResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/queues/{queueName}/failed/{jobId}/retry',
+            ...options
+        });
+    }
+    
+    /**
+     * Delete a single failed job
+     *
+     * Removes the specified failed job from the queue permanently. Admin only.
+     */
+    public static deleteAdminQueuesByQueueNameFailedByJobId<ThrowOnError extends boolean = false>(options: Options<DeleteAdminQueuesByQueueNameFailedByJobIdData, ThrowOnError>) {
+        return (options.client ?? client).delete<DeleteAdminQueuesByQueueNameFailedByJobIdResponses, DeleteAdminQueuesByQueueNameFailedByJobIdErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zDeleteAdminQueuesByQueueNameFailedByJobIdData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zDeleteAdminQueuesByQueueNameFailedByJobIdResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/queues/{queueName}/failed/{jobId}',
+            ...options
+        });
+    }
+    
+    /**
+     * Retry all failed jobs
+     *
+     * Retries all failed jobs in the specified queue. Admin only.
+     */
+    public static postAdminQueuesByQueueNameFailedRetryAll<ThrowOnError extends boolean = false>(options: Options<PostAdminQueuesByQueueNameFailedRetryAllData, ThrowOnError>) {
+        return (options.client ?? client).post<PostAdminQueuesByQueueNameFailedRetryAllResponses, PostAdminQueuesByQueueNameFailedRetryAllErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zPostAdminQueuesByQueueNameFailedRetryAllData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zPostAdminQueuesByQueueNameFailedRetryAllResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/queues/{queueName}/failed/retry-all',
+            ...options
+        });
+    }
+    
+    /**
+     * List all users
+     *
+     * Returns a paginated list of all non-deleted users, with optional search by email, name, or student ID. Admin only.
+     */
+    public static getAdminUsers<ThrowOnError extends boolean = false>(options?: Options<GetAdminUsersData, ThrowOnError>) {
+        return (options?.client ?? client).get<GetAdminUsersResponses, GetAdminUsersErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zGetAdminUsersData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zGetAdminUsersResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/users',
+            ...options
+        });
+    }
+    
+    /**
+     * Soft-delete a user
+     *
+     * Soft-deletes a user by setting their deleted_at timestamp. The user record is preserved but hidden from admin listings. Admin only.
+     */
+    public static deleteAdminUsersByUserId<ThrowOnError extends boolean = false>(options: Options<DeleteAdminUsersByUserIdData, ThrowOnError>) {
+        return (options.client ?? client).delete<DeleteAdminUsersByUserIdResponses, DeleteAdminUsersByUserIdErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zDeleteAdminUsersByUserIdData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zDeleteAdminUsersByUserIdResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/users/{userId}',
+            ...options
+        });
+    }
+    
+    /**
+     * Update user role
+     *
+     * Changes the role of the specified user. Valid roles: student, admin, csg, instructor, organizer. Admin only.
+     */
+    public static patchAdminUsersByUserIdRole<ThrowOnError extends boolean = false>(options: Options<PatchAdminUsersByUserIdRoleData, ThrowOnError>) {
+        return (options.client ?? client).patch<PatchAdminUsersByUserIdRoleResponses, PatchAdminUsersByUserIdRoleErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zPatchAdminUsersByUserIdRoleData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zPatchAdminUsersByUserIdRoleResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/users/{userId}/role',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * List all events
+     *
+     * Returns a paginated list of all events including drafts, with attendance counts and creator info. Admin only.
+     */
+    public static getAdminEvents<ThrowOnError extends boolean = false>(options?: Options<GetAdminEventsData, ThrowOnError>) {
+        return (options?.client ?? client).get<GetAdminEventsResponses, GetAdminEventsErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zGetAdminEventsData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zGetAdminEventsResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/events',
+            ...options
+        });
+    }
+    
+    /**
+     * Update event (admin override)
+     *
+     * Updates event details for any event regardless of creator. Admin override bypasses the created_by ownership check.
+     */
+    public static patchAdminEventsByEventId<ThrowOnError extends boolean = false>(options: Options<PatchAdminEventsByEventIdData, ThrowOnError>) {
+        return (options.client ?? client).patch<PatchAdminEventsByEventIdResponses, PatchAdminEventsByEventIdErrors, ThrowOnError>({
+            requestValidator: async (data) => {
+                return await zPatchAdminEventsByEventIdData.parseAsync(data);
+            },
+            responseType: 'json',
+            responseValidator: async (data) => {
+                return await zPatchAdminEventsByEventIdResponse.parseAsync(data);
+            },
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/admin/events/{eventId}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
         });
     }
 }

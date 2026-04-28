@@ -4,8 +4,8 @@ import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOption
 import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
-import { Authentication, Event, type Options, User } from '../sdk.gen';
-import type { DeleteEventByEventIdData, DeleteEventByEventIdError, DeleteEventByEventIdResponse, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdError, DeleteEventRemoveOrganizerByEventIdResponse, GetAuthLoginHistoryData, GetEventAttendanceCountData, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesError, GetEventByEventIdAttendeesResponse, GetEventByEventIdData, GetEventByEventIdOrganizersData, GetEventData, GetEventExportByEventIdData, GetEventPastData, GetUserAttendedEventsData, GetUserData, GetUserEventsData, GetUserHostedEventsData, PatchEventByEventIdDraftData, PatchEventByEventIdDraftResponse, PatchEventByEventIdPostData, PatchEventByEventIdPostResponse, PostAuthExchangeData, PostAuthExchangeError, PostAuthExchangeResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthRefreshData, PostAuthRefreshError, PostAuthRefreshResponse, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdError, PostEventAddOrganizerByEventIdResponse, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdError, PostEventByEventIdCheckinByStudentIdResponse, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdError, PostEventByEventIdCheckoutByStudentIdResponse, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeError, PostEventCheckInByEventIdByQrCodeResponse, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeError, PostEventCheckOutByEventIdByQrCodeResponse, PostEventData, PostEventError, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdResponse, PostEventResponse, PostUserOnboardingData, PostUserOnboardingError, PostUserOnboardingResponse, PutEventByEventIdData, PutEventByEventIdError, PutEventByEventIdResponse, PutUserData, PutUserError, PutUserResponse } from '../types.gen';
+import { Admin, Authentication, Event, type Options, User } from '../sdk.gen';
+import type { DeleteAdminQueuesByQueueNameFailedByJobIdData, DeleteAdminQueuesByQueueNameFailedByJobIdResponse, DeleteAdminQueuesByQueueNameFailedData, DeleteAdminQueuesByQueueNameFailedResponse, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdResponse, DeleteEventByEventIdData, DeleteEventByEventIdError, DeleteEventByEventIdResponse, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdError, DeleteEventRemoveOrganizerByEventIdResponse, GetAdminEventsData, GetAdminEventsResponse, GetAdminQueuesByQueueNameFailedData, GetAdminQueuesByQueueNameFailedResponse, GetAdminQueuesData, GetAdminUsersData, GetAdminUsersResponse, GetAuthLoginHistoryData, GetEventAttendanceCountData, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesError, GetEventByEventIdAttendeesResponse, GetEventByEventIdData, GetEventByEventIdOrganizersData, GetEventData, GetEventExportByEventIdData, GetEventPastData, GetUserAttendedEventsData, GetUserData, GetUserEventsData, GetUserHostedEventsData, PatchAdminEventsByEventIdData, PatchAdminEventsByEventIdResponse, PatchAdminUsersByUserIdRoleData, PatchAdminUsersByUserIdRoleResponse, PatchEventByEventIdDraftData, PatchEventByEventIdDraftResponse, PatchEventByEventIdPostData, PatchEventByEventIdPostResponse, PostAdminQueuesByQueueNameFailedByJobIdRetryData, PostAdminQueuesByQueueNameFailedByJobIdRetryResponse, PostAdminQueuesByQueueNameFailedRetryAllData, PostAdminQueuesByQueueNameFailedRetryAllResponse, PostAuthExchangeData, PostAuthExchangeError, PostAuthExchangeResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthRefreshData, PostAuthRefreshError, PostAuthRefreshResponse, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdError, PostEventAddOrganizerByEventIdResponse, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdError, PostEventByEventIdCheckinByStudentIdResponse, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdError, PostEventByEventIdCheckoutByStudentIdResponse, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeError, PostEventCheckInByEventIdByQrCodeResponse, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeError, PostEventCheckOutByEventIdByQrCodeResponse, PostEventData, PostEventError, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdResponse, PostEventResponse, PostUserOnboardingData, PostUserOnboardingError, PostUserOnboardingResponse, PutEventByEventIdData, PutEventByEventIdError, PutEventByEventIdResponse, PutUserData, PutUserError, PutUserResponse } from '../types.gen';
 
 /**
  * Refresh access token
@@ -685,6 +685,320 @@ export const postEventByEventIdCheckoutByStudentIdMutation = (options?: Partial<
     const mutationOptions: UseMutationOptions<PostEventByEventIdCheckoutByStudentIdResponse, AxiosError<PostEventByEventIdCheckoutByStudentIdError>, Options<PostEventByEventIdCheckoutByStudentIdData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await Event.postEventByEventIdCheckoutByStudentId({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getAdminQueuesQueryKey = (options?: Options<GetAdminQueuesData>) => createQueryKey('getAdminQueues', options);
+
+/**
+ * List all queues with job counts
+ *
+ * Returns all BullMQ queues (email, start-event, end-event) with their current job counts (waiting, active, delayed, completed, failed). Admin only.
+ */
+export const getAdminQueuesOptions = (options?: Options<GetAdminQueuesData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await Admin.getAdminQueues({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getAdminQueuesQueryKey(options)
+    });
+};
+
+/**
+ * Clean all failed jobs
+ *
+ * Removes all failed jobs from the specified queue. Admin only.
+ */
+export const deleteAdminQueuesByQueueNameFailedMutation = (options?: Partial<Options<DeleteAdminQueuesByQueueNameFailedData>>): UseMutationOptions<DeleteAdminQueuesByQueueNameFailedResponse, AxiosError<DefaultError>, Options<DeleteAdminQueuesByQueueNameFailedData>> => {
+    const mutationOptions: UseMutationOptions<DeleteAdminQueuesByQueueNameFailedResponse, AxiosError<DefaultError>, Options<DeleteAdminQueuesByQueueNameFailedData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await Admin.deleteAdminQueuesByQueueNameFailed({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getAdminQueuesByQueueNameFailedQueryKey = (options: Options<GetAdminQueuesByQueueNameFailedData>) => createQueryKey('getAdminQueuesByQueueNameFailed', options);
+
+/**
+ * Get failed jobs for a queue
+ *
+ * Returns a paginated list of failed jobs for the specified queue. Admin only.
+ */
+export const getAdminQueuesByQueueNameFailedOptions = (options: Options<GetAdminQueuesByQueueNameFailedData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await Admin.getAdminQueuesByQueueNameFailed({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getAdminQueuesByQueueNameFailedQueryKey(options)
+    });
+};
+
+export const getAdminQueuesByQueueNameFailedInfiniteQueryKey = (options: Options<GetAdminQueuesByQueueNameFailedData>): QueryKey<Options<GetAdminQueuesByQueueNameFailedData>> => createQueryKey('getAdminQueuesByQueueNameFailed', options, true);
+
+/**
+ * Get failed jobs for a queue
+ *
+ * Returns a paginated list of failed jobs for the specified queue. Admin only.
+ */
+export const getAdminQueuesByQueueNameFailedInfiniteOptions = (options: Options<GetAdminQueuesByQueueNameFailedData>) => {
+    return infiniteQueryOptions<GetAdminQueuesByQueueNameFailedResponse, AxiosError<DefaultError>, InfiniteData<GetAdminQueuesByQueueNameFailedResponse>, QueryKey<Options<GetAdminQueuesByQueueNameFailedData>>, number | Pick<QueryKey<Options<GetAdminQueuesByQueueNameFailedData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<GetAdminQueuesByQueueNameFailedData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    page: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await Admin.getAdminQueuesByQueueNameFailed({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getAdminQueuesByQueueNameFailedInfiniteQueryKey(options)
+    });
+};
+
+/**
+ * Retry a single failed job
+ *
+ * Retries the specified failed job by its ID. Admin only.
+ */
+export const postAdminQueuesByQueueNameFailedByJobIdRetryMutation = (options?: Partial<Options<PostAdminQueuesByQueueNameFailedByJobIdRetryData>>): UseMutationOptions<PostAdminQueuesByQueueNameFailedByJobIdRetryResponse, AxiosError<DefaultError>, Options<PostAdminQueuesByQueueNameFailedByJobIdRetryData>> => {
+    const mutationOptions: UseMutationOptions<PostAdminQueuesByQueueNameFailedByJobIdRetryResponse, AxiosError<DefaultError>, Options<PostAdminQueuesByQueueNameFailedByJobIdRetryData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await Admin.postAdminQueuesByQueueNameFailedByJobIdRetry({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a single failed job
+ *
+ * Removes the specified failed job from the queue permanently. Admin only.
+ */
+export const deleteAdminQueuesByQueueNameFailedByJobIdMutation = (options?: Partial<Options<DeleteAdminQueuesByQueueNameFailedByJobIdData>>): UseMutationOptions<DeleteAdminQueuesByQueueNameFailedByJobIdResponse, AxiosError<DefaultError>, Options<DeleteAdminQueuesByQueueNameFailedByJobIdData>> => {
+    const mutationOptions: UseMutationOptions<DeleteAdminQueuesByQueueNameFailedByJobIdResponse, AxiosError<DefaultError>, Options<DeleteAdminQueuesByQueueNameFailedByJobIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await Admin.deleteAdminQueuesByQueueNameFailedByJobId({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Retry all failed jobs
+ *
+ * Retries all failed jobs in the specified queue. Admin only.
+ */
+export const postAdminQueuesByQueueNameFailedRetryAllMutation = (options?: Partial<Options<PostAdminQueuesByQueueNameFailedRetryAllData>>): UseMutationOptions<PostAdminQueuesByQueueNameFailedRetryAllResponse, AxiosError<DefaultError>, Options<PostAdminQueuesByQueueNameFailedRetryAllData>> => {
+    const mutationOptions: UseMutationOptions<PostAdminQueuesByQueueNameFailedRetryAllResponse, AxiosError<DefaultError>, Options<PostAdminQueuesByQueueNameFailedRetryAllData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await Admin.postAdminQueuesByQueueNameFailedRetryAll({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getAdminUsersQueryKey = (options?: Options<GetAdminUsersData>) => createQueryKey('getAdminUsers', options);
+
+/**
+ * List all users
+ *
+ * Returns a paginated list of all non-deleted users, with optional search by email, name, or student ID. Admin only.
+ */
+export const getAdminUsersOptions = (options?: Options<GetAdminUsersData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await Admin.getAdminUsers({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getAdminUsersQueryKey(options)
+    });
+};
+
+export const getAdminUsersInfiniteQueryKey = (options?: Options<GetAdminUsersData>): QueryKey<Options<GetAdminUsersData>> => createQueryKey('getAdminUsers', options, true);
+
+/**
+ * List all users
+ *
+ * Returns a paginated list of all non-deleted users, with optional search by email, name, or student ID. Admin only.
+ */
+export const getAdminUsersInfiniteOptions = (options?: Options<GetAdminUsersData>) => {
+    return infiniteQueryOptions<GetAdminUsersResponse, AxiosError<DefaultError>, InfiniteData<GetAdminUsersResponse>, QueryKey<Options<GetAdminUsersData>>, number | Pick<QueryKey<Options<GetAdminUsersData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<GetAdminUsersData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    page: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await Admin.getAdminUsers({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getAdminUsersInfiniteQueryKey(options)
+    });
+};
+
+/**
+ * Soft-delete a user
+ *
+ * Soft-deletes a user by setting their deleted_at timestamp. The user record is preserved but hidden from admin listings. Admin only.
+ */
+export const deleteAdminUsersByUserIdMutation = (options?: Partial<Options<DeleteAdminUsersByUserIdData>>): UseMutationOptions<DeleteAdminUsersByUserIdResponse, AxiosError<DefaultError>, Options<DeleteAdminUsersByUserIdData>> => {
+    const mutationOptions: UseMutationOptions<DeleteAdminUsersByUserIdResponse, AxiosError<DefaultError>, Options<DeleteAdminUsersByUserIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await Admin.deleteAdminUsersByUserId({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Update user role
+ *
+ * Changes the role of the specified user. Valid roles: student, admin, csg, instructor, organizer. Admin only.
+ */
+export const patchAdminUsersByUserIdRoleMutation = (options?: Partial<Options<PatchAdminUsersByUserIdRoleData>>): UseMutationOptions<PatchAdminUsersByUserIdRoleResponse, AxiosError<DefaultError>, Options<PatchAdminUsersByUserIdRoleData>> => {
+    const mutationOptions: UseMutationOptions<PatchAdminUsersByUserIdRoleResponse, AxiosError<DefaultError>, Options<PatchAdminUsersByUserIdRoleData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await Admin.patchAdminUsersByUserIdRole({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getAdminEventsQueryKey = (options?: Options<GetAdminEventsData>) => createQueryKey('getAdminEvents', options);
+
+/**
+ * List all events
+ *
+ * Returns a paginated list of all events including drafts, with attendance counts and creator info. Admin only.
+ */
+export const getAdminEventsOptions = (options?: Options<GetAdminEventsData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await Admin.getAdminEvents({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getAdminEventsQueryKey(options)
+    });
+};
+
+export const getAdminEventsInfiniteQueryKey = (options?: Options<GetAdminEventsData>): QueryKey<Options<GetAdminEventsData>> => createQueryKey('getAdminEvents', options, true);
+
+/**
+ * List all events
+ *
+ * Returns a paginated list of all events including drafts, with attendance counts and creator info. Admin only.
+ */
+export const getAdminEventsInfiniteOptions = (options?: Options<GetAdminEventsData>) => {
+    return infiniteQueryOptions<GetAdminEventsResponse, AxiosError<DefaultError>, InfiniteData<GetAdminEventsResponse>, QueryKey<Options<GetAdminEventsData>>, number | Pick<QueryKey<Options<GetAdminEventsData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<GetAdminEventsData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    page: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await Admin.getAdminEvents({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getAdminEventsInfiniteQueryKey(options)
+    });
+};
+
+/**
+ * Update event (admin override)
+ *
+ * Updates event details for any event regardless of creator. Admin override bypasses the created_by ownership check.
+ */
+export const patchAdminEventsByEventIdMutation = (options?: Partial<Options<PatchAdminEventsByEventIdData>>): UseMutationOptions<PatchAdminEventsByEventIdResponse, AxiosError<DefaultError>, Options<PatchAdminEventsByEventIdData>> => {
+    const mutationOptions: UseMutationOptions<PatchAdminEventsByEventIdResponse, AxiosError<DefaultError>, Options<PatchAdminEventsByEventIdData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await Admin.patchAdminEventsByEventId({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

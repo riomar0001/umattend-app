@@ -121,6 +121,17 @@ const Navbar = () => {
                 >
                   Account Settings
                 </div>
+                {user?.role === 'admin' && (
+                  <>
+                    <div className="border-border/30 border-b" />
+                    <div
+                      className="hover:bg-muted cursor-pointer justify-start bg-transparent px-4 py-3 text-left text-xs font-normal transition-colors"
+                      onClick={() => router.push('/admin')}
+                    >
+                      Admin Panel
+                    </div>
+                  </>
+                )}
                 <div
                   className="hover:bg-muted cursor-pointer justify-start bg-transparent px-4 py-3 text-left text-xs font-normal transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={logoutUser}

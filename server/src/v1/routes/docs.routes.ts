@@ -4,6 +4,7 @@ import { NODE_ENV } from '@/constants/app.constants';
 import { auth } from '../docs/auth.docs';
 import { user } from '../docs/user.docs';
 import { event } from '../docs/event.docs';
+import { admin } from '../docs/admin.docs';
 import { Request, Response } from 'express';
 import { FRONTEND_URL } from '@/constants/app.constants';
 
@@ -31,6 +32,7 @@ const openApiSpec = {
     ...auth,
     ...user,
     ...event,
+    ...admin,
   },
   components: {
     securitySchemes: {

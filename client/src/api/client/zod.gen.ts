@@ -285,7 +285,7 @@ export const zGetEventResponse = z.object({
 export const zPostEventData = z.object({
     body: z.object({
         title: z.string().min(1).max(140).default('Annual Tech Conference 2025'),
-        description: z.string().min(20).max(2000).default('Join us for an exciting day of technology talks, networking, and learning from industry experts.'),
+        description: z.string().min(20).max(500).default('Join us for an exciting day of technology talks, networking, and learning from industry experts.'),
         department: z.string().min(3).default('College of Computer Studies'),
         location: z.string().min(3).max(140).default('Main Auditorium, Building A'),
         capacity: z.optional(z.int()).default(100),
@@ -410,7 +410,7 @@ export const zGetEventByEventIdResponse = z.object({
 export const zPutEventByEventIdData = z.object({
     body: z.object({
         title: z.string().min(1).max(140).default('Updated Annual Tech Conference 2025'),
-        description: z.string().min(20).max(2000).default('Updated Join us for an exciting day of technology talks, networking, and learning from industry experts.'),
+        description: z.string().min(20).max(500).default('Updated Join us for an exciting day of technology talks, networking, and learning from industry experts.'),
         department: z.string().min(3).default('Updated College of Computer Studies'),
         location: z.string().min(3).max(140).default('Updated Main Auditorium, Building A'),
         capacity: z.optional(z.int()).default(100),
@@ -820,5 +820,356 @@ export const zPostEventByEventIdCheckoutByStudentIdResponse = z.object({
         student_name: z.optional(z.string()),
         checked_out_at: z.optional(z.iso.datetime()),
         checked_out_by: z.optional(z.string())
+    }))
+});
+
+export const zGetAdminQueuesData = z.object({
+    body: z.optional(z.never()),
+    path: z.optional(z.never()),
+    query: z.optional(z.never())
+});
+
+/**
+ * Queues retrieved successfully
+ */
+export const zGetAdminQueuesResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.array(z.object({
+        name: z.optional(z.string()),
+        counts: z.optional(z.object({
+            waiting: z.optional(z.number()),
+            active: z.optional(z.number()),
+            delayed: z.optional(z.number()),
+            completed: z.optional(z.number()),
+            failed: z.optional(z.number()),
+            paused: z.optional(z.number())
+        }))
+    })))
+});
+
+export const zDeleteAdminQueuesByQueueNameFailedData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        queueName: z.enum([
+            'email-queue',
+            'event-start-status-queue',
+            'event-end-status-queue'
+        ])
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Failed jobs cleaned
+ */
+export const zDeleteAdminQueuesByQueueNameFailedResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        removed: z.optional(z.number())
+    }))
+});
+
+export const zGetAdminQueuesByQueueNameFailedData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        queueName: z.enum([
+            'email-queue',
+            'event-start-status-queue',
+            'event-end-status-queue'
+        ])
+    }),
+    query: z.optional(z.object({
+        page: z.optional(z.int().gte(1)).default(1),
+        limit: z.optional(z.int().gte(1).lte(100)).default(10)
+    }))
+});
+
+/**
+ * Failed jobs retrieved
+ */
+export const zGetAdminQueuesByQueueNameFailedResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        data: z.optional(z.array(z.object({
+            id: z.optional(z.string()),
+            name: z.optional(z.string()),
+            data: z.optional(z.record(z.string(), z.unknown())),
+            failedReason: z.optional(z.union([
+                z.string(),
+                z.null()
+            ])),
+            attemptsMade: z.optional(z.number()),
+            timestamp: z.optional(z.union([
+                z.number(),
+                z.null()
+            ])),
+            finishedOn: z.optional(z.union([
+                z.number(),
+                z.null()
+            ])),
+            processedOn: z.optional(z.union([
+                z.number(),
+                z.null()
+            ]))
+        }))),
+        pagination: z.optional(z.object({
+            page: z.optional(z.int()),
+            limit: z.optional(z.int()),
+            total: z.optional(z.int()),
+            totalPages: z.optional(z.int())
+        }))
+    }))
+});
+
+export const zPostAdminQueuesByQueueNameFailedByJobIdRetryData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        queueName: z.enum([
+            'email-queue',
+            'event-start-status-queue',
+            'event-end-status-queue'
+        ]),
+        jobId: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Job retried
+ */
+export const zPostAdminQueuesByQueueNameFailedByJobIdRetryResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        jobId: z.optional(z.string()),
+        retried: z.optional(z.boolean())
+    }))
+});
+
+export const zDeleteAdminQueuesByQueueNameFailedByJobIdData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        queueName: z.enum([
+            'email-queue',
+            'event-start-status-queue',
+            'event-end-status-queue'
+        ]),
+        jobId: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Job removed
+ */
+export const zDeleteAdminQueuesByQueueNameFailedByJobIdResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        jobId: z.optional(z.string()),
+        removed: z.optional(z.boolean())
+    }))
+});
+
+export const zPostAdminQueuesByQueueNameFailedRetryAllData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        queueName: z.enum([
+            'email-queue',
+            'event-start-status-queue',
+            'event-end-status-queue'
+        ])
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * All failed jobs retried
+ */
+export const zPostAdminQueuesByQueueNameFailedRetryAllResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        retried: z.optional(z.number())
+    }))
+});
+
+export const zGetAdminUsersData = z.object({
+    body: z.optional(z.never()),
+    path: z.optional(z.never()),
+    query: z.optional(z.object({
+        page: z.optional(z.int().gte(1)).default(1),
+        limit: z.optional(z.int().gte(1).lte(100)).default(20),
+        search: z.optional(z.string())
+    }))
+});
+
+/**
+ * Users retrieved
+ */
+export const zGetAdminUsersResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        data: z.optional(z.array(z.object({
+            id: z.optional(z.string()),
+            umindanao_email: z.optional(z.string()),
+            role: z.optional(z.string()),
+            done_onboarding: z.optional(z.boolean()),
+            last_login_at: z.optional(z.iso.datetime()),
+            created_at: z.optional(z.iso.datetime()),
+            updated_at: z.optional(z.iso.datetime()),
+            student: z.optional(z.object({
+                student_id: z.optional(z.number()),
+                name: z.optional(z.string()),
+                department: z.optional(z.string()),
+                program: z.optional(z.string())
+            }))
+        }))),
+        pagination: z.optional(z.object({
+            page: z.optional(z.int()),
+            limit: z.optional(z.int()),
+            total: z.optional(z.int()),
+            totalPages: z.optional(z.int())
+        }))
+    }))
+});
+
+export const zDeleteAdminUsersByUserIdData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        userId: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * User soft-deleted
+ */
+export const zDeleteAdminUsersByUserIdResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        userId: z.optional(z.string()),
+        deleted: z.optional(z.boolean())
+    }))
+});
+
+export const zPatchAdminUsersByUserIdRoleData = z.object({
+    body: z.object({
+        role: z.enum([
+            'student',
+            'admin',
+            'csg',
+            'instructor',
+            'organizer'
+        ])
+    }),
+    path: z.object({
+        userId: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * User role updated
+ */
+export const zPatchAdminUsersByUserIdRoleResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        user: z.optional(z.object({
+            id: z.optional(z.string()),
+            umindanao_email: z.optional(z.string()),
+            role: z.optional(z.string()),
+            student: z.optional(z.object({
+                student_id: z.optional(z.number()),
+                name: z.optional(z.string()),
+                department: z.optional(z.string()),
+                program: z.optional(z.string())
+            }))
+        }))
+    }))
+});
+
+export const zGetAdminEventsData = z.object({
+    body: z.optional(z.never()),
+    path: z.optional(z.never()),
+    query: z.optional(z.object({
+        page: z.optional(z.int().gte(1)).default(1),
+        limit: z.optional(z.int().gte(1).lte(100)).default(20),
+        search: z.optional(z.string())
+    }))
+});
+
+/**
+ * Events retrieved
+ */
+export const zGetAdminEventsResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        data: z.optional(z.array(z.object({
+            id: z.optional(z.string()),
+            title: z.optional(z.string()),
+            description: z.optional(z.string()),
+            department: z.optional(z.string()),
+            location: z.optional(z.string()),
+            capacity: z.optional(z.union([
+                z.number(),
+                z.null()
+            ])),
+            all_day: z.optional(z.boolean()),
+            start_time: z.optional(z.iso.datetime()),
+            end_time: z.optional(z.iso.datetime()),
+            check_out_required: z.optional(z.boolean()),
+            is_started: z.optional(z.boolean()),
+            is_done: z.optional(z.boolean()),
+            is_draft: z.optional(z.boolean()),
+            created_by: z.optional(z.string()),
+            created_by_name: z.optional(z.string()),
+            checkin_count: z.optional(z.number()),
+            checkout_count: z.optional(z.number())
+        }))),
+        pagination: z.optional(z.object({
+            page: z.optional(z.int()),
+            limit: z.optional(z.int()),
+            total: z.optional(z.int()),
+            totalPages: z.optional(z.int())
+        }))
+    }))
+});
+
+export const zPatchAdminEventsByEventIdData = z.object({
+    body: z.object({
+        title: z.string().min(1).max(140),
+        description: z.string().min(20).max(2000),
+        department: z.string().min(3),
+        location: z.string().min(3).max(140),
+        capacity: z.optional(z.int()),
+        all_day: z.optional(z.boolean()),
+        start_time: z.iso.datetime(),
+        end_time: z.iso.datetime(),
+        check_out_required: z.optional(z.boolean()),
+        is_done: z.optional(z.boolean())
+    }),
+    path: z.object({
+        eventId: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Event updated
+ */
+export const zPatchAdminEventsByEventIdResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        id: z.optional(z.string()),
+        title: z.optional(z.string())
     }))
 });

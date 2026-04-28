@@ -2063,3 +2063,636 @@ export type PostEventByEventIdCheckoutByStudentIdResponses = {
 };
 
 export type PostEventByEventIdCheckoutByStudentIdResponse = PostEventByEventIdCheckoutByStudentIdResponses[keyof PostEventByEventIdCheckoutByStudentIdResponses];
+
+export type GetAdminQueuesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/admin/queues';
+};
+
+export type GetAdminQueuesErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type GetAdminQueuesResponses = {
+    /**
+     * Queues retrieved successfully
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: Array<{
+            name?: string;
+            counts?: {
+                waiting?: number;
+                active?: number;
+                delayed?: number;
+                completed?: number;
+                failed?: number;
+                paused?: number;
+            };
+        }>;
+    };
+};
+
+export type GetAdminQueuesResponse = GetAdminQueuesResponses[keyof GetAdminQueuesResponses];
+
+export type DeleteAdminQueuesByQueueNameFailedData = {
+    body?: never;
+    path: {
+        /**
+         * Queue name
+         */
+        queueName: 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
+    };
+    query?: never;
+    url: '/admin/queues/{queueName}/failed';
+};
+
+export type DeleteAdminQueuesByQueueNameFailedErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Queue not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type DeleteAdminQueuesByQueueNameFailedResponses = {
+    /**
+     * Failed jobs cleaned
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            removed?: number;
+        };
+    };
+};
+
+export type DeleteAdminQueuesByQueueNameFailedResponse = DeleteAdminQueuesByQueueNameFailedResponses[keyof DeleteAdminQueuesByQueueNameFailedResponses];
+
+export type GetAdminQueuesByQueueNameFailedData = {
+    body?: never;
+    path: {
+        /**
+         * Queue name
+         */
+        queueName: 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Items per page
+         */
+        limit?: number;
+    };
+    url: '/admin/queues/{queueName}/failed';
+};
+
+export type GetAdminQueuesByQueueNameFailedErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Queue not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type GetAdminQueuesByQueueNameFailedResponses = {
+    /**
+     * Failed jobs retrieved
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            data?: Array<{
+                id?: string;
+                name?: string;
+                data?: {
+                    [key: string]: unknown;
+                };
+                failedReason?: string | null;
+                attemptsMade?: number;
+                timestamp?: number | null;
+                finishedOn?: number | null;
+                processedOn?: number | null;
+            }>;
+            pagination?: {
+                page?: number;
+                limit?: number;
+                total?: number;
+                totalPages?: number;
+            };
+        };
+    };
+};
+
+export type GetAdminQueuesByQueueNameFailedResponse = GetAdminQueuesByQueueNameFailedResponses[keyof GetAdminQueuesByQueueNameFailedResponses];
+
+export type PostAdminQueuesByQueueNameFailedByJobIdRetryData = {
+    body?: never;
+    path: {
+        /**
+         * Queue name
+         */
+        queueName: 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
+        /**
+         * Job ID
+         */
+        jobId: string;
+    };
+    query?: never;
+    url: '/admin/queues/{queueName}/failed/{jobId}/retry';
+};
+
+export type PostAdminQueuesByQueueNameFailedByJobIdRetryErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Queue or job not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type PostAdminQueuesByQueueNameFailedByJobIdRetryResponses = {
+    /**
+     * Job retried
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            jobId?: string;
+            retried?: boolean;
+        };
+    };
+};
+
+export type PostAdminQueuesByQueueNameFailedByJobIdRetryResponse = PostAdminQueuesByQueueNameFailedByJobIdRetryResponses[keyof PostAdminQueuesByQueueNameFailedByJobIdRetryResponses];
+
+export type DeleteAdminQueuesByQueueNameFailedByJobIdData = {
+    body?: never;
+    path: {
+        /**
+         * Queue name
+         */
+        queueName: 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
+        /**
+         * Job ID
+         */
+        jobId: string;
+    };
+    query?: never;
+    url: '/admin/queues/{queueName}/failed/{jobId}';
+};
+
+export type DeleteAdminQueuesByQueueNameFailedByJobIdErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Queue or job not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type DeleteAdminQueuesByQueueNameFailedByJobIdResponses = {
+    /**
+     * Job removed
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            jobId?: string;
+            removed?: boolean;
+        };
+    };
+};
+
+export type DeleteAdminQueuesByQueueNameFailedByJobIdResponse = DeleteAdminQueuesByQueueNameFailedByJobIdResponses[keyof DeleteAdminQueuesByQueueNameFailedByJobIdResponses];
+
+export type PostAdminQueuesByQueueNameFailedRetryAllData = {
+    body?: never;
+    path: {
+        /**
+         * Queue name
+         */
+        queueName: 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
+    };
+    query?: never;
+    url: '/admin/queues/{queueName}/failed/retry-all';
+};
+
+export type PostAdminQueuesByQueueNameFailedRetryAllErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Queue not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type PostAdminQueuesByQueueNameFailedRetryAllResponses = {
+    /**
+     * All failed jobs retried
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            retried?: number;
+        };
+    };
+};
+
+export type PostAdminQueuesByQueueNameFailedRetryAllResponse = PostAdminQueuesByQueueNameFailedRetryAllResponses[keyof PostAdminQueuesByQueueNameFailedRetryAllResponses];
+
+export type GetAdminUsersData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Items per page
+         */
+        limit?: number;
+        /**
+         * Search by email, student name, or student ID
+         */
+        search?: string;
+    };
+    url: '/admin/users';
+};
+
+export type GetAdminUsersErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type GetAdminUsersResponses = {
+    /**
+     * Users retrieved
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            data?: Array<{
+                id?: string;
+                umindanao_email?: string;
+                role?: string;
+                done_onboarding?: boolean;
+                last_login_at?: string;
+                created_at?: string;
+                updated_at?: string;
+                student?: {
+                    student_id?: number;
+                    name?: string;
+                    department?: string;
+                    program?: string;
+                };
+            }>;
+            pagination?: {
+                page?: number;
+                limit?: number;
+                total?: number;
+                totalPages?: number;
+            };
+        };
+    };
+};
+
+export type GetAdminUsersResponse = GetAdminUsersResponses[keyof GetAdminUsersResponses];
+
+export type DeleteAdminUsersByUserIdData = {
+    body?: never;
+    path: {
+        /**
+         * User ID
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/admin/users/{userId}';
+};
+
+export type DeleteAdminUsersByUserIdErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * User not found
+     */
+    404: unknown;
+    /**
+     * Conflict — user already deleted
+     */
+    409: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type DeleteAdminUsersByUserIdResponses = {
+    /**
+     * User soft-deleted
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            userId?: string;
+            deleted?: boolean;
+        };
+    };
+};
+
+export type DeleteAdminUsersByUserIdResponse = DeleteAdminUsersByUserIdResponses[keyof DeleteAdminUsersByUserIdResponses];
+
+export type PatchAdminUsersByUserIdRoleData = {
+    body: {
+        /**
+         * New role
+         */
+        role: 'student' | 'admin' | 'csg' | 'instructor' | 'organizer';
+    };
+    path: {
+        /**
+         * User ID
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/admin/users/{userId}/role';
+};
+
+export type PatchAdminUsersByUserIdRoleErrors = {
+    /**
+     * Bad request — invalid role
+     */
+    400: unknown;
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * User not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type PatchAdminUsersByUserIdRoleResponses = {
+    /**
+     * User role updated
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            user?: {
+                id?: string;
+                umindanao_email?: string;
+                role?: string;
+                student?: {
+                    student_id?: number;
+                    name?: string;
+                    department?: string;
+                    program?: string;
+                };
+            };
+        };
+    };
+};
+
+export type PatchAdminUsersByUserIdRoleResponse = PatchAdminUsersByUserIdRoleResponses[keyof PatchAdminUsersByUserIdRoleResponses];
+
+export type GetAdminEventsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Items per page
+         */
+        limit?: number;
+        /**
+         * Search by event title or description
+         */
+        search?: string;
+    };
+    url: '/admin/events';
+};
+
+export type GetAdminEventsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type GetAdminEventsResponses = {
+    /**
+     * Events retrieved
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            data?: Array<{
+                id?: string;
+                title?: string;
+                description?: string;
+                department?: string;
+                location?: string;
+                capacity?: number | null;
+                all_day?: boolean;
+                start_time?: string;
+                end_time?: string;
+                check_out_required?: boolean;
+                is_started?: boolean;
+                is_done?: boolean;
+                is_draft?: boolean;
+                created_by?: string;
+                created_by_name?: string;
+                checkin_count?: number;
+                checkout_count?: number;
+            }>;
+            pagination?: {
+                page?: number;
+                limit?: number;
+                total?: number;
+                totalPages?: number;
+            };
+        };
+    };
+};
+
+export type GetAdminEventsResponse = GetAdminEventsResponses[keyof GetAdminEventsResponses];
+
+export type PatchAdminEventsByEventIdData = {
+    body: {
+        title: string;
+        description: string;
+        department: string;
+        location: string;
+        capacity?: number;
+        all_day?: boolean;
+        start_time: string;
+        end_time: string;
+        check_out_required?: boolean;
+        is_done?: boolean;
+    };
+    path: {
+        /**
+         * Event ID
+         */
+        eventId: string;
+    };
+    query?: never;
+    url: '/admin/events/{eventId}';
+};
+
+export type PatchAdminEventsByEventIdErrors = {
+    /**
+     * Bad request — validation errors
+     */
+    400: unknown;
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden — Admin only
+     */
+    403: unknown;
+    /**
+     * Event not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type PatchAdminEventsByEventIdResponses = {
+    /**
+     * Event updated
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            id?: string;
+            title?: string;
+        };
+    };
+};
+
+export type PatchAdminEventsByEventIdResponse = PatchAdminEventsByEventIdResponses[keyof PatchAdminEventsByEventIdResponses];
