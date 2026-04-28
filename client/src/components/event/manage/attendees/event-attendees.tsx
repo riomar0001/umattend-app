@@ -276,6 +276,7 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
         onConfirm={handleCheckIn}
         isLoading={isCheckingIn}
         isEventStarted={isEventStarted}
+        isEventEnded={isEventEnded}
       />
     </div>
   );

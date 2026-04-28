@@ -13,9 +13,10 @@ interface CheckInStudentDialogProps {
   onConfirm: (studentId: string) => Promise<void>;
   isLoading: boolean;
   isEventStarted?: boolean;
+  isEventEnded?: boolean;
 }
 
-export function CheckInStudentDialog({ open, onOpenChange, onConfirm, isLoading, isEventStarted = true }: CheckInStudentDialogProps) {
+export function CheckInStudentDialog({ open, onOpenChange, onConfirm, isLoading, isEventStarted = true, isEventEnded = false }: CheckInStudentDialogProps) {
   const [studentId, setStudentId] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,7 +48,12 @@ export function CheckInStudentDialog({ open, onOpenChange, onConfirm, isLoading,
               <DialogTitle>Check in Student</DialogTitle>
             </div>
             <DialogDescription className="pt-3">
-              {!isEventStarted && (
+              {isEventEnded && (
+                <div className="mb-3 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-300">
+                  This event has already ended. Check-ins will be recorded as late.
+                </div>
+              )}
+              {!isEventStarted && !isEventEnded && (
                 <div className="mb-3 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-300">
                   The event hasn&apos;t started yet. This will be recorded as an early check-in.
                 </div>
