@@ -71,7 +71,7 @@ export default function AdminUsersPage() {
       query: { page, limit: 20, search: search || undefined }
     })
   });
-  
+
 
   const roleMutation = useMutation({
     ...patchAdminUsersByUserIdRoleMutation(),
