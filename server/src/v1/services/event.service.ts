@@ -145,7 +145,9 @@ const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
           .replace('{{event_location}}', checkedIn.event.location)
           .replace(
             '{{event_date_and_time}}',
-            checkedIn.check_in_at.toLocaleString()
+            checkedIn.check_in_at.toLocaleString('en-US', {
+              timeZone: 'Asia/Manila',
+            })
           )
           .replace('{{checked_in_by}}', checkInByName)
       );
@@ -238,7 +240,7 @@ const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
           .replace('{{event_location}}', checkedOut.event.location)
           .replace(
             '{{event_date_and_time}}',
-            checkedOut.check_out_at.toLocaleString()
+            checkedOut.check_out_at.toLocaleString('en-US', { timeZone: 'Asia/Manila' })
           )
           .replace('{{checked_out_by}}', checkOutByName)
       );
@@ -354,7 +356,7 @@ const massCheckOutStudents = async (
               .replace('{{event_location}}', rec.event.location)
               .replace(
                 '{{event_date_and_time}}',
-                rec.check_out_at.toLocaleString()
+                rec.check_out_at.toLocaleString('en-US', { timeZone: 'Asia/Manila' })
               )
               .replace('{{checked_out_by}}', checkOutBy.name)
           );
@@ -828,7 +830,7 @@ const checkInStudentById = async (
           .replace('{{event_location}}', checkedIn.event.location)
           .replace(
             '{{event_date_and_time}}',
-            checkedIn.check_in_at.toLocaleString()
+            checkedIn.check_in_at.toLocaleString('en-US', { timeZone: 'Asia/Manila' })
           )
           .replace('{{checked_in_by}}', checkInByName)
       );
@@ -914,7 +916,7 @@ const checkOutStudentById = async (
           .replace('{{event_location}}', checkedOut.event.location)
           .replace(
             '{{event_date_and_time}}',
-            checkedOut.check_out_at.toLocaleString()
+            checkedOut.check_out_at.toLocaleString('en-US', { timeZone: 'Asia/Manila' })
           )
           .replace('{{checked_out_by}}', checkOutByName)
       );

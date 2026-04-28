@@ -57,7 +57,7 @@ export const generateRefreshToken = async (
   const token_id = uuidv4();
 
   const expires_at = new Date(
-    Date.now() + Number(JWT_ACCESS_TOKEN_TTL) * 60 * 60 * 1000
+    Date.now() + Number(JWT_REFRESH_TOKEN_TTL) * 60 * 60 * 1000
   );
 
   const token = jwt.sign({ token_id, user_id }, JWT_REFRESH_TOKEN_SECRET, {

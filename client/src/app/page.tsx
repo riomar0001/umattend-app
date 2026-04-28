@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import ClickSpark from '@/components/ClickSpark';
@@ -21,6 +22,7 @@ export default function LoginContent() {
 
   const [hasHydrated, setHasHydrated] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Wait for zustand persist to rehydrate from localStorage before checking auth
   useEffect(() => {
@@ -105,11 +107,44 @@ export default function LoginContent() {
       return;
     }
 
+    // User profile is persisted but tokens are in-memory only — attempt silent refresh
+    const user = useAuthStore.getState().user;
+    if (user) {
+      setIsRefreshing(true);
+      return;
+    }
+
     // Confirmed unauthenticated — safe to render the login form
     setIsInitializing(false);
   }, [hasHydrated, isAuthenticated, isDoneOnboarding, router, searchParams]);
 
-  if (!hasHydrated || isInitializing) {
+  // Attempt silent token refresh when user profile exists but access token is missing
+  useEffect(() => {
+    if (!isRefreshing) return;
+
+    const doRefresh = async () => {
+      try {
+        const response = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true });
+        const { access_token } = response.data.data;
+        useAuthStore.getState().replaceAccessToken(access_token);
+        // Redirect based on the refreshed token's user data
+        const refreshedUser = useAuthStore.getState().user;
+        if (refreshedUser?.done_onboarding) {
+          router.replace('/events');
+        } else {
+          router.replace('/onboarding');
+        }
+      } catch {
+        useAuthStore.getState().logout();
+        setIsRefreshing(false);
+        setIsInitializing(false);
+      }
+    };
+
+    doRefresh();
+  }, [isRefreshing, router]);
+
+  if (!hasHydrated || isInitializing || isRefreshing) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"></div>
