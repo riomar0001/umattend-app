@@ -1,12 +1,13 @@
 import { randomUUID } from 'crypto';
 import { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import redis from '../../configs/redis.config';
 import { FRONTEND_URL } from '../../constants/app.constants';
 import authService from '../services/auth.service';
 
 const WINDOW_MS = 60_000;
 const IP_LIMIT = 300;
-const ACCOUNT_IP_LIMIT = 300;
+const ACCOUNT_LIMIT = 10;
 
 // Check-in/check-out limits: tuned for fast organizer scanning (a busy
 // queue is realistically <2 scans/sec) while still catching automated
@@ -72,6 +73,19 @@ async function checkSlidingWindow(
   }
 }
 
+function getUserIdFromRefreshToken(req: Request): string | undefined {
+  const refreshToken =
+    (req.cookies?.refresh_token as string) ?? req.body?.refresh_token;
+  if (!refreshToken) return undefined;
+
+  try {
+    const decoded = jwt.decode(refreshToken) as { user_id?: string } | null;
+    return decoded?.user_id;
+  } catch {
+    return undefined;
+  }
+}
+
 // Both counters run in parallel — both must pass for the request to proceed.
 // Per-IP blocks mass scanning across many accounts; per-account blocks
 // targeted brute-force from many IPs against a single account.
@@ -81,7 +95,8 @@ export const loginRateLimiter = async (
   next: NextFunction
 ): Promise<void> => {
   const ip = getClientIp(req);
-  const userId = (req as Request & { user?: { id: string } }).user?.id;
+  const userId =
+    req.user?.id ?? getUserIdFromRefreshToken(req);
 
   const checks: Promise<boolean>[] = [
     checkSlidingWindow(`rateLimit:ip:${ip}`, IP_LIMIT),
@@ -89,7 +104,7 @@ export const loginRateLimiter = async (
 
   if (userId) {
     checks.push(
-      checkSlidingWindow(`rateLimit:account:${userId}`, ACCOUNT_IP_LIMIT)
+      checkSlidingWindow(`rateLimit:account:${userId}`, ACCOUNT_LIMIT)
     );
   }
 
@@ -124,7 +139,7 @@ export const oauthRateLimiter = async (
 ): Promise<void> => {
   const allowed = await checkSlidingWindow(
     `rateLimit:oauth:${getClientIp(req)}`,
-    ACCOUNT_IP_LIMIT
+    IP_LIMIT
   );
 
   if (!allowed) {
@@ -164,7 +179,7 @@ export const checkInRateLimiter = async (
   next: NextFunction
 ): Promise<void> => {
   const ip = getClientIp(req);
-  const userId = (req as Request & { user?: { id: string } }).user?.id;
+  const userId = req.user?.id;
 
   const checks: Promise<boolean>[] = [
     checkSlidingWindow(`rateLimit:checkin:ip:${ip}`, CHECKIN_IP_LIMIT),

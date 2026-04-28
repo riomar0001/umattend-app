@@ -17,7 +17,7 @@ router.post(
   loginRateLimiter,
   authController.logoutUser
 );
-router.post('/exchange', oauthRateLimiter, authController.exhangeCode);
+router.post('/exchange', loginRateLimiter, authController.exhangeCode);
 router.get(
   '/login-history',
   authMiddleware,

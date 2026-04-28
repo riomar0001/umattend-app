@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRef, useEffect, useMemo } from 'react';
-import { Calendar, Mail, Users, Settings } from 'lucide-react';
+import { Calendar, Mail, Users, Settings, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import QRCodeStyling, { Options } from 'qr-code-styling';
 import { useQuery } from '@tanstack/react-query';
@@ -37,11 +37,29 @@ const ProfilePage = () => {
   });
 
   const [currentHour, setCurrentHour] = useState(() => new Date().getUTCHours());
+  const [qrRefreshKey, setQrRefreshKey] = useState(0);
+  const [expiresIn, setExpiresIn] = useState(() => {
+    const now = new Date();
+    return 3600 - (now.getUTCMinutes() * 60 + now.getUTCSeconds());
+  });
 
   useEffect(() => {
     const tick = () => setCurrentHour(new Date().getUTCHours());
     const id = setInterval(tick, 60_000);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      const remaining = 3600 - (now.getUTCMinutes() * 60 + now.getUTCSeconds());
+      setExpiresIn(remaining);
+      if (remaining <= 0) {
+        setCurrentHour(now.getUTCHours());
+        setQrRefreshKey((k) => k + 1);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const now = new Date();
@@ -85,12 +103,11 @@ const ProfilePage = () => {
   }, [options]);
 
   useEffect(() => {
-    if (!qrCode) return;
-    if (ref.current && !ref.current.hasChildNodes()) {
-      qrCode.append(ref.current);
-    }
+    if (!qrCode || !ref.current) return;
+    ref.current.innerHTML = '';
+    qrCode.append(ref.current);
     qrCode.update(options);
-  }, [qrCode, options]);
+  }, [qrCode, options, qrRefreshKey]);
 
   const [activeTab, setActiveTab] = useState('attended');
 
@@ -206,7 +223,7 @@ const ProfilePage = () => {
                 {/* QR Code Card */}
                 <div className="border-border bg-background/90 rounded-xl border p-4 shadow-lg">
                   <div className="flex flex-col items-center gap-6 sm:flex-row">
-                    <div className="flex-shrink-0">
+                    <div className="flex flex-col items-center gap-3">
                       <style>{`.qr-container canvas, .qr-container svg { width: 100% !important; height: auto !important; display: block; border-radius: 14px !important;}`}</style>
 
                       <div
@@ -215,6 +232,23 @@ const ProfilePage = () => {
                         onContextMenu={(e) => e.preventDefault()}
                         style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                       />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => {
+                          const now = new Date();
+                          setCurrentHour(now.getUTCHours());
+                          setExpiresIn(3600 - (now.getUTCMinutes() * 60 + now.getUTCSeconds()));
+                          setQrRefreshKey((k) => k + 1);
+                        }}
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                        New QR Code
+                      </Button>
+                      <p className="text-muted-foreground text-xs tabular-nums">
+                        Expires in {String(Math.floor(expiresIn / 60)).padStart(2, '0')}:{String(expiresIn % 60).padStart(2, '0')}
+                      </p>
                     </div>
                     <div className="flex-1 text-center sm:text-left">
                       <h3 className="text-foreground mb-2 text-xl font-bold">Your Digital Pass</h3>
