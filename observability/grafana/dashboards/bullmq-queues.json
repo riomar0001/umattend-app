@@ -645,7 +645,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "${loki_datasource}" },
-          "expr": "{service_name=\"umattend-server\"} |~ \"(queue|job|bullmq|worker|completed|failed|retry)\"",
+          "expr": "{service_name=~\"umattend-server.*\"} |~ \"(queue|job|bullmq|worker|completed|failed|retry)\"",
           "maxLines": 100,
           "refId": "A"
         }

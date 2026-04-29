@@ -472,7 +472,7 @@
         {
           "datasource": { "type": "tempo", "uid": "${tempo_datasource}" },
           "queryType": "traceql",
-          "query": "{resource.service.name=\"umattend-server\"}",
+          "query": "{resource.service.name=~\"umattend-server.*\"}",
           "limit": 20,
           "tableType": "traces",
           "refId": "A"
@@ -498,7 +498,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "${loki_datasource}" },
-          "expr": "{service_name=\"umattend-server\"}",
+          "expr": "{service_name=~\"umattend-server.*\"}",
           "maxLines": 100,
           "refId": "A"
         }
