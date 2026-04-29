@@ -8,10 +8,20 @@ const _log = console.log.bind(console);
 const _warn = console.warn.bind(console);
 const _error = console.error.bind(console);
 
+type AnyValue =
+  | { stringValue: string }
+  | { intValue: string }
+  | { doubleValue: number };
+
+interface KeyValue {
+  key: string;
+  value: AnyValue;
+}
+
 interface LogBody {
   resourceLogs: Array<{
     resource: {
-      attributes: Array<{ key: string; value: { stringValue: string } }>;
+      attributes: KeyValue[];
     };
     scopeLogs: Array<{
       scope: { name: string };
@@ -20,16 +30,24 @@ interface LogBody {
         severityNumber: number;
         severityText: string;
         body: { stringValue: string };
+        attributes?: KeyValue[];
       }>;
     }>;
   }>;
+}
+
+function toAnyValue(v: string | number): AnyValue {
+  if (typeof v === 'string') return { stringValue: v };
+  if (Number.isInteger(v)) return { intValue: String(v) };
+  return { doubleValue: v };
 }
 
 function sendLogs(
   scope: string,
   severity: number,
   severityText: string,
-  body: string
+  body: string,
+  attributes?: KeyValue[]
 ): void {
   const payload: LogBody = {
     resourceLogs: [
@@ -53,6 +71,7 @@ function sendLogs(
                 severityNumber: severity,
                 severityText,
                 body: { stringValue: body },
+                ...(attributes?.length ? { attributes } : {}),
               },
             ],
           },
@@ -97,11 +116,12 @@ export function logStructured(
   scope: string,
   level: 'info' | 'warn' | 'error',
   message: string,
-  attributes: Record<string, string | number>
+  attrs: Record<string, string | number>
 ): void {
   const severity = level === 'error' ? 17 : level === 'warn' ? 13 : 9;
-  const extra = Object.entries(attributes)
-    .map(([k, v]) => `${k}=${v}`)
-    .join(' ');
-  sendLogs(scope, severity, level.toUpperCase(), `${message} ${extra}`);
+  const attributes: KeyValue[] = Object.entries(attrs).map(([key, value]) => ({
+    key,
+    value: toAnyValue(value),
+  }));
+  sendLogs(scope, severity, level.toUpperCase(), message, attributes);
 }

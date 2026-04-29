@@ -2,7 +2,9 @@ import { PrismaClient } from '@prisma/client';
 import { trace } from '@opentelemetry/api';
 import { logStructured } from '../telemetry/logging';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: [{ emit: 'event', level: 'query' }],
+});
 
 type TransactionOptions = Parameters<typeof prisma.$transaction>[1];
 

@@ -26,7 +26,11 @@ redis.sendCommand = function (cmd: Command) {
         `REDIS ${cmd.name} ${cmd.args.map(String).join(' ')} ${Date.now() - start}ms`
       );
     })
-    .catch(() => {});
+    .catch((err: Error) => {
+      console.error(
+        `REDIS ERROR ${cmd.name} ${cmd.args.map(String).join(' ')} ${Date.now() - start}ms: ${err.message}`
+      );
+    });
   return result;
 };
 
