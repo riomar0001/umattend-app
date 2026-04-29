@@ -4,7 +4,7 @@
 module.exports = {
   apps: [
     {
-      name: 'umattend-server-staging',
+      name: 'umattend-staging-server',
       script: 'dist/server.js',
       cwd: './server',
       // --import loads tracing.ts output before any other module so OTel
@@ -13,7 +13,7 @@ module.exports = {
       instances: 1,
       exec_mode: 'fork',
       watch: false,
-      env_staging: {
+      env: {
         NODE_ENV: 'staging',
         PORT: 4001,
         OTEL_SERVICE_NAME: 'umattend-server-staging',
@@ -21,14 +21,14 @@ module.exports = {
       },
     },
     {
-      name: 'umattend-server-prod',
+      name: 'umattend-production-server',
       script: 'dist/server.js',
       cwd: './server',
       node_args: '--import ./dist/telemetry/tracing.js',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
-      env_production: {
+      env: {
         NODE_ENV: 'production',
         PORT: 4000,
         OTEL_SERVICE_NAME: 'umattend-server',
@@ -38,13 +38,13 @@ module.exports = {
     // Next.js calls instrumentation.ts register() automatically — no --import needed.
     // Standalone output: built by `pnpm build:staging` / `pnpm build`, then run directly.
     {
-      name: 'umattend-client-staging',
+      name: 'umattend-staging-client',
       script: '.next/standalone/server.js',
       cwd: './client',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
-      env_staging: {
+      env: {
         NODE_ENV: 'production',
         PORT: 3001,
         HOSTNAME: '127.0.0.1',
@@ -53,13 +53,13 @@ module.exports = {
       },
     },
     {
-      name: 'umattend-client-prod',
+      name: 'umattend-production-client',
       script: '.next/standalone/server.js',
       cwd: './client',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
-      env_production: {
+      env: {
         NODE_ENV: 'production',
         PORT: 3000,
         HOSTNAME: '127.0.0.1',
