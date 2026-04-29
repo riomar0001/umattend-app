@@ -22,6 +22,7 @@ services:
     volumes:
       - ./observability/prometheus/prometheus.prod.yml:/otel-lgtm/prometheus.yaml:ro
       - ./observability/grafana/provisioning/dashboards/dashboards.yml:/otel-lgtm/grafana/conf/provisioning/dashboards/umattend-dashboards.yaml:ro
+      - ./observability/grafana/provisioning/datasources/datasource.yml:/otel-lgtm/grafana/conf/provisioning/datasources/umattend-datasources.yaml:ro
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - otel_lgtm_grafana_prod:/var/lib/grafana
       - otel_lgtm_prometheus_prod:/prometheus

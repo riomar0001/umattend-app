@@ -1,15 +1,34 @@
 // PM2 process config — used by both staging and prod.
 // Secrets (DATABASE_URL, JWT_SECRET, etc.) must be set in the shell env or a .env file
-// loaded before running: pm2 start ecosystem.config.cjs --env staging|production
+// before starting any process.
+//
+// Build first:
+//   cd server && npm run build && cd ..
+//   cd client && npm run build && cd ..
+//
+// Start all processes:
+//   pm2 start ecosystem.config.cjs
+//
+// Start staging only:
+//   pm2 start ecosystem.config.cjs --only umattend-staging-server,umattend-staging-client
+//
+// Start production only:
+//   pm2 start ecosystem.config.cjs --only umattend-production-server,umattend-production-client
+//
+// Restart after a new build:
+//   pm2 restart umattend-staging-server umattend-staging-client
+//   pm2 restart umattend-production-server umattend-production-client
+//
+// View logs:
+//   pm2 logs umattend-staging-client
+//   pm2 logs umattend-staging-server
 module.exports = {
   apps: [
     {
       name: 'umattend-staging-server',
-      script: 'dist/server.js',
+      script: 'npm',
+      args: 'start',
       cwd: './server',
-      // --import loads tracing.ts output before any other module so OTel
-      // instrumentation patches Express/HTTP before they are imported.
-      node_args: '--import ./dist/telemetry/tracing.js',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
@@ -35,11 +54,10 @@ module.exports = {
         OTEL_EXPORTER_OTLP_ENDPOINT: 'http://localhost:4320',
       },
     },
-    // Next.js calls instrumentation.ts register() automatically — no --import needed.
-    // Standalone output: built by `pnpm build:staging` / `pnpm build`, then run directly.
     {
       name: 'umattend-staging-client',
-      script: '.next/standalone/server.js',
+      script: 'npm',
+      args: 'start',
       cwd: './client',
       instances: 1,
       exec_mode: 'fork',
