@@ -141,7 +141,7 @@ a[x-apple-data-detectors],
                        </table></td>
                      </tr>
                      <tr>
-                      <td align="center" class="a" style="padding:0;Margin:0;padding-bottom:35px"><p class="b" style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:19.5px;letter-spacing:0;color:#999999;font-size:13px">College of Computing Education Skills Clinic © 2025. All Rights Reserved.</p><p class="b" style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:19.5px;letter-spacing:0;color:#999999;font-size:13px">University of Mindanao - Matina Campus Matina Crossing, Davao City, Davao del Sur, Philippines 8000</p></td>
+                      <td align="center" class="a" style="padding:0;Margin:0;padding-bottom:35px"><p class="b" style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:19.5px;letter-spacing:0;color:#999999;font-size:13px">College of Computing Education Skills Clinic © 2026. All Rights Reserved.</p><p class="b" style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:19.5px;letter-spacing:0;color:#999999;font-size:13px">University of Mindanao - Matina Campus Matina Crossing, Davao City, Davao del Sur, Philippines 8000</p></td>
                      </tr>
                    </table></td>
                  </tr>
