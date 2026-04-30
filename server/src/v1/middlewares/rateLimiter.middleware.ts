@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import redis from '../../configs/redis.config';
 import { FRONTEND_URL } from '../../constants/app.constants';
 import authService from '../services/auth.service';
+import { HTTPErrorResponse } from '../../utils/responseHandler';
 
 export const WINDOW_MS = 60_000;
 const IP_LIMIT = 300;
@@ -117,20 +118,12 @@ export const loginRateLimiter = async (
   const results = await Promise.all(checks);
 
   if (results[0] === false) {
-    res.status(429).json({
-      status: 429,
-      success: false,
-      message: 'Too many requests from this IP. Please try again later.',
-    });
+    HTTPErrorResponse(res, 429, 'Too many requests from this IP. Please try again later.');
     return;
   }
 
   if (results[1] === false) {
-    res.status(429).json({
-      status: 429,
-      success: false,
-      message: 'Too many requests for this account. Please try again later.',
-    });
+    HTTPErrorResponse(res, 429, 'Too many requests for this account. Please try again later.');
     return;
   }
 
@@ -164,22 +157,12 @@ export const refreshRateLimiter = async (
   const results = await Promise.all(checks);
 
   if (results[0] === false) {
-    res.status(429).json({
-      status: 429,
-      success: false,
-      message:
-        'Too many refresh requests from this IP. Please try again later.',
-    });
+    HTTPErrorResponse(res, 429, 'Too many refresh requests from this IP. Please try again later.');
     return;
   }
 
   if (results[1] === false) {
-    res.status(429).json({
-      status: 429,
-      success: false,
-      message:
-        'Too many refresh requests for this account. Please try again later.',
-    });
+    HTTPErrorResponse(res, 429, 'Too many refresh requests for this account. Please try again later.');
     return;
   }
 
@@ -215,11 +198,7 @@ export const oauthRateLimiter = async (
       return;
     }
 
-    res.status(429).json({
-      status: 429,
-      success: false,
-      message: 'Too many OAuth requests. Please try again later.',
-    });
+    HTTPErrorResponse(res, 429, 'Too many OAuth requests. Please try again later.');
     return;
   }
 
@@ -249,20 +228,12 @@ export const checkInRateLimiter = async (
   const results = await Promise.all(checks);
 
   if (results[0] === false) {
-    res.status(429).json({
-      status: 429,
-      success: false,
-      message: 'Too many scan requests from this IP. Please slow down.',
-    });
+    HTTPErrorResponse(res, 429, 'Too many scan requests from this IP. Please slow down.');
     return;
   }
 
   if (results[1] === false) {
-    res.status(429).json({
-      status: 429,
-      success: false,
-      message: 'Too many scan requests for this account. Please slow down.',
-    });
+    HTTPErrorResponse(res, 429, 'Too many scan requests for this account. Please slow down.');
     return;
   }
 

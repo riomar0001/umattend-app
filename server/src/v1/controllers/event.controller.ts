@@ -12,6 +12,7 @@ import {
   ForbiddenError,
   ConflictError,
   BadRequestError,
+  OrganizerError,
 } from '@/utils/customErrors';
 import { formatDateTime, generateExportFileName } from '@/utils/export.utils';
 import { NODE_ENV } from '@/constants/app.constants';
@@ -430,13 +431,14 @@ const massCheckOutEvent = async (
     if (error instanceof ForbiddenError) {
       return HTTPErrorResponse(res, 403, error.message);
     }
-    if (error instanceof Error) {
-      return HTTPErrorResponse(res, 500, error.message);
+    if (error instanceof ConflictError) {
+      return HTTPErrorResponse(res, 409, error.message);
     }
-
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
+    }
     if (NODE_ENV === 'DEVELOPMENT') {
       console.error('Unexpected error mass checking out', error);
-      return HTTPErrorResponse(res, 500, error);
     }
     return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
   }
@@ -479,13 +481,14 @@ const addOrganizer = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
-    if (error instanceof Error) {
-      return HTTPErrorResponse(res, 500, error.message);
+    if (error instanceof OrganizerError) {
+      return HTTPErrorResponse(res, 400, error.message);
     }
-
+    if (error instanceof ConflictError) {
+      return HTTPErrorResponse(res, 409, error.message);
+    }
     if (NODE_ENV === 'DEVELOPMENT') {
       console.error('Unexpected error adding organizer:', error);
-      return HTTPErrorResponse(res, 500, error);
     }
     return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
   }
@@ -723,7 +726,7 @@ const exportEventAttendeesToExcel = async (req: Request, res: Response) => {
     const event_name = await eventServices.getEventNameById(event_id);
 
     if (attendees.length === 0) {
-      return HTTPErrorResponse(res, 404, 'No attendees found for this event');
+      return HTTPSuccessResponse(res, 200, 'No attendees found for this event');
     }
 
     const workbook = new ExcelJS.Workbook();

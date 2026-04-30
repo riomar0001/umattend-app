@@ -36,12 +36,8 @@ const googleAuth = async (req: Request, res: Response) => {
       return HTTPErrorResponse(
         res,
         500,
-        `Internal server error:${error}`
+        `Internal server error: ${error}`
       ) as Response;
-    }
-
-    if (NODE_ENV === 'DEVELOPMENT') {
-      return HTTPErrorResponse(res, 500, error);
     }
     return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
   }
@@ -160,7 +156,7 @@ const logoutUser = async (req: Request, res: Response) => {
     }
 
     if (error instanceof jwt.TokenExpiredError) {
-      return HTTPErrorResponse(res, 401, 'Token Expire') as Response;
+      return HTTPErrorResponse(res, 401, 'Token Expired') as Response;
     }
 
     if (error instanceof AuthenticationError) {
@@ -175,12 +171,8 @@ const logoutUser = async (req: Request, res: Response) => {
       return HTTPErrorResponse(
         res,
         500,
-        `Internal server error:${error}`
+        `Internal server error: ${error}`
       ) as Response;
-    }
-
-    if (NODE_ENV === 'DEVELOPMENT') {
-      return HTTPErrorResponse(res, 500, error);
     }
     return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
   }
@@ -218,7 +210,7 @@ const refreshAccessToken = async (req: Request, res: Response) => {
     console.log(error);
 
     if (error instanceof jwt.TokenExpiredError) {
-      return HTTPErrorResponse(res, 401, 'Token Expire') as Response;
+      return HTTPErrorResponse(res, 401, 'Token Expired') as Response;
     }
 
     if (error instanceof AuthenticationError) {
@@ -228,16 +220,13 @@ const refreshAccessToken = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, 'Not Found') as Response;
     }
+
     if (NODE_ENV === 'DEVELOPMENT') {
       return HTTPErrorResponse(
         res,
         500,
-        `Internal server error:${error}`
+        `Internal server error: ${error}`
       ) as Response;
-    }
-
-    if (NODE_ENV === 'DEVELOPMENT') {
-      return HTTPErrorResponse(res, 500, error);
     }
     return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
   }
@@ -291,12 +280,8 @@ const exhangeCode = async (req: Request, res: Response) => {
       return HTTPErrorResponse(
         res,
         500,
-        `Internal server error:${error}`
+        `Internal server error: ${error}`
       ) as Response;
-    }
-
-    if (NODE_ENV === 'DEVELOPMENT') {
-      return HTTPErrorResponse(res, 500, error);
     }
     return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
   }
@@ -316,12 +301,8 @@ const getLoginHistory = async (req: Request, res: Response) => {
       return HTTPErrorResponse(
         res,
         500,
-        `Internal server error:${error}`
+        `Internal server error: ${error}`
       ) as Response;
-    }
-
-    if (NODE_ENV === 'DEVELOPMENT') {
-      return HTTPErrorResponse(res, 500, error);
     }
     return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
   }

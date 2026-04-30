@@ -14,6 +14,8 @@ import {
   ForbiddenError,
   NoCheckoutRequiredError,
   OrganizerError,
+  ConflictError,
+  BadRequestError,
 } from '@/utils/customErrors';
 import { events } from '@prisma/client';
 import { endEventStatusQueue } from '../queues/endEvent.queue';
@@ -37,20 +39,18 @@ const addEvent = async (event_data: AddEventInterface) => {
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
-        throw new Error('Unique constraint failed');
+        throw new ConflictError('An event with conflicting unique fields already exists');
       }
       if (error.code === 'P2003') {
-        throw new Error('Foreign key constraint failed');
+        throw new BadRequestError('Invalid reference: a related resource does not exist');
       }
     }
 
-    if (
-      error instanceof Prisma.PrismaClientValidationError &&
-      NODE_ENV === 'DEVELOPMENT'
-    ) {
-      throw new Error('Validation failed: ' + error.message);
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      throw new BadRequestError('Invalid event data provided');
     }
-    return false;
+
+    throw error;
   }
 };
 
@@ -592,7 +592,7 @@ const getAllEvents = async (
   const events = await eventRepository.getAllEvents(includeDrafts);
 
   if (events.length === 0) {
-    throw new NotFoundError('No events found');
+    return [] as GetAllEventsInterface;
   }
 
   return Promise.all(
@@ -631,7 +631,7 @@ const getAllPastEvents = async (
   const events = await eventRepository.getAllPastEvents(includeDrafts);
 
   if (events.length === 0) {
-    throw new NotFoundError('No past events found');
+    return [] as GetAllEventsInterface;
   }
 
   return Promise.all(
