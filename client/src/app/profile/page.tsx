@@ -246,9 +246,6 @@ const ProfilePage = () => {
                         <RefreshCw className="h-3.5 w-3.5" />
                         New QR Code
                       </Button>
-                      <p className="text-muted-foreground text-xs tabular-nums">
-                        Expires in {String(Math.floor(expiresIn / 60)).padStart(2, '0')}:{String(expiresIn % 60).padStart(2, '0')}
-                      </p>
                     </div>
                     <div className="flex-1 text-center sm:text-left">
                       <h3 className="text-foreground mb-2 text-xl font-bold">Your Digital Pass</h3>

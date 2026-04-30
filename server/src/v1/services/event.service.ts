@@ -526,7 +526,8 @@ const getOrganizersByEventId = async (event_id: string) => {
 
 const getEventDetailsById = async (
   event_id: string,
-  user_id: string
+  user_id: string,
+  role?: string
 ): Promise<GetEventDetailsWithEditByIdInterface> => {
   const event = await eventRepository.getEventDetails(event_id);
 
@@ -556,6 +557,14 @@ const getEventDetailsById = async (
       : null;
 
   const is_organizer = await eventRepository.checkOrganizer(user_id, event_id);
+
+  if (event.is_draft) {
+    const canSeeDraft =
+      role === 'admin' || role === 'csg' || !!is_organizer;
+    if (!canSeeDraft) {
+      throw new NotFoundError('Event not found');
+    }
+  }
 
   return {
     ...event,

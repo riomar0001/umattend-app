@@ -544,6 +544,7 @@ const getEventDetailsById = async (req: Request, res: Response) => {
   try {
     const { event_id } = req.params;
     const user_id = req.user?.id;
+    const role = req.user?.role;
 
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'Event ID is required');
@@ -553,7 +554,7 @@ const getEventDetailsById = async (req: Request, res: Response) => {
       return HTTPErrorResponse(res, 401, 'Unauthorized');
     }
 
-    const event = await eventServices.getEventDetailsById(event_id, user_id);
+    const event = await eventServices.getEventDetailsById(event_id, user_id, role);
     return HTTPSuccessResponse(res, 200, 'Event details retrieved', event);
   } catch (error: unknown) {
     if (error instanceof NotFoundError) {
