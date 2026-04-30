@@ -28,6 +28,7 @@ datasources:
     url: http://localhost:3200
     editable: false
     jsonData:
+      grpcEndpoint: localhost:9096
       tracesToLogsV2:
         datasourceUid: 'loki'
         tags: [{ key: 'service.name', value: 'service_name' }]
