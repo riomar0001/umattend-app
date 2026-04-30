@@ -10,14 +10,19 @@ export function requestLogger(
 
   res.on('finish', () => {
     const durationMs = Date.now() - start;
-    logStructured('http', res.statusCode >= 400 ? 'warn' : 'info', '', {
-      'http.method': req.method,
-      'http.url': req.originalUrl,
-      'http.status_code': res.statusCode,
-      'http.duration_ms': durationMs,
-      'http.user_agent': req.get('user-agent') ?? '',
-      'http.ip': req.ip ?? '',
-    });
+    logStructured(
+      'http',
+      res.statusCode >= 400 ? 'warn' : 'info',
+      `HTTP REQUEST ${req.ip ?? ''} ${req.method} ${res.statusCode} ${req.originalUrl}`,
+      {
+        'http.method': req.method,
+        'http.url': req.originalUrl,
+        'http.status_code': res.statusCode,
+        'http.duration_ms': durationMs,
+        'http.user_agent': req.get('user-agent') ?? '',
+        'http.ip': req.ip ?? '',
+      }
+    );
   });
 
   next();

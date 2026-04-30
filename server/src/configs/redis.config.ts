@@ -6,6 +6,7 @@ import {
   REDIS_PASSWORD,
   REDIS_DB,
 } from '../constants/redis.constants';
+import { logStructured } from '../telemetry/logging';
 
 const redis = new Redis({
   host: REDIS_HOST,
@@ -15,20 +16,36 @@ const redis = new Redis({
   db: REDIS_DB,
 });
 
-// Log Redis commands to OTel (captured by logging.ts and sent to Loki)
 const origSendCommand = redis.sendCommand.bind(redis);
 redis.sendCommand = function (cmd: Command) {
   const start = Date.now();
   const result = origSendCommand(cmd) as Promise<unknown>;
   result
     .then(() => {
-      console.log(
-        `REDIS ${cmd.name} ${cmd.args.map(String).join(' ')} ${Date.now() - start}ms`
+      const durationMs = Date.now() - start;
+      logStructured(
+        'redis',
+        'info',
+        `REDIS COMMAND ${cmd.name} ${cmd.args.map(String).join(' ')}`,
+        {
+          'redis.command': cmd.name,
+          'redis.args': cmd.args.map(String).join(' '),
+          'redis.duration_ms': durationMs,
+        }
       );
     })
     .catch((err: Error) => {
-      console.error(
-        `REDIS ERROR ${cmd.name} ${cmd.args.map(String).join(' ')} ${Date.now() - start}ms: ${err.message}`
+      const durationMs = Date.now() - start;
+      logStructured(
+        'redis',
+        'error',
+        `REDIS COMMAND ${cmd.name} ${cmd.args.map(String).join(' ')}`,
+        {
+          'redis.command': cmd.name,
+          'redis.args': cmd.args.map(String).join(' '),
+          'redis.duration_ms': durationMs,
+          'redis.error': err.message,
+        }
       );
     });
   return result;
