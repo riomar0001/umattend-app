@@ -503,56 +503,6 @@
           "refId": "A"
         }
       ]
-    },
-    {
-      "id": 12,
-      "title": "Database Logs",
-      "type": "logs",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 48 },
-      "datasource": { "type": "loki", "uid": "${loki_datasource}" },
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": false
-      },
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "${loki_datasource}" },
-          "expr": "{service_name=~\"umattend-server.*\"} |= \"DATABASE QUERY\"",
-          "maxLines": 100,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 13,
-      "title": "Redis Logs",
-      "type": "logs",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 58 },
-      "datasource": { "type": "loki", "uid": "${loki_datasource}" },
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": false
-      },
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "${loki_datasource}" },
-          "expr": "{service_name=~\"umattend-server.*\"} |= \"REDIS COMMAND\"",
-          "maxLines": 100,
-          "refId": "A"
-        }
-      ]
     }
   ]
 }

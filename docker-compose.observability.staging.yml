@@ -1,3 +1,5 @@
+name: umattend-observability-staging
+
 services:
   otel-lgtm:
     image: grafana/otel-lgtm:0.26.0
