@@ -61,6 +61,10 @@ const deleteEvent = async (eventId: string): Promise<boolean> => {
     throw new NotFoundError('Event not found');
   }
 
+  if (!event.is_draft) {
+    throw new ForbiddenError('Event must be set to draft before it can be deleted.');
+  }
+
   // Count checks are enforced atomically inside the repository transaction
   await eventRepository.deleteEvent(eventId);
   return true;

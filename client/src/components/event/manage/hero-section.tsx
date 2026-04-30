@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MapPin, Clock, Users, Edit, ChevronLeft, Shield, Trash2, Eye, EyeOff, Loader2, MoreHorizontal } from 'lucide-react';
+import { MapPin, Clock, Users, Edit, ChevronLeft, Shield, Trash2, Eye, EyeOff, Loader2, MoreHorizontal, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
@@ -64,11 +64,14 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
     onSuccess: () => refetch()
   });
 
+  const isDraft = !!event.is_draft;
+  const hasStarted = event.status === 'ongoing' || !!event.is_started;
+  const hasAttendees = event.checkInCount > 0;
+  const nameMatches = confirmName.trim() === event.name.trim();
+
   const handleDelete = () => {
     deleteEvent({ path: { event_id: event.id } });
   };
-
-  const nameMatches = confirmName.trim() === event.name.trim();
 
   return (
     <section className="border-border relative border-b backdrop-blur-[2px]">
@@ -234,19 +237,79 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
           <DialogHeader>
             <DialogTitle className="text-destructive">Delete Event</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. To confirm, type the event name below:
-              <span className="text-foreground mt-1 block font-semibold">{event.name}</span>
+              {isDraft
+                ? 'This action cannot be undone.'
+                : 'Before deleting, this event must be set back to draft.'}
             </DialogDescription>
           </DialogHeader>
-          <Input placeholder="Type event name to confirm" value={confirmName} onChange={(e) => setConfirmName(e.target.value)} className="mt-1" />
+
+          {/* Block: must be draft first */}
+          {!isDraft && (
+            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>
+                This event is currently posted. Unpost it first, then you can delete it.
+              </p>
+            </div>
+          )}
+
+          {/* Block: has attendees */}
+          {isDraft && hasAttendees && (
+            <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-300">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>
+                This event has <span className="font-semibold">{event.checkInCount} check-in{event.checkInCount !== 1 ? 's' : ''}</span>. Events with existing attendees cannot be deleted.
+              </p>
+            </div>
+          )}
+
+          {/* Warning: event has started but no attendees yet */}
+          {isDraft && hasStarted && !hasAttendees && (
+            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>This event has already started. Deleting it will permanently remove all associated data.</p>
+            </div>
+          )}
+
+          {/* Name confirmation — only when in a deletable state */}
+          {isDraft && !hasAttendees && (
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-sm">
+                To confirm, type the event name below:
+              </p>
+              <p className="text-foreground text-sm font-semibold">{event.name}</p>
+              <Input
+                placeholder="Type event name to confirm"
+                value={confirmName}
+                onChange={(e) => setConfirmName(e.target.value)}
+              />
+            </div>
+          )}
+
           <DialogFooter className="mt-2">
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={isDeleting}>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={isDeleting || isDrafting}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={!nameMatches || isDeleting}>
-              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Delete Event
-            </Button>
+            {!isDraft ? (
+              <Button
+                onClick={() => draftEvent({ path: { event_id: event.id } })}
+                disabled={isDrafting}
+                className="gap-1.5 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 hover:text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50"
+                variant="outline"
+              >
+                {isDrafting ? <Loader2 className="h-4 w-4 animate-spin" /> : <EyeOff className="h-4 w-4" />}
+                Unpost event
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={!nameMatches || isDeleting || hasAttendees}
+              >
+                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Delete Event
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

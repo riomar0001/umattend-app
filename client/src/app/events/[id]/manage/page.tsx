@@ -128,7 +128,8 @@ export default function ManageSingleEventPage() {
 
               <TabsTrigger
                 value="check-out"
-                className="text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium shadow-none transition-colors"
+                disabled={!event.checkOutRequired}
+                className="text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-35 relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium shadow-none transition-colors"
               >
                 <UserX className="h-3.5 w-3.5" />
                 Check Out
