@@ -1,73 +1,55 @@
 'use client';
 
-import { useState } from 'react';
-import { useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Calendar, Mail, Users, Settings, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import QRCodeStyling, { Options } from 'qr-code-styling';
 import { useQuery } from '@tanstack/react-query';
 import ProfileSkeleton from '@/components/profile/profile-skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { getUserAttendedEventsOptions, getUserHostedEventsOptions } from '@/api/client/@tanstack/react-query.gen';
+import { getUserAttendanceTokenOptions, getUserAttendedEventsOptions, getUserHostedEventsOptions } from '@/api/client/@tanstack/react-query.gen';
 import { formatEventDateRange, getInitials, toTitleCase } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
+
 
 const ProfilePage = () => {
   const user = useAuthStore((state) => state.user);
 
   const ref = useRef<HTMLDivElement>(null);
 
-  // Check if user can host events (admin, csg, organizer roles)
   const canHostEvents = user?.role && ['admin', 'csg', 'organizer'].includes(user.role.toLowerCase());
 
-  // Fetch attended events
   const { data: attendedEventsData, isLoading: isLoadingAttended } = useQuery({
     ...getUserAttendedEventsOptions(),
     enabled: !!user,
     retry: false
   });
 
-  // Fetch hosted events (only for users with appropriate roles)
   const { data: hostedEventsData, isLoading: isLoadingHosted } = useQuery({
     ...getUserHostedEventsOptions(),
     enabled: !!user && !!canHostEvents,
     retry: false
   });
 
-  const [currentHour, setCurrentHour] = useState(() => new Date().getUTCHours());
-  const [qrRefreshKey, setQrRefreshKey] = useState(0);
-  const [expiresIn, setExpiresIn] = useState(() => {
-    const now = new Date();
-    return 3600 - (now.getUTCMinutes() * 60 + now.getUTCSeconds());
+  const { data: tokenData, isError: isTokenError, isLoading: isTokenLoading, refetch: refetchToken } = useQuery({
+    ...getUserAttendanceTokenOptions(),
+    enabled: !!user,
+    refetchInterval: 3540000,
+    retry: false,
   });
 
-  useEffect(() => {
-    const tick = () => setCurrentHour(new Date().getUTCHours());
-    const id = setInterval(tick, 60_000);
-    return () => clearInterval(id);
-  }, []);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleRefetch = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => refetchToken(), 500);
+  };
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const remaining = 3600 - (now.getUTCMinutes() * 60 + now.getUTCSeconds());
-      setExpiresIn(remaining);
-      if (remaining <= 0) {
-        setCurrentHour(now.getUTCHours());
-        setQrRefreshKey((k) => k + 1);
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const attendanceToken = tokenData?.data?.token ?? '';
 
-  const now = new Date();
-  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const date = String(now.getUTCDate()).padStart(2, '0');
-  const year = String(now.getUTCFullYear()).slice(-2);
-  const hour = String(currentHour).padStart(2, '0');
-  const QRCode = typeof window !== 'undefined' ? btoa(`${month}${date}${year}${hour}${String(user?.student_id)}`) : '';
+
 
   const options: Options = useMemo(
     () => ({
@@ -75,10 +57,10 @@ const ProfilePage = () => {
       shape: 'square',
       width: 1000,
       height: 1000,
-      margin: 0,
+      margin: 30,
       qrOptions: {
         mode: 'Byte',
-        errorCorrectionLevel: 'H'
+        errorCorrectionLevel: 'L'
       },
       imageOptions: {
         saveAsBlob: true,
@@ -88,11 +70,11 @@ const ProfilePage = () => {
       },
       dotsOptions: { type: 'rounded', color: '#1B1212', roundSize: true },
       backgroundOptions: { round: 0, color: '#fdfcf1' },
-      cornersSquareOptions: { type: 'extra-rounded', color: '#36454F' },
-      cornersDotOptions: { type: 'dot', color: '#36454F' },
-      data: `${QRCode}`
+      cornersSquareOptions: { type: 'extra-rounded', color: '#1B1212' },
+      cornersDotOptions: { type: 'dot', color: '#1B1212' },
+      data: attendanceToken
     }),
-    [QRCode]
+    [attendanceToken]
   );
 
   const qrCode = useMemo(() => {
@@ -107,7 +89,7 @@ const ProfilePage = () => {
     ref.current.innerHTML = '';
     qrCode.append(ref.current);
     qrCode.update(options);
-  }, [qrCode, options, qrRefreshKey]);
+  }, [qrCode, options]);
 
   const [activeTab, setActiveTab] = useState('attended');
 
@@ -226,26 +208,25 @@ const ProfilePage = () => {
                     <div className="flex flex-col items-center gap-3">
                       <style>{`.qr-container canvas, .qr-container svg { width: 100% !important; height: auto !important; display: block; border-radius: 14px !important;}`}</style>
 
-                      <div
-                        ref={ref}
-                        className="qr-container border-primary/30 pointer-events-none aspect-square w-full items-center justify-center rounded-xl border-2 border-dashed select-none sm:max-w-[190px]"
-                        onContextMenu={(e) => e.preventDefault()}
-                        style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={() => {
-                          const now = new Date();
-                          setCurrentHour(now.getUTCHours());
-                          setExpiresIn(3600 - (now.getUTCMinutes() * 60 + now.getUTCSeconds()));
-                          setQrRefreshKey((k) => k + 1);
-                        }}
-                      >
-                        <RefreshCw className="h-3.5 w-3.5" />
-                        New QR Code
-                      </Button>
+                      {isTokenLoading ? (
+                        <div className="border-primary/30 aspect-square w-full rounded-xl border-2 border-dashed flex items-center justify-center sm:min-w-[190px]">
+                          <Spinner className="size-8" />
+                        </div>
+                      ) : isTokenError ? (
+                        <button
+                          onClick={handleRefetch}
+                          className="border-primary/30 text-muted-foreground hover:text-foreground hover:bg-muted aspect-square w-full rounded-xl border-2 border-dashed flex items-center justify-center transition-colors sm:min-w-[190px]"
+                        >
+                          <RefreshCw className="h-8 w-8" />
+                        </button>
+                      ) : (
+                        <div
+                          ref={ref}
+                          className="qr-container border-primary/30 pointer-events-none aspect-square w-full items-center justify-center rounded-xl border-2 border-dashed select-none sm:max-w-[190px]"
+                          onContextMenu={(e) => e.preventDefault()}
+                          style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+                        />
+                      )}
                     </div>
                     <div className="flex-1 text-center sm:text-left">
                       <h3 className="text-foreground mb-2 text-xl font-bold">Your Digital Pass</h3>

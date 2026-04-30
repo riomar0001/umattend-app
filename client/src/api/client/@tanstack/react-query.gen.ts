@@ -5,7 +5,7 @@ import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
 import { Admin, Authentication, Event, type Options, User } from '../sdk.gen';
-import type { DeleteAdminQueuesByQueueNameFailedByJobIdData, DeleteAdminQueuesByQueueNameFailedByJobIdResponse, DeleteAdminQueuesByQueueNameFailedData, DeleteAdminQueuesByQueueNameFailedResponse, DeleteAdminRateLimitsByKeyData, DeleteAdminRateLimitsByKeyResponse, DeleteAdminRateLimitsData, DeleteAdminRateLimitsResponse, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdResponse, DeleteEventByEventIdData, DeleteEventByEventIdError, DeleteEventByEventIdResponse, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdError, DeleteEventRemoveOrganizerByEventIdResponse, GetAdminEventsData, GetAdminEventsResponse, GetAdminQueuesByQueueNameFailedData, GetAdminQueuesByQueueNameFailedResponse, GetAdminQueuesData, GetAdminRateLimitsData, GetAdminUsersData, GetAdminUsersResponse, GetAuthLoginHistoryData, GetEventAttendanceCountData, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesError, GetEventByEventIdAttendeesResponse, GetEventByEventIdData, GetEventByEventIdOrganizersData, GetEventData, GetEventExportByEventIdData, GetEventPastData, GetUserAttendedEventsData, GetUserData, GetUserEventsData, GetUserHostedEventsData, PatchAdminEventsByEventIdData, PatchAdminEventsByEventIdResponse, PatchAdminUsersByUserIdRoleData, PatchAdminUsersByUserIdRoleResponse, PatchEventByEventIdDraftData, PatchEventByEventIdDraftResponse, PatchEventByEventIdPostData, PatchEventByEventIdPostResponse, PostAdminQueuesByQueueNameFailedByJobIdRetryData, PostAdminQueuesByQueueNameFailedByJobIdRetryResponse, PostAdminQueuesByQueueNameFailedRetryAllData, PostAdminQueuesByQueueNameFailedRetryAllResponse, PostAuthExchangeData, PostAuthExchangeError, PostAuthExchangeResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthRefreshData, PostAuthRefreshError, PostAuthRefreshResponse, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdError, PostEventAddOrganizerByEventIdResponse, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdError, PostEventByEventIdCheckinByStudentIdResponse, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdError, PostEventByEventIdCheckoutByStudentIdResponse, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeError, PostEventCheckInByEventIdByQrCodeResponse, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeError, PostEventCheckOutByEventIdByQrCodeResponse, PostEventData, PostEventError, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdResponse, PostEventResponse, PostUserOnboardingData, PostUserOnboardingError, PostUserOnboardingResponse, PutEventByEventIdData, PutEventByEventIdError, PutEventByEventIdResponse, PutUserData, PutUserError, PutUserResponse } from '../types.gen';
+import type { DeleteAdminQueuesByQueueNameFailedByJobIdData, DeleteAdminQueuesByQueueNameFailedByJobIdResponse, DeleteAdminQueuesByQueueNameFailedData, DeleteAdminQueuesByQueueNameFailedResponse, DeleteAdminRateLimitsByKeyData, DeleteAdminRateLimitsByKeyResponse, DeleteAdminRateLimitsData, DeleteAdminRateLimitsResponse, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdResponse, DeleteEventByEventIdData, DeleteEventByEventIdError, DeleteEventByEventIdResponse, DeleteEventRemoveOrganizerByEventIdData, DeleteEventRemoveOrganizerByEventIdError, DeleteEventRemoveOrganizerByEventIdResponse, GetAdminEventsData, GetAdminEventsResponse, GetAdminQueuesByQueueNameFailedData, GetAdminQueuesByQueueNameFailedResponse, GetAdminQueuesData, GetAdminRateLimitsData, GetAdminUsersData, GetAdminUsersResponse, GetAuthLoginHistoryData, GetEventAttendanceCountData, GetEventByEventIdAttendeesData, GetEventByEventIdAttendeesError, GetEventByEventIdAttendeesResponse, GetEventByEventIdData, GetEventByEventIdOrganizersData, GetEventData, GetEventExportByEventIdData, GetEventPastData, GetUserAttendanceTokenData, GetUserAttendedEventsData, GetUserData, GetUserEventsData, GetUserHostedEventsData, PatchAdminEventsByEventIdData, PatchAdminEventsByEventIdResponse, PatchAdminUsersByUserIdRoleData, PatchAdminUsersByUserIdRoleResponse, PatchEventByEventIdDraftData, PatchEventByEventIdDraftResponse, PatchEventByEventIdPostData, PatchEventByEventIdPostResponse, PostAdminQueuesByQueueNameFailedByJobIdRetryData, PostAdminQueuesByQueueNameFailedByJobIdRetryResponse, PostAdminQueuesByQueueNameFailedRetryAllData, PostAdminQueuesByQueueNameFailedRetryAllResponse, PostAuthExchangeData, PostAuthExchangeError, PostAuthExchangeResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthRefreshData, PostAuthRefreshError, PostAuthRefreshResponse, PostEventAddOrganizerByEventIdData, PostEventAddOrganizerByEventIdError, PostEventAddOrganizerByEventIdResponse, PostEventByEventIdCheckinByStudentIdData, PostEventByEventIdCheckinByStudentIdError, PostEventByEventIdCheckinByStudentIdResponse, PostEventByEventIdCheckoutByStudentIdData, PostEventByEventIdCheckoutByStudentIdError, PostEventByEventIdCheckoutByStudentIdResponse, PostEventCheckInByEventIdByQrCodeData, PostEventCheckInByEventIdByQrCodeError, PostEventCheckInByEventIdByQrCodeResponse, PostEventCheckOutByEventIdByQrCodeData, PostEventCheckOutByEventIdByQrCodeError, PostEventCheckOutByEventIdByQrCodeResponse, PostEventData, PostEventError, PostEventMassCheckOutByEventIdData, PostEventMassCheckOutByEventIdResponse, PostEventResponse, PostUserOnboardingData, PostUserOnboardingError, PostUserOnboardingResponse, PutEventByEventIdData, PutEventByEventIdError, PutEventByEventIdResponse, PutUserData, PutUserError, PutUserResponse } from '../types.gen';
 
 /**
  * Refresh access token
@@ -244,6 +244,28 @@ export const getUserHostedEventsOptions = (options?: Options<GetUserHostedEvents
             return data;
         },
         queryKey: getUserHostedEventsQueryKey(options)
+    });
+};
+
+export const getUserAttendanceTokenQueryKey = (options?: Options<GetUserAttendanceTokenData>) => createQueryKey('getUserAttendanceToken', options);
+
+/**
+ * Get attendance QR token
+ *
+ * Returns a signed JWT for use as QR code data during attendance check-in/out
+ */
+export const getUserAttendanceTokenOptions = (options?: Options<GetUserAttendanceTokenData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await User.getUserAttendanceToken({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getUserAttendanceTokenQueryKey(options)
     });
 };
 

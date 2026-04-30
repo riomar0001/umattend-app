@@ -199,6 +199,21 @@ const updateUserProfile = async (req: Request, res: Response) => {
   }
 };
 
+const getAttendanceToken = async (req: Request, res: Response) => {
+  try {
+    const token = await userService.getAttendanceToken(req.user.id);
+    return HTTPSuccessResponse(res, 200, 'Attendance token generated', { token });
+  } catch (error: unknown) {
+    if (error instanceof NotFoundError) {
+      return HTTPErrorResponse(res, 404, error.message);
+    }
+    if (NODE_ENV === 'DEVELOPMENT') {
+      return HTTPErrorResponse(res, 500, error);
+    }
+    return HTTPErrorResponse(res, 500, 'Internal server error') as Response;
+  }
+};
+
 const userController = {
   getUserById,
   onboardUser,
@@ -206,6 +221,7 @@ const userController = {
   getUserAttendedEventsDetailed,
   getUserHostedEvents,
   updateUserProfile,
+  getAttendanceToken,
 };
 
 export default userController;

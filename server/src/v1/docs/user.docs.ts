@@ -631,10 +631,89 @@ const getUserHostedEvents = {
   },
 };
 
+const getAttendanceToken = {
+  '/user/attendance-token': {
+    get: {
+      tags: ['User'],
+      summary: 'Get attendance QR token',
+      description: 'Returns a signed JWT for use as QR code data during attendance check-in/out',
+      security: [{ bearerAuth: [] }],
+      responses: {
+        200: {
+          description: 'Attendance token generated successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  message: { type: 'string', example: 'Attendance token generated' },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      token: {
+                        type: 'string',
+                        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        401: {
+          description: 'Unauthorized',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  message: { type: 'string', example: 'No token provided' },
+                },
+              },
+            },
+          },
+        },
+        404: {
+          description: 'Student not found',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  message: { type: 'string', example: 'Student profile not found' },
+                },
+              },
+            },
+          },
+        },
+        500: {
+          description: 'Internal server error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  message: { type: 'string', example: 'Internal server error' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
 export const user = {
   ...getAndUpdateUser,
   ...onboarding,
   ...getUserAttendedEvents,
   ...getUserAttendedEventsDetailed,
   ...getUserHostedEvents,
+  ...getAttendanceToken,
 };

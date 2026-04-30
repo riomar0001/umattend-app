@@ -565,6 +565,54 @@ export type GetUserHostedEventsResponses = {
 
 export type GetUserHostedEventsResponse = GetUserHostedEventsResponses[keyof GetUserHostedEventsResponses];
 
+export type GetUserAttendanceTokenData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/user/attendance-token';
+};
+
+export type GetUserAttendanceTokenErrors = {
+    /**
+     * Unauthorized
+     */
+    401: {
+        success?: boolean;
+        message?: string;
+    };
+    /**
+     * Student not found
+     */
+    404: {
+        success?: boolean;
+        message?: string;
+    };
+    /**
+     * Internal server error
+     */
+    500: {
+        success?: boolean;
+        message?: string;
+    };
+};
+
+export type GetUserAttendanceTokenError = GetUserAttendanceTokenErrors[keyof GetUserAttendanceTokenErrors];
+
+export type GetUserAttendanceTokenResponses = {
+    /**
+     * Attendance token generated successfully
+     */
+    200: {
+        success?: boolean;
+        message?: string;
+        data?: {
+            token?: string;
+        };
+    };
+};
+
+export type GetUserAttendanceTokenResponse = GetUserAttendanceTokenResponses[keyof GetUserAttendanceTokenResponses];
+
 export type GetEventData = {
     body?: never;
     path?: never;

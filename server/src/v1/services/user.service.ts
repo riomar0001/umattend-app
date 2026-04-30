@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import userRepository from '../repositories/user.repository';
 import { NotFoundError } from '../../utils/customErrors';
 import {
@@ -8,6 +9,10 @@ import {
   OnboardedUserInfoResult,
 } from '../interface/auth';
 import { generateAccessToken } from '../services/jwt.service';
+import {
+  JWT_ATTENDANCE_TOKEN_SECRET,
+  JWT_ATTENDANCE_TOKEN_TTL,
+} from '../../constants/jwt.constants';
 
 const getUserById = async (user_id: string): Promise<FetchUserInfoResult> => {
   const user = await userRepository.findUserById(user_id);
@@ -119,6 +124,18 @@ const updateUserProfile = async (
   };
 };
 
+const getAttendanceToken = async (user_id: string): Promise<string> => {
+  const user = await userRepository.findUserById(user_id);
+  if (!user?.student?.student_id) {
+    throw new NotFoundError('Student profile not found');
+  }
+  return jwt.sign(
+    { student_id: user.student.student_id },
+    JWT_ATTENDANCE_TOKEN_SECRET,
+    { expiresIn: Number(JWT_ATTENDANCE_TOKEN_TTL) } as jwt.SignOptions
+  );
+};
+
 const userService = {
   getUserById,
   onboardUser,
@@ -126,6 +143,7 @@ const userService = {
   getUserAttendedEventsDetailed,
   getUserHostedEvents,
   updateUserProfile,
+  getAttendanceToken,
 };
 
 export default userService;

@@ -247,6 +247,23 @@ export const zGetUserHostedEventsResponse = z.object({
     }))
 });
 
+export const zGetUserAttendanceTokenData = z.object({
+    body: z.optional(z.never()),
+    path: z.optional(z.never()),
+    query: z.optional(z.never())
+});
+
+/**
+ * Attendance token generated successfully
+ */
+export const zGetUserAttendanceTokenResponse = z.object({
+    success: z.optional(z.boolean()),
+    message: z.optional(z.string()),
+    data: z.optional(z.object({
+        token: z.optional(z.string())
+    }))
+});
+
 export const zGetEventData = z.object({
     body: z.optional(z.never()),
     path: z.optional(z.never()),
