@@ -65,32 +65,6 @@ const deleteEvent = async (eventId: string) => {
       throw new Error('Event not found or already deleted.');
     }
 
-    if (existing.is_done) {
-      throw new Error('Cannot delete a completed event.');
-    }
-
-    // Count checks are inside the transaction so a concurrent check-in cannot
-    // slip between the check and the DELETE.
-    const checkinCount = await tx.attendance.count({
-      where: { event_id: eventId },
-    });
-    if (checkinCount > 0) {
-      throw new ForbiddenError(
-        'Cannot delete event with existing check-ins. Please contact support.'
-      );
-    }
-
-    if (existing.check_out_required) {
-      const checkoutCount = await tx.attendance.count({
-        where: { event_id: eventId, NOT: { check_out_at: null } },
-      });
-      if (checkoutCount > 0) {
-        throw new ForbiddenError(
-          'Cannot delete event with existing check-outs. Please contact support.'
-        );
-      }
-    }
-
     return tx.events.delete({
       where: { id: eventId },
     });

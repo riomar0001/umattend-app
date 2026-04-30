@@ -253,12 +253,12 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
             </div>
           )}
 
-          {/* Block: has attendees */}
+          {/* Warning: has attendees */}
           {isDraft && hasAttendees && (
-            <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800/60 dark:bg-red-950/30 dark:text-red-300">
+            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <p>
-                This event has <span className="font-semibold">{event.checkInCount} check-in{event.checkInCount !== 1 ? 's' : ''}</span>. Events with existing attendees cannot be deleted.
+                This event has <span className="font-semibold">{event.checkInCount} check-in{event.checkInCount !== 1 ? 's' : ''}</span>. All attendance records will be permanently deleted.
               </p>
             </div>
           )}
@@ -271,13 +271,13 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
             </div>
           )}
 
-          {/* Name confirmation — only when in a deletable state */}
-          {isDraft && !hasAttendees && (
+          {/* Name confirmation */}
+          {isDraft && (
             <div className="space-y-2">
               <p className="text-muted-foreground text-sm">
                 To confirm, type the event name below:
               </p>
-              <p className="text-foreground text-sm font-semibold">{event.name}</p>
+              <p className="text-foreground select-none text-sm font-semibold" onCopy={(e) => e.preventDefault()}>{event.name}</p>
               <Input
                 placeholder="Type event name to confirm"
                 value={confirmName}
@@ -304,7 +304,7 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
               <Button
                 variant="destructive"
                 onClick={handleDelete}
-                disabled={!nameMatches || isDeleting || hasAttendees}
+                disabled={!nameMatches || isDeleting}
               >
                 {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Delete Event
