@@ -294,7 +294,12 @@ export function EventCheckOutScanner({ eventId, isEventDone, isEventStarted }: E
       </Dialog>
 
       {/* Result dialog (success / warning / error) */}
-      <Dialog open={!!result} onOpenChange={(open) => { if (!open) handleResultDialogClose(); }}>
+      <Dialog
+        open={!!result}
+        onOpenChange={(open) => {
+          if (!open) handleResultDialogClose();
+        }}
+      >
         <DialogContent className="w-[90vw] max-w-sm sm:w-full md:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
           {result && (
             <>
@@ -308,11 +313,7 @@ export function EventCheckOutScanner({ eventId, isEventDone, isEventStarted }: E
                 </div>
               </div>
               <DialogFooter>
-                <Button
-                  onClick={handleResultDialogClose}
-                  variant={result.state === 'error' ? 'destructive' : 'default'}
-                  className="w-full"
-                >
+                <Button onClick={handleResultDialogClose} variant={result.state === 'error' ? 'destructive' : 'default'} className="w-full">
                   {resultConfig[result.state].buttonLabel}
                 </Button>
               </DialogFooter>
