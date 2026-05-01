@@ -18,6 +18,7 @@ import {
   postAdminQueuesByQueueNameFailedRetryAllMutation,
   deleteAdminQueuesByQueueNameFailedMutation
 } from '@/api/client/@tanstack/react-query.gen';
+import { getErrorMessage } from '@/lib/error-utils';
 import { cn } from '@/lib/utils';
 
 type QueueName = 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
@@ -100,7 +101,7 @@ export default function AdminQueuesPage() {
       toast.success('Job retried');
       invalidateAll();
     },
-    onError: (err) => toast.error((err as Error)?.message || 'Failed to retry job')
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to retry job'))
   });
 
   const deleteJob = useMutation({
@@ -109,7 +110,7 @@ export default function AdminQueuesPage() {
       toast.success('Job removed');
       invalidateAll();
     },
-    onError: (err) => toast.error((err as Error)?.message || 'Failed to remove job')
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to remove job'))
   });
 
   const retryAll = useMutation({
@@ -120,7 +121,7 @@ export default function AdminQueuesPage() {
       setConfirmDialog(null);
       invalidateAll();
     },
-    onError: (err) => toast.error((err as Error)?.message || 'Failed to retry jobs')
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to retry jobs'))
   });
 
   const cleanAll = useMutation({
@@ -131,7 +132,7 @@ export default function AdminQueuesPage() {
       setConfirmDialog(null);
       invalidateAll();
     },
-    onError: (err) => toast.error((err as Error)?.message || 'Failed to clean jobs')
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to clean jobs'))
   });
 
   function invalidateAll() {

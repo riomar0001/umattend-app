@@ -212,7 +212,7 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
 
   if (attendeesStatsIsLoading) {
     return (
-      <div className="min-h-screen">
+      <div>
         <EvenAttendeesSkeleton />
         <EventAttendeesStatsSkeleton />
         <EventDataTableSkeleton />

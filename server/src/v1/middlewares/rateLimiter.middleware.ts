@@ -118,12 +118,20 @@ export const loginRateLimiter = async (
   const results = await Promise.all(checks);
 
   if (results[0] === false) {
-    HTTPErrorResponse(res, 429, 'Too many requests from this IP. Please try again later.');
+    HTTPErrorResponse(
+      res,
+      429,
+      'Too many requests from this IP. Please try again later.'
+    );
     return;
   }
 
   if (results[1] === false) {
-    HTTPErrorResponse(res, 429, 'Too many requests for this account. Please try again later.');
+    HTTPErrorResponse(
+      res,
+      429,
+      'Too many requests for this account. Please try again later.'
+    );
     return;
   }
 
@@ -157,12 +165,20 @@ export const refreshRateLimiter = async (
   const results = await Promise.all(checks);
 
   if (results[0] === false) {
-    HTTPErrorResponse(res, 429, 'Too many refresh requests from this IP. Please try again later.');
+    HTTPErrorResponse(
+      res,
+      429,
+      'Too many refresh requests from this IP. Please try again later.'
+    );
     return;
   }
 
   if (results[1] === false) {
-    HTTPErrorResponse(res, 429, 'Too many refresh requests for this account. Please try again later.');
+    HTTPErrorResponse(
+      res,
+      429,
+      'Too many refresh requests for this account. Please try again later.'
+    );
     return;
   }
 
@@ -198,7 +214,11 @@ export const oauthRateLimiter = async (
       return;
     }
 
-    HTTPErrorResponse(res, 429, 'Too many OAuth requests. Please try again later.');
+    HTTPErrorResponse(
+      res,
+      429,
+      'Too many OAuth requests. Please try again later.'
+    );
     return;
   }
 
@@ -228,12 +248,20 @@ export const checkInRateLimiter = async (
   const results = await Promise.all(checks);
 
   if (results[0] === false) {
-    HTTPErrorResponse(res, 429, 'Too many scan requests from this IP. Please slow down.');
+    HTTPErrorResponse(
+      res,
+      429,
+      'Too many scan requests from this IP. Please slow down.'
+    );
     return;
   }
 
   if (results[1] === false) {
-    HTTPErrorResponse(res, 429, 'Too many scan requests for this account. Please slow down.');
+    HTTPErrorResponse(
+      res,
+      429,
+      'Too many scan requests for this account. Please slow down.'
+    );
     return;
   }
 

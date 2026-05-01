@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import EventContent from '@/components/event/event-content';
 import EventContentEmpty from '@/components/event/event-content-empty';
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { getEventOptions, getEventPastOptions } from '@/api/client/@tanstack/react-query.gen';
+import { getErrorMessage } from '@/lib/error-utils';
 import { transformEventData } from '@/lib/events-utils';
 import { useAuthStore } from '@/store/authStore';
 
@@ -27,15 +29,33 @@ export default function EventsTabsView({ defaultTab }: EventsTabsViewProps) {
   const user = useAuthStore((state) => state.user);
   const isOrganizer = user?.role && ['admin', 'organizer', 'csg'].includes(user.role);
 
-  const { data: eventsData, isLoading: isUpcomingLoading } = useQuery({
+  const {
+    data: eventsData,
+    isLoading: isUpcomingLoading,
+    isError: isUpcomingError,
+    error: upcomingError
+  } = useQuery({
     ...getEventOptions(),
     retry: false
   });
 
-  const { data: pastEventsData, isLoading: isPastLoading } = useQuery({
+  const {
+    data: pastEventsData,
+    isLoading: isPastLoading,
+    isError: isPastError,
+    error: pastError
+  } = useQuery({
     ...getEventPastOptions(),
     retry: false
   });
+
+  useEffect(() => {
+    if (isUpcomingError) toast.error(getErrorMessage(upcomingError, 'Failed to load events'));
+  }, [isUpcomingError, upcomingError]);
+
+  useEffect(() => {
+    if (isPastError) toast.error(getErrorMessage(pastError, 'Failed to load past events'));
+  }, [isPastError, pastError]);
 
   const events = eventsData?.data || [];
   const allUpcoming = events.map(transformEventData).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
@@ -59,7 +79,7 @@ export default function EventsTabsView({ defaultTab }: EventsTabsViewProps) {
   };
 
   return (
-    <div className="bg-background relative min-h-screen">
+    <div className="bg-background relative">
       {/* Background decorative elements */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div className="from-primary/[0.15] via-primary/[0.06] dark:from-primary/[0.22] dark:via-primary/[0.08] absolute inset-x-0 top-0 h-80 bg-gradient-to-b to-transparent" />

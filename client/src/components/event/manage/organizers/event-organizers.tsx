@@ -9,6 +9,7 @@ import {
   postEventAddOrganizerByEventIdMutation,
   deleteEventRemoveOrganizerByEventIdMutation
 } from '@/api/client/@tanstack/react-query.gen';
+import { getErrorMessage } from '@/lib/error-utils';
 import { formatDateTimeFull } from '@/lib/utils';
 
 interface EventOrganizersProps {
@@ -39,8 +40,7 @@ export default function EventOrganizers({ eventId }: EventOrganizersProps) {
       refetch();
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to add organizer');
+      toast.error(getErrorMessage(error, 'Failed to add organizer'));
     }
   });
 
@@ -52,8 +52,7 @@ export default function EventOrganizers({ eventId }: EventOrganizersProps) {
       refetch();
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to remove organizer');
+      toast.error(getErrorMessage(error, 'Failed to remove organizer'));
     }
   });
 

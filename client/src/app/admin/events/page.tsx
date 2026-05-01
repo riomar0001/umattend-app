@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { getAdminEventsOptions, patchEventByEventIdPostMutation, patchEventByEventIdDraftMutation } from '@/api/client/@tanstack/react-query.gen';
+import { getErrorMessage } from '@/lib/error-utils';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -83,7 +84,7 @@ export default function AdminEventsPage() {
       queryClient.invalidateQueries({ queryKey: getAdminEventsOptions({}).queryKey });
     },
     onError: (err) => {
-      toast.error((err as Error)?.message || 'Failed to publish');
+      toast.error(getErrorMessage(err, 'Failed to publish'));
       setTogglingId(null);
     }
   });
@@ -96,7 +97,7 @@ export default function AdminEventsPage() {
       queryClient.invalidateQueries({ queryKey: getAdminEventsOptions({}).queryKey });
     },
     onError: (err) => {
-      toast.error((err as Error)?.message || 'Failed to draft');
+      toast.error(getErrorMessage(err, 'Failed to save as draft'));
       setTogglingId(null);
     }
   });

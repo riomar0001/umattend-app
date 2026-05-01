@@ -39,10 +39,14 @@ const addEvent = async (event_data: AddEventInterface) => {
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
-        throw new ConflictError('An event with conflicting unique fields already exists');
+        throw new ConflictError(
+          'An event with conflicting unique fields already exists'
+        );
       }
       if (error.code === 'P2003') {
-        throw new BadRequestError('Invalid reference: a related resource does not exist');
+        throw new BadRequestError(
+          'Invalid reference: a related resource does not exist'
+        );
       }
     }
 
@@ -62,7 +66,9 @@ const deleteEvent = async (eventId: string): Promise<boolean> => {
   }
 
   if (!event.is_draft) {
-    throw new ForbiddenError('Event must be set to draft before it can be deleted.');
+    throw new ForbiddenError(
+      'Event must be set to draft before it can be deleted.'
+    );
   }
 
   // Count checks are enforced atomically inside the repository transaction
@@ -563,8 +569,7 @@ const getEventDetailsById = async (
   const is_organizer = await eventRepository.checkOrganizer(user_id, event_id);
 
   if (event.is_draft) {
-    const canSeeDraft =
-      role === 'admin' || role === 'csg' || !!is_organizer;
+    const canSeeDraft = role === 'admin' || role === 'csg' || !!is_organizer;
     if (!canSeeDraft) {
       throw new NotFoundError('Event not found');
     }

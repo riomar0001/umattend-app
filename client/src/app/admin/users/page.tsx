@@ -11,6 +11,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getAdminUsersOptions, patchAdminUsersByUserIdRoleMutation, deleteAdminUsersByUserIdMutation } from '@/api/client/@tanstack/react-query.gen';
+import { getErrorMessage } from '@/lib/error-utils';
 
 type UserRole = 'student' | 'admin' | 'csg' | 'instructor' | 'organizer';
 const VALID_ROLES: UserRole[] = ['student', 'admin', 'csg', 'instructor', 'organizer'];
@@ -79,7 +80,7 @@ export default function AdminUsersPage() {
       setEditingRole(null);
       queryClient.invalidateQueries({ queryKey: getAdminUsersOptions({}).queryKey });
     },
-    onError: (err) => toast.error((err as Error)?.message || 'Failed to update role')
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to update role'))
   });
 
   const deleteMutation = useMutation({
@@ -89,7 +90,7 @@ export default function AdminUsersPage() {
       setDeleteDialog(null);
       queryClient.invalidateQueries({ queryKey: getAdminUsersOptions({}).queryKey });
     },
-    onError: (err) => toast.error((err as Error)?.message || 'Failed to delete user')
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to delete user'))
   });
 
   const responseData = data?.data as AdminUsersResponse | undefined;

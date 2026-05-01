@@ -37,8 +37,12 @@ interface LogBody {
 }
 
 function toAnyValue(v: string | number): AnyValue {
-  if (typeof v === 'string') return { stringValue: v };
-  if (Number.isInteger(v)) return { intValue: String(v) };
+  if (typeof v === 'string') {
+    return { stringValue: v };
+  }
+  if (Number.isInteger(v)) {
+    return { intValue: String(v) };
+  }
   return { doubleValue: v };
 }
 

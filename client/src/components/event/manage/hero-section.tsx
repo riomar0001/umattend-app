@@ -236,20 +236,14 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-destructive">Delete Event</DialogTitle>
-            <DialogDescription>
-              {isDraft
-                ? 'This action cannot be undone.'
-                : 'Before deleting, this event must be set back to draft.'}
-            </DialogDescription>
+            <DialogDescription>{isDraft ? 'This action cannot be undone.' : 'Before deleting, this event must be set back to draft.'}</DialogDescription>
           </DialogHeader>
 
           {/* Block: must be draft first */}
           {!isDraft && (
             <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>
-                This event is currently posted. Unpost it first, then you can delete it.
-              </p>
+              <p>This event is currently posted. Unpost it first, then you can delete it.</p>
             </div>
           )}
 
@@ -258,7 +252,11 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
             <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <p>
-                This event has <span className="font-semibold">{event.checkInCount} check-in{event.checkInCount !== 1 ? 's' : ''}</span>. All attendance records will be permanently deleted.
+                This event has{' '}
+                <span className="font-semibold">
+                  {event.checkInCount} check-in{event.checkInCount !== 1 ? 's' : ''}
+                </span>
+                . All attendance records will be permanently deleted.
               </p>
             </div>
           )}
@@ -274,15 +272,11 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
           {/* Name confirmation */}
           {isDraft && (
             <div className="space-y-2">
-              <p className="text-muted-foreground text-sm">
-                To confirm, type the event name below:
+              <p className="text-muted-foreground text-sm">To confirm, type the event name below:</p>
+              <p className="text-foreground text-sm font-semibold select-none" onCopy={(e) => e.preventDefault()}>
+                {event.name}
               </p>
-              <p className="text-foreground select-none text-sm font-semibold" onCopy={(e) => e.preventDefault()}>{event.name}</p>
-              <Input
-                placeholder="Type event name to confirm"
-                value={confirmName}
-                onChange={(e) => setConfirmName(e.target.value)}
-              />
+              <Input placeholder="Type event name to confirm" value={confirmName} onChange={(e) => setConfirmName(e.target.value)} />
             </div>
           )}
 
@@ -301,11 +295,7 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
                 Unpost event
               </Button>
             ) : (
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={!nameMatches || isDeleting}
-              >
+              <Button variant="destructive" onClick={handleDelete} disabled={!nameMatches || isDeleting}>
                 {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Delete Event
               </Button>

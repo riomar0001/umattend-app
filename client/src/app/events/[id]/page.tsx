@@ -13,7 +13,7 @@ import { getEventStatus, getAttendanceStatus } from '@/lib/events-utils';
 import { formatDate, formatDateShort, formatTime } from '@/lib/utils';
 
 const EventDetailsSkeleton = () => (
-  <div className="bg-background min-h-screen">
+  <div className="bg-background">
     <section className="border-border border-b">
       <div className="container mx-auto max-w-4xl px-4 pt-6 pb-10 sm:px-6 sm:pt-8 sm:pb-12">
         <Skeleton className="h-4 w-16" />
@@ -66,8 +66,8 @@ export default function EventDetailsPage() {
   const event = eventData?.data as ApiEventData | undefined;
   const attendanceStatus = event ? getAttendanceStatus(event) : 'did_not_attend';
 
-  if (isLoading || !event) return <EventDetailsSkeleton />;
   if (isError) return <EventNotFound />;
+  if (isLoading || !event) return <EventDetailsSkeleton />;
 
   const eventStatus = getEventStatus(event);
 
@@ -95,7 +95,7 @@ export default function EventDetailsPage() {
   const attendeeCount = event.check_out_required ? event.checkout_count || 0 : event.checkin_count || 0;
 
   return (
-    <div className="bg-background relative min-h-screen">
+    <div className="bg-background relative">
       {/* Background decorative */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="from-primary/[0.18] via-primary/[0.06] dark:from-primary/[0.26] dark:via-primary/[0.09] absolute inset-x-0 top-0 h-96 bg-gradient-to-b to-transparent" />

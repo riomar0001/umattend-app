@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SettingsPage() {
   return (
-    <div className="bg-background relative min-h-screen">
+    <div className="bg-background relative">
       {/* Background decorative elements */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         {/* Top gradient wash */}

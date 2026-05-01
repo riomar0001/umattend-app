@@ -202,7 +202,9 @@ const updateUserProfile = async (req: Request, res: Response) => {
 const getAttendanceToken = async (req: Request, res: Response) => {
   try {
     const token = await userService.getAttendanceToken(req.user.id);
-    return HTTPSuccessResponse(res, 200, 'Attendance token generated', { token });
+    return HTTPSuccessResponse(res, 200, 'Attendance token generated', {
+      token,
+    });
   } catch (error: unknown) {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);

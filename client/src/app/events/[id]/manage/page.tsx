@@ -77,7 +77,7 @@ export default function ManageSingleEventPage() {
   };
 
   return (
-    <div className="bg-background relative min-h-screen">
+    <div className="bg-background relative">
       {/* Background decorative */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="from-primary/[0.15] via-primary/[0.05] dark:from-primary/[0.22] dark:via-primary/[0.07] absolute inset-x-0 top-0 h-96 bg-gradient-to-b to-transparent" />
@@ -129,7 +129,7 @@ export default function ManageSingleEventPage() {
               <TabsTrigger
                 value="check-out"
                 disabled={!event.checkOutRequired}
-                className="text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-35 relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium shadow-none transition-colors"
+                className="text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground relative h-10 gap-1.5 rounded-none border-b-2 border-transparent bg-transparent px-4 text-sm font-medium shadow-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-35"
               >
                 <UserX className="h-3.5 w-3.5" />
                 Check Out

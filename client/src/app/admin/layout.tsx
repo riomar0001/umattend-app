@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
   }, []);
 
   useEffect(() => {
-    if (hasHydrated && (!user || user.role !== 'admin')) {
+    if (hasHydrated && user && user.role !== 'admin') {
       router.replace('/forbidden');
     }
   }, [hasHydrated, user, router]);

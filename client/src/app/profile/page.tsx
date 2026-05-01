@@ -4,16 +4,17 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Calendar, Mail, Users, Settings, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import QRCodeStyling, { Options } from 'qr-code-styling';
+import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import ProfileSkeleton from '@/components/profile/profile-skeleton';
-import { Spinner } from '@/components/ui/spinner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { getUserAttendanceTokenOptions, getUserAttendedEventsOptions, getUserHostedEventsOptions } from '@/api/client/@tanstack/react-query.gen';
+import { getErrorMessage } from '@/lib/error-utils';
 import { formatEventDateRange, getInitials, toTitleCase } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
-
 
 const ProfilePage = () => {
   const user = useAuthStore((state) => state.user);
@@ -22,23 +23,46 @@ const ProfilePage = () => {
 
   const canHostEvents = user?.role && ['admin', 'csg', 'organizer'].includes(user.role.toLowerCase());
 
-  const { data: attendedEventsData, isLoading: isLoadingAttended } = useQuery({
+  const {
+    data: attendedEventsData,
+    isLoading: isLoadingAttended,
+    isError: isAttendedError,
+    error: attendedError
+  } = useQuery({
     ...getUserAttendedEventsOptions(),
     enabled: !!user,
     retry: false
   });
 
-  const { data: hostedEventsData, isLoading: isLoadingHosted } = useQuery({
+  const {
+    data: hostedEventsData,
+    isLoading: isLoadingHosted,
+    isError: isHostedError,
+    error: hostedError
+  } = useQuery({
     ...getUserHostedEventsOptions(),
     enabled: !!user && !!canHostEvents,
     retry: false
   });
 
-  const { data: tokenData, isError: isTokenError, isLoading: isTokenLoading, refetch: refetchToken } = useQuery({
+  useEffect(() => {
+    if (isAttendedError) toast.error(getErrorMessage(attendedError, 'Failed to load attended events'));
+  }, [isAttendedError, attendedError]);
+
+  useEffect(() => {
+    if (isHostedError) toast.error(getErrorMessage(hostedError, 'Failed to load hosted events'));
+  }, [isHostedError, hostedError]);
+
+  const {
+    data: tokenData,
+    isError: isTokenError,
+    isLoading: isTokenLoading,
+    refetch: refetchToken
+  } = useQuery({
     ...getUserAttendanceTokenOptions(),
     enabled: !!user,
     refetchInterval: 3540000,
-    retry: false,
+    retry: false
   });
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,8 +72,6 @@ const ProfilePage = () => {
   };
 
   const attendanceToken = tokenData?.data?.token ?? '';
-
-
 
   const options: Options = useMemo(
     () => ({
@@ -110,7 +132,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="bg-background relative min-h-screen">
+    <div className="bg-background relative">
       {/* Background decorative elements */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         {/* Top gradient wash */}
@@ -209,13 +231,13 @@ const ProfilePage = () => {
                       <style>{`.qr-container canvas, .qr-container svg { width: 100% !important; height: auto !important; display: block; border-radius: 14px !important;}`}</style>
 
                       {isTokenLoading ? (
-                        <div className="border-primary/30 aspect-square w-full rounded-xl border-2 border-dashed flex items-center justify-center sm:min-w-[190px]">
+                        <div className="border-primary/30 flex aspect-square w-full items-center justify-center rounded-xl border-2 border-dashed sm:min-w-[190px]">
                           <Spinner className="size-8" />
                         </div>
                       ) : isTokenError ? (
                         <button
                           onClick={handleRefetch}
-                          className="border-primary/30 text-muted-foreground hover:text-foreground hover:bg-muted aspect-square w-full rounded-xl border-2 border-dashed flex items-center justify-center transition-colors sm:min-w-[190px]"
+                          className="border-primary/30 text-muted-foreground hover:text-foreground hover:bg-muted flex aspect-square w-full items-center justify-center rounded-xl border-2 border-dashed transition-colors sm:min-w-[190px]"
                         >
                           <RefreshCw className="h-8 w-8" />
                         </button>

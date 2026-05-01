@@ -5,7 +5,11 @@ import { authMiddleware } from '../middlewares/auth.middleware';
 const router = express.Router();
 
 router.get('/', authMiddleware, userController.getUserById);
-router.get('/attendance-token', authMiddleware, userController.getAttendanceToken);
+router.get(
+  '/attendance-token',
+  authMiddleware,
+  userController.getAttendanceToken
+);
 router.get('/events/:id', userController.getUserAttendedEvents);
 router.get(
   '/attended-events',

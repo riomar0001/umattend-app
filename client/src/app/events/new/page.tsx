@@ -230,7 +230,7 @@ export default function CreateEventPage() {
   }, onInvalid);
 
   return (
-    <div className="bg-background relative min-h-screen">
+    <div className="bg-background relative">
       {/* Decorative background */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="from-primary/[0.18] via-primary/[0.07] dark:from-primary/[0.26] dark:via-primary/[0.10] absolute inset-x-0 top-0 h-80 bg-gradient-to-b to-transparent" />

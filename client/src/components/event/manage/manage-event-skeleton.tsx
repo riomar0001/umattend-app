@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ManageEventSkeleton() {
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background">
       {/* Hero skeleton */}
       <section className="border-border border-b">
         <div className="container mx-auto max-w-4xl px-4 pt-6 pb-10 sm:px-6 sm:pt-8 sm:pb-12">

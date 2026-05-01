@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getAdminRateLimitsOptions, deleteAdminRateLimitsMutation, deleteAdminRateLimitsByKeyMutation } from '@/api/client/@tanstack/react-query.gen';
+import { getErrorMessage } from '@/lib/error-utils';
 
 // ---------------------------------------------------------------------------
 // Types & constants
@@ -92,7 +93,7 @@ export default function AdminRateLimitsPage() {
       toast.success('Rate limit cleared');
       queryClient.invalidateQueries({ queryKey: getAdminRateLimitsOptions({}).queryKey });
     },
-    onError: (err) => toast.error((err as Error)?.message || 'Failed to clear')
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to clear'))
   });
 
   const deleteAll = useMutation({
@@ -102,7 +103,7 @@ export default function AdminRateLimitsPage() {
       setDeleteAllDialog(false);
       queryClient.invalidateQueries({ queryKey: getAdminRateLimitsOptions({}).queryKey });
     },
-    onError: (err) => toast.error((err as Error)?.message || 'Failed to clear all')
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to clear all'))
   });
 
   const rawEntries: RateLimitEntry[] = useMemo(() => data?.data?.entries ?? [], [data?.data?.entries]);

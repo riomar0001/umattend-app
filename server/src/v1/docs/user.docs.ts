@@ -636,7 +636,8 @@ const getAttendanceToken = {
     get: {
       tags: ['User'],
       summary: 'Get attendance QR token',
-      description: 'Returns a signed JWT for use as QR code data during attendance check-in/out',
+      description:
+        'Returns a signed JWT for use as QR code data during attendance check-in/out',
       security: [{ bearerAuth: [] }],
       responses: {
         200: {
@@ -647,7 +648,10 @@ const getAttendanceToken = {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: true },
-                  message: { type: 'string', example: 'Attendance token generated' },
+                  message: {
+                    type: 'string',
+                    example: 'Attendance token generated',
+                  },
                   data: {
                     type: 'object',
                     properties: {
@@ -684,7 +688,10 @@ const getAttendanceToken = {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: false },
-                  message: { type: 'string', example: 'Student profile not found' },
+                  message: {
+                    type: 'string',
+                    example: 'Student profile not found',
+                  },
                 },
               },
             },
