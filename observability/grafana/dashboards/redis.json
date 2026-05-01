@@ -29,6 +29,18 @@
         "query": "prometheus",
         "refresh": 1,
         "type": "datasource"
+      },
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Logs",
+        "multi": false,
+        "name": "loki_datasource",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "type": "datasource"
       }
     ]
   },
@@ -552,6 +564,31 @@
           "expr": "rate(redis_cpu_user_seconds_total[5m])",
           "legendFormat": "user",
           "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Redis Logs",
+      "type": "logs",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 40 },
+      "datasource": { "type": "loki", "uid": "${loki_datasource}" },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${loki_datasource}" },
+          "expr": "{service_name=~\"umattend-server.*\"} |= \"REDIS COMMAND\"",
+          "maxLines": 100,
+          "refId": "A"
         }
       ]
     },

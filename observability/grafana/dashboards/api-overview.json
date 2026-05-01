@@ -481,7 +481,7 @@
     },
     {
       "id": 11,
-      "title": "Server Logs",
+      "title": "HTTP Logs",
       "type": "logs",
       "gridPos": { "h": 10, "w": 24, "x": 0, "y": 38 },
       "datasource": { "type": "loki", "uid": "${loki_datasource}" },
@@ -498,7 +498,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "${loki_datasource}" },
-          "expr": "{service_name=~\"umattend-server.*\"}",
+          "expr": "{service_name=~\"umattend-server.*\"} |= \"HTTP REQUEST\"",
           "maxLines": 100,
           "refId": "A"
         }

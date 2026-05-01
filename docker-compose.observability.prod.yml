@@ -1,6 +1,8 @@
+name: umattend-observability-prod
+
 services:
   otel-lgtm:
-    image: grafana/otel-lgtm:0.8.1
+    image: grafana/otel-lgtm:0.26.0
     container_name: umattend_otel_lgtm_prod
     restart: unless-stopped
     extra_hosts:

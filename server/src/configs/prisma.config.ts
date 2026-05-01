@@ -53,7 +53,7 @@ const originalTransaction = prisma.$transaction.bind(
 (prisma as any).$on('query', (e: any) => {
   const level =
     e.duration > 10000 ? 'warn' : e.duration > 1000 ? 'warn' : 'info';
-  logStructured('prisma', level, '', {
+  logStructured('prisma', level, `DATABASE QUERY ${e.query}`, {
     'db.query': e.query,
     'db.params': JSON.stringify(e.params),
     'db.duration_ms': e.duration,
