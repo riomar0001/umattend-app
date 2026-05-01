@@ -2,12 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import jsQR from 'jsqr';
-import { Scan, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { Scan, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { postEventCheckInByEventIdByQrCodeMutation } from '@/api/client/@tanstack/react-query.gen';
 
@@ -17,11 +16,19 @@ interface EventCheckInScannerProps {
   isEventStarted: boolean;
 }
 
+type ResultState = 'success' | 'warning' | 'error';
+
+interface ResultDialog {
+  state: ResultState;
+  message: string;
+}
+
 export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: EventCheckInScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [scannedValue, setScannedValue] = useState<string | null>(null);
-  const [showDialog, setShowDialog] = useState(false);
+  const [showProcessingDialog, setShowProcessingDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [result, setResult] = useState<ResultDialog | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanningRef = useRef(false);
@@ -37,26 +44,30 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
   // Check-in mutation
   const checkInMutation = useMutation({
     ...postEventCheckInByEventIdByQrCodeMutation(),
-    onSuccess: () => {
-      toast.success('Check-in successful!');
-      setShowDialog(false);
+    onSuccess: (data) => {
+      const name = (data as { data?: { name?: string } })?.data?.name;
+      setShowProcessingDialog(false);
       setIsProcessing(false);
       setScannedValue(null);
-      resetScanner();
+      scanningRef.current = false;
+      setResult({
+        state: 'success',
+        message: name ? `${name} has been checked in.` : 'Attendee has been checked in.'
+      });
     },
     onError: (error) => {
       setIsProcessing(false);
-      setShowDialog(false);
+      setShowProcessingDialog(false);
       const status = error?.response?.status;
       const message = error?.response?.data?.message;
+      setScannedValue(null);
+      scanningRef.current = false;
       if (status === 409) {
-        toast.warning(message || 'Student is already checked in');
+        setResult({ state: 'warning', message: message || 'Student is already checked in.' });
       } else {
-        toast.error(message || 'Failed to check in student');
+        setResult({ state: 'error', message: message || 'Failed to check in student.' });
       }
       console.error('[Check-In Scanner] Error:', error);
-      setScannedValue(null);
-      resetScanner();
     }
   });
 
@@ -74,7 +85,7 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
     debounceTimerRef.current = setTimeout(() => {
       isProcessingRef.current = true;
       setScannedValue(detectedCode);
-      setShowDialog(true);
+      setShowProcessingDialog(true);
       setIsProcessing(true);
 
       checkInMutation.mutate({
@@ -110,6 +121,14 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
   const detectQRCode = (imageData: ImageData): string | null => {
     const code = jsQR(imageData.data, imageData.width, imageData.height);
     return code ? code.data : null;
+  };
+
+  const handleResultDialogClose = () => {
+    setResult(null);
+    resetScanner();
+    if (isScanning) {
+      startAutoScan();
+    }
   };
 
   const startCamera = async () => {
@@ -191,6 +210,27 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
     );
   }
 
+  const resultConfig = {
+    success: {
+      icon: <CheckCircle2 className="h-7 w-7 text-green-500 sm:h-8 sm:w-8" />,
+      iconBg: 'bg-green-500/10',
+      title: 'Check-In Successful',
+      buttonLabel: 'Continue Scanning'
+    },
+    warning: {
+      icon: <AlertCircle className="h-7 w-7 text-yellow-500 sm:h-8 sm:w-8" />,
+      iconBg: 'bg-yellow-500/10',
+      title: 'Already Checked In',
+      buttonLabel: 'Continue Scanning'
+    },
+    error: {
+      icon: <XCircle className="h-7 w-7 text-red-500 sm:h-8 sm:w-8" />,
+      iconBg: 'bg-red-500/10',
+      title: 'Check-In Failed',
+      buttonLabel: 'Try Again'
+    }
+  };
+
   return (
     <div className="w-full space-y-3 sm:space-y-4 md:space-y-6">
       {/* Scanner Section */}
@@ -228,11 +268,12 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
         )}
       </Card>
 
+      {/* Processing dialog */}
       <Dialog
-        open={showDialog && isProcessing}
+        open={showProcessingDialog && isProcessing}
         onOpenChange={(open) => {
           if (!open) {
-            setShowDialog(false);
+            setShowProcessingDialog(false);
             setIsProcessing(false);
           }
         }}
@@ -249,6 +290,34 @@ export function EventCheckInScanner({ eventId, isEventDone, isEventStarted }: Ev
             </div>
             <p className="text-muted-foreground text-center text-xs sm:text-sm">Checking in attendee...</p>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Result dialog (success / warning / error) */}
+      <Dialog open={!!result} onOpenChange={(open) => { if (!open) handleResultDialogClose(); }}>
+        <DialogContent className="w-[90vw] max-w-sm sm:w-full md:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+          {result && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-base sm:text-lg md:text-xl">{resultConfig[result.state].title}</DialogTitle>
+                <DialogDescription className="text-xs sm:text-sm md:text-base">{result.message}</DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col items-center justify-center gap-3 py-4 sm:gap-4 sm:py-6">
+                <div className={`flex h-14 w-14 items-center justify-center rounded-full sm:h-16 sm:w-16 ${resultConfig[result.state].iconBg}`}>
+                  {resultConfig[result.state].icon}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={handleResultDialogClose}
+                  variant={result.state === 'error' ? 'destructive' : 'default'}
+                  className="w-full"
+                >
+                  {resultConfig[result.state].buttonLabel}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
