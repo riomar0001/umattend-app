@@ -45,6 +45,8 @@ const ProfilePage = () => {
     retry: false
   });
 
+
+
   useEffect(() => {
     if (isAttendedError) toast.error(getErrorMessage(attendedError, 'Failed to load attended events'));
   }, [isAttendedError, attendedError]);
@@ -70,6 +72,8 @@ const ProfilePage = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => refetchToken(), 500);
   };
+
+
 
   const attendanceToken = tokenData?.data?.token ?? '';
 

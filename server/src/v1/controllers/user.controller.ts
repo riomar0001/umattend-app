@@ -111,22 +111,11 @@ const getUserAttendedEventsDetailed = async (req: Request, res: Response) => {
     const { id } = req.user as { id: string };
     const events = await userService.getUserAttendedEventsDetailed(id);
 
-    if (events?.length === 0) {
-      return HTTPSuccessResponse(
-        res,
-        200,
-        'User has not attended any events yet',
-        []
-      );
-    }
-
     return HTTPSuccessResponse(
       res,
       200,
-      'Attended events successfully fetched',
-      {
-        events,
-      }
+      events?.length === 0 ? 'User has not attended any events yet' : 'Attended events successfully fetched',
+      { events: events ?? [] }
     ) as Response;
   } catch (error: unknown) {
     if (error instanceof NotFoundError) {
@@ -145,18 +134,12 @@ const getUserHostedEvents = async (req: Request, res: Response) => {
     const { id } = req.user as { id: string };
     const events = await userService.getUserHostedEvents(id);
 
-    if (events?.length === 0) {
-      return HTTPSuccessResponse(
-        res,
-        200,
-        'User has not created any events yet',
-        []
-      );
-    }
-
-    return HTTPSuccessResponse(res, 200, 'Hosted events successfully fetched', {
-      events,
-    }) as Response;
+    return HTTPSuccessResponse(
+      res,
+      200,
+      events?.length === 0 ? 'User has not created any events yet' : 'Hosted events successfully fetched',
+      { events: events ?? [] }
+    ) as Response;
   } catch (error: unknown) {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message) as Response;
