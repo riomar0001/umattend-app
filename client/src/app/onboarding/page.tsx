@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { postUserOnboardingMutation, getUserOptions } from '@/api/client/@tanstack/react-query.gen';
+import { postUserOnboardingMutation, getUserOptions, postAuthLogoutMutation } from '@/api/client/@tanstack/react-query.gen';
 import type { PostUserOnboardingError } from '@/api/client/types.gen';
 import { DepartmentAndPrograms } from '@/lib/department-and-program';
 import { getInitials } from '@/lib/utils';
@@ -86,6 +86,20 @@ export default function OnboardingPage() {
       router.push('/events');
     }
   }, [isAuthenticated, router, isDoneOnboarding]);
+
+  const logoutMutation = useMutation({
+    mutationFn: postAuthLogoutMutation().mutationFn,
+    onSuccess: () => {
+      logout();
+      router.push('/');
+      toast.success('Logged out successfully');
+    },
+    onError: () => {
+      logout();
+      router.push('/');
+      toast.info('Logged out');
+    }
+  });
 
   const onboardingMutation = useMutation({
     ...postUserOnboardingMutation(),
@@ -167,9 +181,7 @@ export default function OnboardingPage() {
   };
 
   const handleLogout = () => {
-    logout();
-    toast.success('Logged out successfully');
-    router.push('/');
+    logoutMutation.mutate({});
   };
 
   // Student data from auth store
