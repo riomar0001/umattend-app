@@ -1,9 +1,9 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { Toaster } from 'sonner';
 import './globals.css';
 import { Providers } from './providers';
+import { ThemedToaster } from '@/components/themed-toaster';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -34,7 +34,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>
           <Suspense fallback={null}>{children}</Suspense>
-          <Toaster theme="system" richColors position="top-right" />
+          <ThemedToaster />
         </Providers>
       </body>
     </html>
