@@ -1,10 +1,9 @@
 import getEnv from '@/utils/envHandler';
 
+// PORT / HOST / DATABASE_URL are gone: a Worker does not bind a port, and the
+// database is reached through the D1 binding rather than a connection string.
 const NODE_ENV = getEnv('NODE_ENV');
-const PORT = parseInt(getEnv('PORT'), 10) || 3000;
-const HOST = getEnv('HOST', false);
 const FRONTEND_URL = getEnv('FRONTEND_URL');
-const DATABASE_URL = getEnv('DATABASE_URL');
 const ALLOWED_ORIGINS = getEnv('ALLOWED_ORIGINS');
 
-export { NODE_ENV, PORT, HOST, FRONTEND_URL, DATABASE_URL, ALLOWED_ORIGINS };
+export { NODE_ENV, FRONTEND_URL, ALLOWED_ORIGINS };

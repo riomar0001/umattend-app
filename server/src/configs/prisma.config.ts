@@ -1,102 +1,45 @@
-import { PrismaClient } from '@prisma/client';
-import { trace } from '@opentelemetry/api';
-import { logStructured } from '../telemetry/logging';
+/**
+ * Prisma client bound to Cloudflare D1.
+ *
+ * Two things differ from the previous Postgres setup:
+ *
+ * 1. The client is created per isolate, lazily, because the D1 binding only
+ *    exists once a handler has run `seedRuntime(env)`. A module-level
+ *    `new PrismaClient()` would evaluate too early.
+ *
+ * 2. There is no `$transaction` wrapper any more. D1 does not implement
+ *    interactive transactions — Prisma would silently run the callback's
+ *    queries individually, which looks atomic but is not. The repositories now
+ *    express those guards as single conditional statements instead. Grouping
+ *    independent writes is still available via `prisma.$transaction([...])`,
+ *    which the adapter maps onto D1's atomic batch API.
+ */
 
-const prisma = new PrismaClient({
-  log: [{ emit: 'event', level: 'query' }],
-});
+import { PrismaD1 } from '@prisma/adapter-d1';
+import { PrismaClient } from '../generated/prisma/client';
+import { bindings } from '../worker/runtime';
 
-type TransactionOptions = Parameters<typeof prisma.$transaction>[1];
+let client: PrismaClient | null = null;
 
-const originalTransaction = prisma.$transaction.bind(
-  prisma
-) as typeof prisma.$transaction;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- monkey-patching Prisma's $transaction to add instrumentation; the overloaded union type is too complex to replicate
-(prisma.$transaction as any) = function <T>(
-  queries: Parameters<typeof prisma.$transaction>[0],
-  options?: TransactionOptions
-): Promise<T> {
-  const startTime = Date.now();
-
-  // Default to 30s but let callers override (e.g. batched bulk operations).
-  const mergedOptions: TransactionOptions = {
-    timeout: 30000,
-    ...(options ?? {}),
-  } as TransactionOptions;
-
-  return originalTransaction(queries, mergedOptions)
-    .then((result: unknown) => {
-      const duration = Date.now() - startTime;
-      if (duration > 10000) {
-        console.warn(`SLOW TRANSACTION: ${duration}ms`, {
-          timestamp: new Date().toISOString(),
-          duration,
-          action: 'transaction',
-        });
-      }
-      return result as T;
-    })
-    .catch((error: Error & { code?: string }) => {
-      const duration = Date.now() - startTime;
-      console.error(`TRANSACTION FAILED: ${duration}ms`, {
-        timestamp: new Date().toISOString(),
-        duration,
-        error: error.message,
-        code: error.code,
-      });
-      throw error;
-    });
+const getClient = (): PrismaClient => {
+  client ??= new PrismaClient({
+    adapter: new PrismaD1(bindings().DB),
+  });
+  return client;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma $on event type is narrowed to `never` after $extends; the runtime API accepts 'query'
-(prisma as any).$on('query', (e: any) => {
-  const level =
-    e.duration > 10000 ? 'warn' : e.duration > 1000 ? 'warn' : 'info';
-  logStructured('prisma', level, `DATABASE QUERY ${e.query}`, {
-    'db.query': e.query,
-    'db.params': JSON.stringify(e.params),
-    'db.duration_ms': e.duration,
-  });
-
-  if (e.duration > 10000) {
-    console.warn(`SLOW QUERY: ${e.duration}ms`, {
-      timestamp: new Date().toISOString(),
-      query: e.query,
-      params: e.params,
-      duration: e.duration,
-    });
-  }
-});
-
-const tracer = trace.getTracer('prisma');
-
-const prismaWithTracing = prisma.$extends({
-  query: {
-    $allModels: {
-      $allOperations: async ({ model, operation, args, query }) => {
-        const startTime = Date.now();
-        return tracer.startActiveSpan(
-          `prisma.${model}.${operation}`,
-          async (span) => {
-            try {
-              const result = await query(args);
-              const durationMs = Date.now() - startTime;
-              span.setAttribute('db.model', model);
-              span.setAttribute('db.operation', operation);
-              span.setAttribute('db.duration_ms', durationMs);
-              span.end();
-              return result;
-            } catch (e) {
-              span.recordException(e as Error);
-              span.end();
-              throw e;
-            }
-          }
-        );
-      },
-    },
+/**
+ * Proxy so existing `import prisma from '.../prisma.config'` call sites keep
+ * working: the real client is built on first property access, by which point
+ * the bindings are in place.
+ */
+const prisma = new Proxy({} as PrismaClient, {
+  get(_target, property) {
+    const instance = getClient();
+    const value = Reflect.get(instance, property, instance);
+    // Methods must stay bound to the client, not to the proxy.
+    return typeof value === 'function' ? value.bind(instance) : value;
   },
 });
 
-export default prismaWithTracing;
+export default prisma;

@@ -1,4 +1,3 @@
-import axios from 'axios';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import crypto from 'crypto';
 import { URLSearchParams } from 'url';
@@ -9,6 +8,23 @@ import {
   GOOGLE_CLIENT,
 } from '../../constants/google.constants';
 import { JWT_GOOGLE_STATE_SECRET } from '../../constants/jwt.constants';
+
+/**
+ * A non-2xx from Google, carrying the response body.
+ *
+ * Google explains itself in that body — `{ error, error_description }` — and it
+ * is the only thing that identifies the cause, so it must not be discarded.
+ */
+class GoogleApiError extends Error {
+  constructor(
+    readonly endpoint: 'token' | 'userinfo',
+    readonly status: number,
+    readonly body: string
+  ) {
+    super(`Google ${endpoint} endpoint returned ${status}`);
+    this.name = 'GoogleApiError';
+  }
+}
 
 const generatePKCE = () => {
   const codeVerifier = crypto.randomBytes(32).toString('base64url');
@@ -43,6 +59,10 @@ const generateGoogleAuthUrl = () => {
 };
 
 const exchangeCodeForUserInfo = async (code: string, state: string) => {
+  // Declared outside the try so the catch below can report whether the state
+  // actually yielded a verifier.
+  let codeVerifier: string | undefined;
+
   try {
     if (!JWT_GOOGLE_STATE_SECRET) {
       throw new Error('JWT_SECRET is not defined in environment variables');
@@ -50,7 +70,7 @@ const exchangeCodeForUserInfo = async (code: string, state: string) => {
 
     const decoded = jwt.verify(state, JWT_GOOGLE_STATE_SECRET) as JwtPayload;
 
-    const codeVerifier = decoded.codeVerifier;
+    codeVerifier = decoded.codeVerifier;
 
     if (!codeVerifier) {
       throw new Error('Invalid state - missing code verifier');
@@ -60,44 +80,84 @@ const exchangeCodeForUserInfo = async (code: string, state: string) => {
       throw new Error('Missing required environment variables');
     }
 
-    const tokenRes = await axios.post(
-      'https://oauth2.googleapis.com/token',
-      new URLSearchParams({
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
         code: code,
         client_id: GOOGLE_CLIENT_ID,
         client_secret: GOOGLE_CLIENT_SECRET,
         redirect_uri: GOOGLE_REDIRECT_URI,
         grant_type: 'authorization_code',
         code_verifier: codeVerifier,
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
+      }).toString(),
+    });
 
-    const accessToken = tokenRes.data.access_token;
+    if (!tokenRes.ok) {
+      // Google puts { error, error_description } here; it is the only thing
+      // that identifies the cause, so surface it rather than a bare status.
+      throw new GoogleApiError(
+        'token',
+        tokenRes.status,
+        await tokenRes.text()
+      );
+    }
+
+    const tokenData = (await tokenRes.json()) as { access_token?: string };
+    const accessToken = tokenData.access_token;
 
     if (!accessToken) {
       throw new Error('No access token received from Google');
     }
 
-    const userRes = await axios.get(
+    const userRes = await fetch(
       'https://www.googleapis.com/oauth2/v1/userinfo',
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
 
+    if (!userRes.ok) {
+      throw new GoogleApiError(
+        'userinfo',
+        userRes.status,
+        await userRes.text()
+      );
+    }
+
+    const profile = (await userRes.json()) as {
+      id: string;
+      email: string;
+      name: string;
+      picture: string;
+    };
+
     return {
-      google_id: userRes.data.id,
-      email: userRes.data.email,
-      name: userRes.data.name,
-      profile_picture: userRes.data.picture,
+      google_id: profile.id,
+      email: profile.email,
+      name: profile.name,
+      profile_picture: profile.picture,
     };
   } catch (error) {
-    console.log(error);
+    if (error instanceof GoogleApiError) {
+      console.error('[google] request rejected', {
+        endpoint: error.endpoint,
+        status: error.status,
+        google_error: error.body,
+        // A mismatch between this and the value used to build the consent URL
+        // is the usual cause of invalid_grant.
+        redirect_uri_sent: GOOGLE_REDIRECT_URI,
+        client_id_suffix: GOOGLE_CLIENT_ID?.slice(-24),
+        code_prefix: code?.slice(0, 6),
+        has_code_verifier: Boolean(codeVerifier),
+      });
+    } else {
+      console.error('[google] exchange failed', {
+        name: error instanceof Error ? error.name : typeof error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+    }
     throw new Error('Failed to exchange code for user info');
   }
 };

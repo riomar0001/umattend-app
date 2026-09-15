@@ -22,32 +22,12 @@
 // View logs:
 //   pm2 logs umattend-staging-client
 //   pm2 logs umattend-staging-server
+// The two server apps are gone: the API runs on Cloudflare Workers now, not
+// pm2. `server/` no longer has a Node entry point — it is deployed with
+// `npm run deploy:staging` / `deploy:prod` from ./server. Only the Next.js
+// client still runs here.
 module.exports = {
   apps: [
-    {
-      name: "umattend-staging-server",
-      script: "npm",
-      args: "start",
-      cwd: "./server",
-      instances: 1,
-      exec_mode: "fork",
-      watch: false,
-      env: {
-        NODE_ENV: "staging",
-        PORT: 4001,      },
-    },
-    {
-      name: "umattend-production-server",
-      script: "dist/server.js",
-      cwd: "./server",
-      node_args: "--import ./dist/telemetry/tracing.js",
-      instances: 1,
-      exec_mode: "fork",
-      watch: false,
-      env: {
-        NODE_ENV: "production",
-        PORT: 4000,      },
-    },
     {
       name: "umattend-staging-client",
       script: "npm",

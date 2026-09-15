@@ -22,6 +22,22 @@ export default [
         fetch: 'readonly',
         setInterval: 'readonly',
         setTimeout: 'readonly',
+        // Workers runtime globals. These are ambient types from
+        // worker-configuration.d.ts, which ESLint's scope analysis cannot see.
+        Request: 'readonly',
+        Response: 'readonly',
+        Headers: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        crypto: 'readonly',
+        clearTimeout: 'readonly',
+        AbortSignal: 'readonly',
+        ExecutionContext: 'readonly',
+        ScheduledController: 'readonly',
+        MessageBatch: 'readonly',
+        Queue: 'readonly',
+        D1Database: 'readonly',
+        DurableObjectNamespace: 'readonly',
         clearInterval: 'readonly',
         clearTimeout: 'readonly',
       },
@@ -36,6 +52,10 @@ export default [
       
       
       // TypeScript rules
+      // TypeScript already reports undefined identifiers, and it understands
+      // ambient .d.ts declarations that ESLint cannot see.
+      'no-undef': 'off',
+      'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',

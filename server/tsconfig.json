@@ -107,6 +107,6 @@
     "files": true,
     "esm": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules","dist"]
+  "include": ["src/**/*", "worker-configuration.d.ts"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -1,15 +1,11 @@
-import express, { Response, Request } from 'express';
+import express from 'express';
 import cookieParser from 'cookie-parser';
-import { fileURLToPath } from 'url';
 
 import cors from 'cors';
-import path from 'path';
 import helmet from 'helmet';
 
 import { errorHandler, notFound } from './v1/middlewares/error.middleware';
 import { cacheControl } from './v1/middlewares/cacheControl.middleware';
-import { metricsMiddleware } from './v1/middlewares/metrics.middleware';
-import { requestLogger } from './v1/middlewares/requestLogger.middleware';
 import { CustomError } from './v1/interface/error';
 
 import userRoutes from './v1/routes/user.routes';
@@ -18,22 +14,15 @@ import eventRoutes from './v1/routes/event.routes';
 import adminRoutes from './v1/routes/admin.routes';
 import docsRoutes from './v1/routes/docs.routes';
 import healthRoutes from './v1/routes/health.routes';
-import metricsRoutes from './v1/routes/metrics.routes';
 import { NODE_ENV, ALLOWED_ORIGINS } from './constants/app.constants';
-import register from './telemetry/index';
 
 const app = express();
 
-// ---------- METRICS ENDPOINT (Prometheus scrape — no auth, host-internal only) ----------
-// Not proxied by nginx; Prometheus reaches this directly via host.docker.internal:<PORT>
-app.get('/metrics', async (_req, res) => {
-  try {
-    res.set('Content-Type', register.contentType);
-    res.end(await register.metrics());
-  } catch (err) {
-    res.status(500).end(String(err));
-  }
-});
+// The Prometheus /metrics endpoint is gone along with the rest of the LGTM
+// stack: prom-client and the OpenTelemetry Node SDK cannot run on workerd, and
+// nothing would scrape a Worker over host-internal networking anyway.
+// Observability now comes from Workers Logs — see the `observability` block in
+// wrangler.jsonc and `wrangler tail`.
 
 // ---------- SECURITY & PERFORMANCE MIDDLEWARE ----------
 app.set('trust proxy', 1);
@@ -71,36 +60,19 @@ app.use(
   })
 );
 
-// ---------- REQUEST LOGGER MIDDLEWARE ----------
-app.use(requestLogger);
-
-// ---------- REQUEST METRICS MIDDLEWARE ----------
-app.use(metricsMiddleware);
-
 // ---------- API ROUTES ----------
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/event', eventRoutes);
 app.use('/api/v1/admin', adminRoutes);
-app.use('/api/v1/metrics', metricsRoutes);
 if (NODE_ENV !== 'PRODUCTION') {
   app.use('/api/v1/docs', docsRoutes);
 }
 
-// ---------- SERVE FRONTEND (only in production) ----------
-if (NODE_ENV === 'PRODUCTION') {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-
-  const distPath = path.join(__dirname, '../client/dist');
-  app.use(express.static(distPath));
-
-  // SPA catch-all: serve index.html for unmatched routes so client-side routing works
-  app.use((_req: Request, res: Response) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-}
+// The frontend is no longer served from here. Workers have no filesystem for
+// `express.static`, and the client is published separately — Vercel serves it
+// and proxies /api back to this Worker (see client/DEPLOYMENT.md).
 
 // ---------- 404 HANDLER ----------
 app.use(notFound);

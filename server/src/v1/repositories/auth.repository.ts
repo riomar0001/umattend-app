@@ -49,19 +49,19 @@ const updateLoginAndProfile = async (
   user_id: string,
   profile_picture: string
 ) => {
-  // Prisma's interactive-tx client uses a single connection — running
-  // writes in parallel over it can interleave at the protocol level, so
-  // these must be awaited sequentially.
-  return prisma.$transaction(async (tx) => {
-    await tx.user.update({
+  // Two independent row updates with no invariant spanning them, so the array
+  // form is enough — the D1 adapter maps it onto an atomic batch. The old
+  // interactive form would be silently downgraded to loose queries on D1.
+  await prisma.$transaction([
+    prisma.user.update({
       where: { id: user_id },
       data: { last_login_at: new Date() },
-    });
-    await tx.student.updateMany({
+    }),
+    prisma.student.updateMany({
       where: { user_id },
       data: { profile_picture },
-    });
-  });
+    }),
+  ]);
 };
 
 const findUserByEmail = async (umindanao_email: string) => {
@@ -99,18 +99,21 @@ const findRefreshToken = async (token_id: string) => {
 };
 
 const revokeRefreshToken = async (token_id: string) => {
-  return prisma.$transaction(async (tx) => {
-    const token = await tx.refresh_token.findUnique({
-      where: { id: token_id },
-    });
-    if (!token?.is_active) {
-      return null;
-    }
-    return tx.refresh_token.update({
-      where: { id: token_id },
-      data: { is_active: false, revoked_at: new Date() },
-    });
+  // Compare-and-set in a single statement. The read-then-update pair relied on
+  // a transaction to stop two concurrent refreshes both seeing an active token
+  // and both succeeding; filtering on `is_active` inside the UPDATE gets that
+  // from the database itself, so exactly one caller can observe count === 1.
+  // This is what keeps refresh-token rotation single-use without transactions.
+  const { count } = await prisma.refresh_token.updateMany({
+    where: { id: token_id, is_active: true },
+    data: { is_active: false, revoked_at: new Date() },
   });
+
+  if (count === 0) {
+    return null;
+  }
+
+  return prisma.refresh_token.findUnique({ where: { id: token_id } });
 };
 
 const createErrorCode = async (error_code: string, error_message: string) => {

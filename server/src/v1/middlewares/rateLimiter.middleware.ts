@@ -1,7 +1,6 @@
-import { randomUUID } from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import redis from '../../configs/redis.config';
+import rateLimitStore from '../../configs/rateLimit.config';
 import { FRONTEND_URL } from '../../constants/app.constants';
 import authService from '../services/auth.service';
 import { HTTPErrorResponse } from '../../utils/responseHandler';
@@ -21,26 +20,9 @@ const REFRESH_ACCOUNT_LIMIT = 30;
 const CHECKIN_USER_LIMIT = 120; // 120 scans/min per organizer
 const CHECKIN_IP_LIMIT = 600; // 600 scans/min per IP (multiple devices)
 
-// Atomic sliding window via Redis sorted set
-const slidingWindowScript = `
-local key = KEYS[1]
-local now = tonumber(ARGV[1])
-local window_ms = tonumber(ARGV[2])
-local limit = tonumber(ARGV[3])
-local uid = ARGV[4]
-
-redis.call('ZREMRANGEBYSCORE', key, 0, now - window_ms)
-local count = redis.call('ZCARD', key)
-
-if count >= limit then
-  return 0
-end
-
-redis.call('ZADD', key, now, uid)
-redis.call('EXPIRE', key, math.ceil(window_ms / 1000) + 1)
-
-return 1
-`;
+// The sliding window now lives in a Durable Object rather than a Redis Lua
+// script — see src/worker/rateLimiter.do.ts. A DO handles one call at a time,
+// so the prune-count-append sequence is atomic for the same reason EVAL was.
 
 function getClientIp(req: Request): string {
   // CF-Connecting-IP is set by Cloudflare. Only trust it when the request
@@ -63,18 +45,9 @@ async function checkSlidingWindow(
   limit: number
 ): Promise<boolean> {
   try {
-    const result = await redis.eval(
-      slidingWindowScript,
-      1,
-      key,
-      String(Date.now()),
-      String(WINDOW_MS),
-      String(limit),
-      randomUUID()
-    );
-    return result === 1;
+    return await rateLimitStore.allow(key, WINDOW_MS, limit);
   } catch {
-    // Fail open if Redis is unavailable
+    // Fail open if the store is unavailable
     return true;
   }
 }

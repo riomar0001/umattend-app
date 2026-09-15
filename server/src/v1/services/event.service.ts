@@ -6,7 +6,7 @@ import {
   GetAllEventsInterface,
   GetEventDetailsWithEditByIdInterface,
 } from '../interface/event';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { NODE_ENV } from '../../constants/app.constants';
 import {
   AppError,
@@ -17,7 +17,7 @@ import {
   ConflictError,
   BadRequestError,
 } from '@/utils/customErrors';
-import { events } from '@prisma/client';
+import { events } from '@/generated/prisma/client';
 import { endEventStatusQueue } from '../queues/endEvent.queue';
 import authRepository from '../repositories/auth.repository';
 import { startEventStatusQueue } from '../queues/startEvent.queue';

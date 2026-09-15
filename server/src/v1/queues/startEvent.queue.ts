@@ -1,66 +1,43 @@
-import { Queue, Worker } from 'bullmq';
-import prisma from '../../configs/prisma.config';
-import {
-  REDIS_HOST,
-  REDIS_PORT,
-  REDIS_USERNAME,
-  REDIS_PASSWORD,
-  REDIS_DB,
-} from '../../constants/redis.constants';
-import {
-  bullmqJobsCompletedTotal,
-  bullmqJobsFailedTotal,
-  bullmqJobDurationSeconds,
-} from '../../telemetry/metrics.js';
-import { startQueueMetricsPolling } from '../../telemetry/queueMetrics.js';
-import { bullmqTelemetry } from '../../telemetry/index.js';
+/**
+ * Producer for the "mark event started" transition.
+ *
+ * Both event transitions share one Cloudflare queue, discriminated by message
+ * `type`; this module keeps the old per-queue import surface intact for
+ * `event.service.ts`.
+ *
+ * `remove()` is a no-op: Cloudflare Queues cannot withdraw an enqueued message.
+ * Cancellation is handled instead by the consumer, which reloads the event and
+ * re-derives whether it is actually due — see
+ * `src/worker/consumers/eventStatus.consumer.ts`.
+ */
 
-const connection = {
-  host: REDIS_HOST,
-  port: Number(REDIS_PORT),
-  username: REDIS_USERNAME,
-  password: REDIS_PASSWORD,
-  db: REDIS_DB,
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
+import { bindings } from '../../worker/runtime';
+
+interface AddOptions {
+  delay?: number;
+  jobId?: string;
+}
+
+export const startEventStatusQueue = {
+  async add(
+    _name: string,
+    data: { event_id: string },
+    options: AddOptions = {}
+  ): Promise<void> {
+    const delaySeconds = Math.min(
+      Math.max(0, Math.ceil((options.delay ?? 0) / 1000)),
+      86_400
+    );
+
+    await bindings().EVENT_STATUS_QUEUE.send(
+      { type: 'event-start', event_id: data.event_id },
+      { delaySeconds }
+    );
+  },
+
+  async remove(_jobId: string): Promise<void> {
+    // Intentionally empty — see module docblock.
+  },
 };
 
-export const startEventStatusQueue = new Queue('event-start-status-queue', {
-  connection,
-  telemetry: bullmqTelemetry,
-});
-
-const startEventStatusWorker = new Worker(
-  'event-start-status-queue',
-  async (job) => {
-    const { event_id } = job.data;
-
-    console.log(`Checking event ${event_id} start status`);
-
-    await prisma.events.update({
-      where: { id: event_id },
-      data: { is_started: true },
-    });
-
-    console.log(`Event ${event_id} marked as started.`);
-  },
-  { connection, telemetry: bullmqTelemetry, concurrency: 1 }
-);
-
-startEventStatusWorker.on('completed', (job) => {
-  console.log(`Start job completed for event ${job.data.event_id}`);
-  bullmqJobsCompletedTotal.inc({ queue: 'event-start-status-queue' });
-  if (job.finishedOn && job.processedOn) {
-    bullmqJobDurationSeconds.observe(
-      { queue: 'event-start-status-queue' },
-      (job.finishedOn - job.processedOn) / 1000
-    );
-  }
-});
-
-startEventStatusWorker.on('failed', (job, err) => {
-  console.error(`Start job failed for event ${job?.data?.event_id}:`, err);
-  bullmqJobsFailedTotal.inc({ queue: 'event-start-status-queue' });
-});
-
-startQueueMetricsPolling(startEventStatusQueue, 'event-start-status-queue');
+export default startEventStatusQueue;

@@ -1,56 +1,51 @@
-import { Queue, Job } from 'bullmq';
 import {
   NotFoundError,
   ConflictError,
   BadRequestError,
 } from '../../utils/customErrors';
-import { emailQueue } from '../queues/email.queue';
-import { startEventStatusQueue } from '../queues/startEvent.queue';
-import { endEventStatusQueue } from '../queues/endEvent.queue';
-import redis from '../../configs/redis.config';
+import rateLimitStore from '../../configs/rateLimit.config';
 import adminRepository from '../repositories/admin.repository';
 import eventRepository from '../repositories/event.repository';
 import { WINDOW_MS } from '../middlewares/rateLimiter.middleware';
 
 const VALID_ROLES = ['student', 'admin', 'csg', 'instructor', 'organizer'];
 
-const QUEUE_MAP: Record<string, Queue> = {
-  'email-queue': emailQueue,
-  'event-start-status-queue': startEventStatusQueue,
-  'event-end-status-queue': endEventStatusQueue,
-};
-
-function resolveQueue(name: string): Queue {
-  const q = QUEUE_MAP[name];
-  if (!q) {
-    throw new NotFoundError(`Queue "${name}" not found`);
-  }
-  return q;
-}
-
 // ---------------------------------------------------------------------------
-// Dead Letter Queue
+// Queues
 // ---------------------------------------------------------------------------
+//
+// BullMQ kept every job in Redis, so the admin panel could count them, page
+// through failures, and retry or delete an individual job by id.
+//
+// Cloudflare Queues exposes none of that. A queue is write-and-forget: there is
+// no API to enumerate messages, read backlog contents, or address a single
+// message. Retries and dead-lettering happen inside the platform, driven by the
+// `max_retries` / `dead_letter_queue` settings in wrangler.jsonc, and the
+// dead-letter queue can only be *consumed* — never browsed.
+//
+// Rather than return invented numbers, these report that the capability is
+// gone and the mutating operations refuse outright. Restoring the panel means
+// recording job outcomes ourselves (a `failed_job` table in D1 written by the
+// consumers in src/worker/consumers/), which is a feature build, not a port.
+
+const QUEUE_NAMES = [
+  'umattend-email',
+  'umattend-event-status',
+  'umattend-dlq',
+] as const;
+
+const UNSUPPORTED =
+  'Per-job inspection is not available on Cloudflare Queues. Retries and ' +
+  'dead-lettering are handled by the platform; see the dead-letter queue and ' +
+  'Workers logs instead.';
 
 const getAllQueues = async () => {
-  const results = await Promise.allSettled(
-    Object.entries(QUEUE_MAP).map(async ([name, queue]) => {
-      const counts = await queue.getJobCounts(
-        'waiting',
-        'active',
-        'delayed',
-        'completed',
-        'failed'
-      );
-      return { name, counts };
-    })
-  );
-
-  return results.map((r) =>
-    r.status === 'fulfilled'
-      ? r.value
-      : { name: 'unknown', counts: {}, error: String(r.reason) }
-  );
+  return QUEUE_NAMES.map((name) => ({
+    name,
+    counts: {},
+    supported: false,
+    note: UNSUPPORTED,
+  }));
 };
 
 const getFailedJobs = async (
@@ -58,83 +53,35 @@ const getFailedJobs = async (
   page: number,
   limit: number
 ) => {
-  const queue = resolveQueue(queueName);
-  const start = (page - 1) * limit;
-  const end = start + limit - 1;
-
-  const [jobs, total] = await Promise.all([
-    queue.getJobs(['failed'], start, end, false),
-    queue.getJobCounts('failed'),
-  ]);
-
-  const failedCount = total?.failed ?? 0;
-  const data = jobs.map((job: Job) => ({
-    id: job.id,
-    name: job.name,
-    data: job.data,
-    failedReason: job.failedReason,
-    stacktrace: job.stacktrace ?? [],
-    attemptsMade: job.attemptsMade,
-    timestamp: job.timestamp,
-    finishedOn: job.finishedOn,
-    processedOn: job.processedOn,
-  }));
-
+  void queueName;
   return {
-    data,
-    pagination: {
-      page,
-      limit,
-      total: failedCount,
-      totalPages: Math.ceil(failedCount / limit),
-    },
+    data: [],
+    supported: false,
+    note: UNSUPPORTED,
+    pagination: { page, limit, total: 0, totalPages: 0 },
   };
 };
 
 const retryJob = async (queueName: string, jobId: string) => {
-  const queue = resolveQueue(queueName);
-  const job = await queue.getJob(jobId);
-  if (!job) {
-    throw new NotFoundError(`Job "${jobId}" not found`);
-  }
-  await job.retry();
-  return { jobId, retried: true };
+  void queueName;
+  void jobId;
+  throw new BadRequestError(UNSUPPORTED);
 };
 
 const removeJob = async (queueName: string, jobId: string) => {
-  const queue = resolveQueue(queueName);
-  const job = await queue.getJob(jobId);
-  if (!job) {
-    throw new NotFoundError(`Job "${jobId}" not found`);
-  }
-  await job.remove();
-  return { jobId, removed: true };
+  void queueName;
+  void jobId;
+  throw new BadRequestError(UNSUPPORTED);
 };
 
 const retryAllFailed = async (queueName: string) => {
-  const queue = resolveQueue(queueName);
-  const jobs = await queue.getJobs(['failed']);
-  const results = await Promise.allSettled(jobs.map((j) => j.retry()));
-  const retried = results.filter((r) => r.status === 'fulfilled').length;
-  return { retried };
+  void queueName;
+  throw new BadRequestError(UNSUPPORTED);
 };
 
 const cleanAllFailed = async (queueName: string) => {
-  const queue = resolveQueue(queueName);
-  const BATCH = 1000;
-  let removed = 0;
-
-  // clean() removes up to `limit` jobs older than `grace` ms. Loop to remove all.
-
-  while (true) {
-    const batchRemoved = await queue.clean(0, BATCH, 'failed');
-    removed += batchRemoved.length;
-    if (batchRemoved.length < BATCH) {
-      break;
-    }
-  }
-
-  return { removed };
+  void queueName;
+  throw new BadRequestError(UNSUPPORTED);
 };
 
 // ---------------------------------------------------------------------------
@@ -243,68 +190,11 @@ interface RateLimitEntry {
 
 const RATE_LIMIT_PREFIX = 'rateLimit:';
 
-const adminCountScript = `
-local key = KEYS[1]
-local now = tonumber(ARGV[1])
-local window_ms = tonumber(ARGV[2])
-
-redis.call('ZREMRANGEBYSCORE', key, 0, now - window_ms)
-local count = redis.call('ZCARD', key)
-
-if count == 0 then
-  redis.call('DEL', key)
-  return {0, -2}
-end
-
-local ttl = redis.call('PTTL', key)
-return {count, ttl}
-`;
-
+// The Lua script and SCAN loop are gone: all rate-limit state lives in one
+// Durable Object, which can list its own storage by prefix and prune expired
+// hits atomically. See src/worker/rateLimiter.do.ts.
 const getRateLimits = async (): Promise<RateLimitEntry[]> => {
-  const keys: string[] = [];
-
-  // Use SCAN for production safety — avoids blocking Redis on large key spaces
-  let cursor = '0';
-  do {
-    const [next, batch] = await redis.scan(
-      cursor,
-      'MATCH',
-      `${RATE_LIMIT_PREFIX}*`,
-      'COUNT',
-      100
-    );
-    cursor = next;
-    keys.push(...batch);
-  } while (cursor !== '0');
-
-  if (keys.length === 0) {
-    return [];
-  }
-
-  // Run cleanup+count for each key in parallel. Each EVAL atomically evicts
-  // expired entries before counting, so the admin page shows per-request
-  // decrements instead of the whole key vanishing at once.
-  const results = await Promise.all(
-    keys.map((k) =>
-      redis
-        .eval(adminCountScript, 1, k, String(Date.now()), String(WINDOW_MS))
-        .then((result) => {
-          const [count, ttl] = result as [number, number];
-          return {
-            key: k,
-            count: typeof count === 'number' ? count : Number(count ?? 0),
-            ttl:
-              typeof ttl === 'number'
-                ? Math.ceil(ttl / 1000)
-                : Number(ttl ?? -1),
-          };
-        })
-        .catch(() => ({ key: k, count: 0, ttl: -1 }))
-    )
-  );
-
-  // Filter out empty keys that were deleted by the cleanup script (ttl === -2)
-  return results.filter((e) => e.ttl !== -2);
+  return rateLimitStore.list(RATE_LIMIT_PREFIX, WINDOW_MS);
 };
 
 const deleteRateLimit = async (key: string): Promise<void> => {
@@ -312,16 +202,13 @@ const deleteRateLimit = async (key: string): Promise<void> => {
   if (!key.startsWith(RATE_LIMIT_PREFIX)) {
     throw new BadRequestError('Invalid rate limit key');
   }
-  await redis.del(key);
+  await rateLimitStore.delete(key);
 };
 
 const deleteAllRateLimits = async (): Promise<number> => {
-  const keys = await redis.keys(`${RATE_LIMIT_PREFIX}*`);
-  if (keys.length === 0) {
-    return 0;
-  }
-  return await redis.del(...keys);
+  return rateLimitStore.deleteAll(RATE_LIMIT_PREFIX);
 };
+
 
 const adminService = {
   getAllQueues,

@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 /**
  * Get city, region, and country from IP address
  * @param {string} ip - IP address to lookup
@@ -25,19 +23,34 @@ export const getLocationByIp = async (ip: string): Promise<LocationTypes> => {
       };
     }
 
-    const response = await axios.get(`http://ip-api.com/json/${cleanIp}`, {
-      timeout: 5000,
+    // Native fetch, not axios: axios's fetch adapter sets `cache: 'default'`,
+    // which workerd rejects with "Unsupported cache mode", so every axios call
+    // throws before leaving the Worker.
+    const response = await fetch(`http://ip-api.com/json/${cleanIp}`, {
+      signal: AbortSignal.timeout(5000),
     });
 
-    if (response.data.status === 'fail') {
-      throw new Error(response.data.message);
+    if (!response.ok) {
+      throw new Error(`ip-api returned ${response.status}`);
+    }
+
+    const data = (await response.json()) as {
+      status?: string;
+      message?: string;
+      city?: string;
+      regionName?: string;
+      country?: string;
+    };
+
+    if (data.status === 'fail') {
+      throw new Error(data.message);
     }
 
     return {
       ip: cleanIp,
-      city: response.data.city ?? 'Unknown',
-      region: response.data.regionName ?? 'Unknown',
-      country: response.data.country ?? 'Unknown',
+      city: data.city ?? 'Unknown',
+      region: data.regionName ?? 'Unknown',
+      country: data.country ?? 'Unknown',
     };
   } catch (error: unknown) {
     if (error instanceof Error) {

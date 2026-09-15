@@ -1,0 +1,246 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "umattend-api",
+	"main": "src/worker/index.ts",
+	// 2025-09-01 or later is what enables the Node HTTP server modules that
+	// `httpServerHandler` needs to run Express. `nodejs_compat` additionally
+	// populates process.env from the vars and secrets below.
+	"compatibility_date": "2025-09-15",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	// ---------- observability (production) ----------
+	// head_sampling_rate 1 keeps every invocation rather than a sample, and
+	// `persist` is what makes logs queryable in the dashboard after the fact —
+	// without it `wrangler tail` only shows what is happening live.
+	"observability": {
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"invocation_logs": true,
+			"persist": true
+		},
+		"traces": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"persist": true
+		}
+	},
+	// ---------- database ----------
+	// The code reads `env.DB`, so that is the only binding needed here.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "umattend",
+			"database_id": "7badcf38-cb56-415a-923d-7dc3b1cc334c",
+			"migrations_dir": "migrations"
+		},
+		{
+			"binding": "umattend_staging",
+			"database_name": "umattend-staging",
+			"database_id": "80bf6428-2c0c-4afc-96da-5f1307a8d550"
+		}
+	],
+	// ---------- queues ----------
+	"queues": {
+		"producers": [
+			{
+				"binding": "EMAIL_QUEUE",
+				"queue": "umattend-email"
+			},
+			{
+				"binding": "EVENT_STATUS_QUEUE",
+				"queue": "umattend-event-status"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "umattend-email",
+				// One at a time, mirroring the BullMQ limiter that capped sending to a
+				// single message per tick.
+				"max_batch_size": 1,
+				"max_concurrency": 2,
+				"max_retries": 3,
+				"dead_letter_queue": "umattend-dlq"
+			},
+			{
+				"queue": "umattend-event-status",
+				"max_batch_size": 10,
+				"max_batch_timeout": 5,
+				"max_concurrency": 2,
+				"max_retries": 5,
+				"dead_letter_queue": "umattend-dlq"
+			}
+		]
+	},
+	// ---------- durable objects ----------
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "EPHEMERAL_STORE",
+				"class_name": "EphemeralStore"
+			},
+			{
+				"name": "RATE_LIMITER",
+				"class_name": "RateLimiterStore"
+			}
+		]
+	},
+	// SQLite-backed classes are available on the Workers free plan; the
+	// key-value backend is not.
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"EphemeralStore",
+				"RateLimiterStore"
+			]
+		}
+	],
+	// ---------- cron triggers ----------
+	// Replaces node-cron. Handlers are dispatched by expression in
+	// src/worker/scheduled.ts, so these strings must match exactly.
+	"triggers": {
+		"crons": [
+			"0 */12 * * *", // expire stale refresh tokens
+			"*/15 * * * *" // reconcile event start/done flags
+		]
+	},
+	// ---------- PRODUCTION configuration ----------
+	// Everything here is non-secret and version-controlled, so the difference
+	// between the two environments is reviewable in a diff.
+	//
+	// Secrets are NOT listed here — upload them per environment with
+	//   wrangler secret put <NAME> --env=""        (production)
+	//   wrangler secret put <NAME> --env staging   (staging)
+	// namely: JWT_ACCESS_TOKEN_SECRET, JWT_REFRESH_TOKEN_SECRET,
+	// JWT_GOOGLE_STATE_SECRET, GOOGLE_CLIENT_SECRET, MAIL_PASS.
+	// Locally they come from .dev.vars (see .dev.vars.example).
+	"vars": {
+		"NODE_ENV": "PRODUCTION",
+		"API_URL": "https://umattend.site",
+		"FRONTEND_URL": "https://umattend.site",
+		"CORS_ORIGIN": "https://umattend.site",
+		"ALLOWED_ORIGINS": "https://umattend.site,https://www.umattend.site",
+		"JWT_ACCESS_TOKEN_TTL": "3",
+		"JWT_REFRESH_TOKEN_TTL": "24",
+		// Attendance QR token lifetime, in SECONDS (user.service.ts passes it to
+		// jwt.sign as a bare number). Unlike the other TTLs, which are hours.
+		// ASSUMED VALUE — no prior setting was recorded anywhere; confirm it.
+		"JWT_ATTENDANCE_TOKEN_TTL": "300",
+		"GOOGLE_CLIENT_ID": "908931193191-1iv9dq0kc6quu5skd1g4m2m9iq799jqb.apps.googleusercontent.com",
+		"GOOGLE_REDIRECT_URI": "https://umattend.site/api/v1/auth/google/callback",
+		// Gmail submission port: plaintext connect upgraded via STARTTLS.
+		"MAIL_HOST": "smtp.gmail.com",
+		"MAIL_PORT": "587",
+		"MAIL_SECURE": "false",
+		"MAIL_USER": "inguitomario00@gmail.com",
+		"MAIL_FROM": "attendance@umattend.site",
+		"MAIL_FROM_NAME": "UMAttend"
+	},
+	"env": {
+		"staging": {
+			"name": "umattend-api-staging",
+			// ---------- observability (staging) ----------
+			// Declared explicitly rather than relying on inheritance, so the two
+			// environments stay readable side by side.
+			"observability": {
+				"logs": {
+					"enabled": true,
+					"head_sampling_rate": 1,
+					"invocation_logs": true,
+					"persist": true
+				},
+				"traces": {
+					"enabled": true,
+					"head_sampling_rate": 1,
+					"persist": true
+				}
+			},
+			// ---------- STAGING configuration ----------
+			// Named environments do NOT inherit the top-level `vars`; this block
+			// must be complete on its own. Anything omitted here is simply
+			// absent at runtime, and getEnv() will throw on boot.
+			"vars": {
+				"NODE_ENV": "STAGING",
+				"API_URL": "https://api-staging.umattend.site",
+				"FRONTEND_URL": "https://staging.umattend.site",
+				"CORS_ORIGIN": "https://staging.umattend.site",
+				"ALLOWED_ORIGINS": "https://staging.umattend.site",
+				"JWT_ACCESS_TOKEN_TTL": "3",
+				"JWT_REFRESH_TOKEN_TTL": "24",
+				// Attendance QR token lifetime, in SECONDS (user.service.ts passes it to
+				// jwt.sign as a bare number). Unlike the other TTLs, which are hours.
+				// ASSUMED VALUE — no prior setting was recorded anywhere; confirm it.
+				"JWT_ATTENDANCE_TOKEN_TTL": "300",
+				"GOOGLE_CLIENT_ID": "908931193191-1iv9dq0kc6quu5skd1g4m2m9iq799jqb.apps.googleusercontent.com",
+				"GOOGLE_REDIRECT_URI": "https://api-staging.umattend.site/api/v1/auth/google/callback",
+				"MAIL_HOST": "smtp.gmail.com",
+				"MAIL_PORT": "587",
+				"MAIL_SECURE": "false",
+				"MAIL_USER": "inguitomario00@gmail.com",
+				"MAIL_FROM": "attendance@umattend.site",
+				"MAIL_FROM_NAME": "UMAttend (Staging)"
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "umattend-staging",
+					// MUST be a different id from production. `database_id` is
+					// what actually binds — `database_name` is only a label, so
+					// reusing production's id here would silently point staging
+					// at live data.
+					"database_id": "80bf6428-2c0c-4afc-96da-5f1307a8d550",
+					"migrations_dir": "migrations"
+				}
+			],
+			"queues": {
+				"producers": [
+					{
+						"binding": "EMAIL_QUEUE",
+						"queue": "umattend-email-staging"
+					},
+					{
+						"binding": "EVENT_STATUS_QUEUE",
+						"queue": "umattend-event-status-staging"
+					}
+				],
+				"consumers": [
+					{
+						"queue": "umattend-email-staging",
+						"max_batch_size": 1,
+						"max_concurrency": 1,
+						"max_retries": 3,
+						"dead_letter_queue": "umattend-dlq-staging"
+					},
+					{
+						"queue": "umattend-event-status-staging",
+						"max_batch_size": 10,
+						"max_batch_timeout": 5,
+						"max_concurrency": 1,
+						"max_retries": 5,
+						"dead_letter_queue": "umattend-dlq-staging"
+					}
+				]
+			},
+			"durable_objects": {
+				"bindings": [
+					{
+						"name": "EPHEMERAL_STORE",
+						"class_name": "EphemeralStore"
+					},
+					{
+						"name": "RATE_LIMITER",
+						"class_name": "RateLimiterStore"
+					}
+				]
+			},
+			"triggers": {
+				"crons": [
+					"0 */12 * * *",
+					"*/15 * * * *"
+				]
+			}
+		}
+	}
+}

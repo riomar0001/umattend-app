@@ -1,5 +1,5 @@
 import prisma from '../../configs/prisma.config';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 
 const findAllUsers = async (page: number, limit: number, search?: string) => {
   const skip = (page - 1) * limit;
@@ -9,12 +9,15 @@ const findAllUsers = async (page: number, limit: number, search?: string) => {
   };
 
   if (search) {
+    // No `mode: 'insensitive'` — that filter is Postgres-only and the SQLite
+    // client rejects it. SQLite's LIKE is already case-insensitive for ASCII,
+    // so `contains` behaves the same for names and emails.
     const orConditions: Prisma.userWhereInput[] = [
-      { umindanao_email: { contains: search, mode: 'insensitive' } },
+      { umindanao_email: { contains: search } },
     ];
 
     orConditions.push({
-      student: { name: { contains: search, mode: 'insensitive' } },
+      student: { name: { contains: search } },
     });
 
     const parsedId = Number(search);
@@ -119,8 +122,8 @@ const findAllEvents = async (
 
   if (search) {
     where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
+      { title: { contains: search } },
+      { description: { contains: search } },
     ];
   }
 

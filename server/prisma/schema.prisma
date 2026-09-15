@@ -1,16 +1,26 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Targets Cloudflare D1 (SQLite) through a Prisma driver adapter.
+//
+// `runtime = "workerd"` emits a client with no Node-specific bindings, and the
+// driver adapter lets it talk to D1 over the binding instead of opening a
+// socket — Workers cannot open one to a database anyway.
+//
+// D1 is never reached through `url` below: the CLI only uses that path for
+// `migrate diff`, against a throwaway local SQLite file. Applying migrations to
+// the real database goes through `wrangler d1 migrations apply`.
 
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "workerd"
+  moduleFormat = "esm"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = env("PRISMA_MIGRATE_SHADOW_URL")
 }
 
 model user {
@@ -149,6 +159,12 @@ model attendance {
   updated_at DateTime @updatedAt
   user       user[]
 
+  // D1 has no transactions, so the "find existing, then insert" guard in
+  // createCheckInEvent can no longer be made atomic in application code.
+  // Enforcing uniqueness in the schema makes a double check-in impossible
+  // regardless of concurrency; the repository translates the resulting P2002
+  // into the same ConflictError callers already expect.
+  @@unique([event_id, student_id])
   @@index([event_id])
   @@index([student_id])
   @@index([check_in_at])

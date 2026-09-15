@@ -1,7 +1,7 @@
 import GoogleAuth from '../services/google.service.js';
 import authRepository from '../repositories/auth.repository.js';
 import jwt from 'jsonwebtoken';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import {
   generateAccessToken,
   generateRefreshToken,

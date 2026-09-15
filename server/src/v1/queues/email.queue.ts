@@ -1,95 +1,39 @@
-import { Queue, Worker, JobsOptions } from 'bullmq';
-import { transporter } from '../../configs/smtp.config';
-import { EmailJob } from '../interface/email';
-import {
-  REDIS_HOST,
-  REDIS_PORT,
-  REDIS_USERNAME,
-  REDIS_PASSWORD,
-  REDIS_DB,
-} from '../../constants/redis.constants';
-import {
-  bullmqJobsCompletedTotal,
-  bullmqJobsFailedTotal,
-  bullmqJobDurationSeconds,
-} from '../../telemetry/metrics.js';
-import { startQueueMetricsPolling } from '../../telemetry/queueMetrics.js';
-import { bullmqTelemetry } from '../../telemetry/index.js';
+/**
+ * Email queue producer.
+ *
+ * Backed by Cloudflare Queues instead of BullMQ. The `.add()` signature is kept
+ * so callers (`email.service.ts`) are unchanged; the consumer lives in
+ * `src/worker/consumers/email.consumer.ts`.
+ *
+ * Retry/backoff and dead-lettering are queue configuration now — see the
+ * `umattend-email` consumer block in wrangler.jsonc — rather than per-job
+ * options.
+ */
 
-const connection = {
-  host: REDIS_HOST,
-  port: Number(REDIS_PORT),
-  username: REDIS_USERNAME,
-  password: REDIS_PASSWORD,
-  db: REDIS_DB,
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
+import { bindings } from '../../worker/runtime';
+import type { EmailJob } from '../interface/email';
+
+interface AddOptions {
+  /** Accepted for call-site compatibility; Cloudflare Queues has no job ids. */
+  jobId?: string;
+  delay?: number;
+}
+
+export const emailQueue = {
+  async add(
+    _name: string,
+    data: EmailJob,
+    options: AddOptions = {}
+  ): Promise<void> {
+    const delaySeconds = options.delay
+      ? Math.min(Math.ceil(options.delay / 1000), 86_400)
+      : 0;
+
+    await bindings().EMAIL_QUEUE.send(
+      { type: 'send-email', ...data },
+      { delaySeconds }
+    );
+  },
 };
 
-export const emailQueue = new Queue<EmailJob>('email-queue', {
-  connection,
-  telemetry: bullmqTelemetry,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 2000,
-    },
-    removeOnComplete: {
-      age: 3600,
-      count: 1000,
-    },
-    removeOnFail: {
-      age: 86400,
-    },
-  } as JobsOptions,
-});
-
-const emailWorker = new Worker<EmailJob>(
-  'email-queue',
-  async (job) => {
-    const { to, subject, html } = job.data;
-
-    try {
-      await transporter.sendMail({
-        from: process.env.MAIL_USER,
-        to,
-        subject,
-        html,
-      });
-      console.log(`Email sent to ${to}`);
-    } catch (error) {
-      console.error(`Failed to send email to ${to}:`, error);
-      throw error;
-    }
-  },
-  {
-    connection,
-    telemetry: bullmqTelemetry,
-    limiter: {
-      max: 1,
-      duration: 10000,
-    },
-  }
-);
-
-emailWorker.on('completed', (job) => {
-  console.log(`Job ${job.id} completed for ${job.data.to}`);
-  bullmqJobsCompletedTotal.inc({ queue: 'email-queue' });
-  if (job.finishedOn && job.processedOn) {
-    bullmqJobDurationSeconds.observe(
-      { queue: 'email-queue' },
-      (job.finishedOn - job.processedOn) / 1000
-    );
-  }
-});
-
-emailWorker.on('failed', (job, err) => {
-  console.error(
-    `Job ${job?.id} failed after ${job?.attemptsMade} attempts:`,
-    err
-  );
-  bullmqJobsFailedTotal.inc({ queue: 'email-queue' });
-});
-
-startQueueMetricsPolling(emailQueue, 'email-queue');
+export default emailQueue;

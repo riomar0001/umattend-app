@@ -1,0 +1,58 @@
+# Local values for `wrangler dev`. Copy to `.dev.vars` (git-ignored).
+#
+# In production these are NOT set here — non-secret values live in the `vars`
+# block of wrangler.jsonc, and secrets are uploaded with:
+#     wrangler secret put <NAME>
+#
+# There is no DATABASE_URL: D1 is reached through the `DB` binding.
+# There is no PORT: a Worker does not bind one.
+# There is no REDIS_*: replaced by the EPHEMERAL_STORE Durable Object.
+
+NODE_ENV=DEVELOPMENT
+
+# ---------- URLs / CORS ----------
+API_URL=http://localhost:8787
+FRONTEND_URL=http://localhost:5173
+CORS_ORIGIN=http://localhost:5173
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# ---------- JWT ----------
+# Generate fresh secrets, e.g. `openssl rand -hex 32`. Do not reuse the ones
+# that were previously committed to .env.example.
+#
+# The TTLs are a bare number of HOURS, not a timespan string. The code appends
+# the unit itself (`${TTL}h` for jwt.sign) and multiplies out for cookie maxAge,
+# so "3h" here becomes "3hh" and jwt.sign rejects it.
+JWT_ACCESS_TOKEN_SECRET=
+JWT_ACCESS_TOKEN_TTL=3
+JWT_REFRESH_TOKEN_SECRET=
+JWT_REFRESH_TOKEN_TTL=24
+JWT_GOOGLE_STATE_SECRET=
+
+# Student QR attendance token. TTL is in SECONDS here, unlike the hour-based
+# TTLs above (user.service.ts passes it to jwt.sign as a bare number).
+JWT_ATTENDANCE_TOKEN_SECRET=
+JWT_ATTENDANCE_TOKEN_TTL=300
+
+# ---------- Google OAuth ----------
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=
+
+# ---------- SMTP (Gmail) ----------
+# Cloudflare blocks outbound port 25; use 587 (STARTTLS) or 465 (implicit TLS).
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_SECURE=false
+
+# The mailbox that authenticates. MAIL_PASS must be a 16-character Google App
+# Password (requires 2-Step Verification) — a normal account password is
+# rejected. Generate at https://myaccount.google.com/apppasswords
+MAIL_USER=
+MAIL_PASS=
+
+# The address recipients see. Gmail only honours this if it is verified in that
+# account under Settings -> Accounts and Import -> "Send mail as"; otherwise
+# Gmail rewrites the From header back to MAIL_USER.
+MAIL_FROM=
+MAIL_FROM_NAME=

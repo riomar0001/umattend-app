@@ -10,65 +10,57 @@ import {
   AddCheckInInterface,
   AddCheckOutInterface,
 } from '../interface/event';
-import { Prisma } from '@prisma/client';
-import { setTimeout as sleep } from 'timers/promises';
+import { Prisma } from '@/generated/prisma/client';
 
-// Retry on Postgres serialization failures (P2034) — Serializable isolation
-// can roll back one of two concurrent transactions; the loser should retry.
-const SERIALIZATION_RETRY_LIMIT = 3;
-async function withSerializationRetry<T>(fn: () => Promise<T>): Promise<T> {
-  let lastError: unknown;
-  for (let attempt = 0; attempt < SERIALIZATION_RETRY_LIMIT; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      const isSerializationError =
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2034';
-      if (!isSerializationError) {
-        throw error;
-      }
-      await sleep(25 + Math.random() * 50);
-    }
-  }
-  throw lastError;
-}
+// The Serializable-isolation retry helper (P2034) that used to live here is
+// gone. D1 implements neither transactions nor isolation levels, so it could
+// never fire — keeping it would imply a protection that does not exist.
+// Each guard it wrapped is now a single conditional statement; see the
+// comments on createCheckInEvent and createCheckOutEvent.
 
 const createEvent = async (event_data: AddEventInterface) => {
-  return await prisma.$transaction(async (tx) => {
-    const event = await tx.events.create({
+  // A nested write keeps the event and its first organizer in one Prisma call.
+  // D1 still executes the underlying INSERTs separately, so if the organizer
+  // row fails we delete the event rather than leave one nobody can administer.
+  try {
+    return await prisma.events.create({
       data: {
         ...event_data,
+        organizers: {
+          create: {
+            user_id: event_data.created_by,
+            added_by: event_data.created_by,
+          },
+        },
       },
     });
-
-    await tx.organizers.create({
-      data: {
-        user_id: event.created_by,
-        event_id: event.id,
-        added_by: event.created_by,
-      },
+  } catch (error) {
+    const orphan = await prisma.events.findFirst({
+      where: { created_by: event_data.created_by, organizers: { none: {} } },
+      orderBy: { created_at: 'desc' },
     });
 
-    return event;
-  });
+    if (orphan) {
+      await prisma.events.delete({ where: { id: orphan.id } });
+    }
+
+    throw error;
+  }
 };
 
 const deleteEvent = async (eventId: string) => {
-  return prisma.$transaction(async (tx) => {
-    const existing = await tx.events.findUnique({
-      where: { id: eventId },
-    });
+  // One conditional DELETE instead of read-then-delete: `count` tells us
+  // whether the row existed, so the transaction that used to make those two
+  // steps atomic is no longer needed.
+  const existing = await prisma.events.findUnique({ where: { id: eventId } });
 
-    if (!existing) {
-      throw new Error('Event not found or already deleted.');
-    }
+  const { count } = await prisma.events.deleteMany({ where: { id: eventId } });
 
-    return tx.events.delete({
-      where: { id: eventId },
-    });
-  });
+  if (count === 0) {
+    throw new Error('Event not found or already deleted.');
+  }
+
+  return existing;
 };
 
 const updateEvent = async (eventId: string, event_data: AddEventInterface) => {
@@ -187,144 +179,146 @@ const getAllPastEvents = async (includeDrafts = false) => {
 
 const createCheckInEvent = async (attendance_data: AddCheckInInterface) => {
   const { event_id, student_id, check_in_at, check_in_by } = attendance_data;
-  return await withSerializationRetry(() =>
-    prisma.$transaction(
-      async (tx) => {
-        const event = await tx.events.findUnique({
-          where: { id: event_id },
-        });
+  const event = await prisma.events.findUnique({ where: { id: event_id } });
 
-        if (!event) {
-          throw new NotFoundError('Event not found');
-        }
+  if (!event) {
+    throw new NotFoundError('Event not found');
+  }
 
-        if (event.is_done) {
-          throw new Error('Event has already ended');
-        }
+  if (event.is_done) {
+    throw new Error('Event has already ended');
+  }
 
-        // Capacity check is inside a Serializable transaction to prevent
-        // overbooking — under READ COMMITTED two concurrent scans could both
-        // read count < capacity and both insert.
-        if (event.capacity !== null && event.capacity !== undefined) {
-          const currentCount = await tx.attendance.count({
-            where: { event_id },
-          });
-          if (currentCount >= event.capacity) {
-            throw new Error('Event has reached its maximum capacity');
-          }
-        }
+  const student = await prisma.student.findUnique({ where: { student_id } });
 
-        const student = await tx.student.findUnique({
-          where: { student_id },
-        });
+  if (!student) {
+    throw new NotFoundError('Student not found');
+  }
 
-        if (!student) {
-          throw new NotFoundError('Student not found');
-        }
+  if (
+    event.department !== 'Open to all Departments' &&
+    student.department !== event.department
+  ) {
+    throw new ForbiddenError(
+      'This event is only open to students from the organizing department'
+    );
+  }
 
-        if (
-          event.department !== 'Open to all Departments' &&
-          student.department !== event.department
-        ) {
-          throw new ForbiddenError(
-            'This event is only open to students from the organizing department'
-          );
-        }
-
-        const existingCheckIn = await tx.attendance.findFirst({
-          where: {
-            event_id,
-            student_id,
-          },
-        });
-
-        if (existingCheckIn) {
-          throw new ConflictError(
-            'Student is already checked in to this event'
-          );
-        }
-
-        return await tx.attendance.create({
-          data: {
-            event_id,
-            student_id,
-            check_in_by,
-            check_in_at: check_in_at ?? new Date().toISOString(),
-          },
-          include: {
-            event: true,
-            student: true,
-            check_in_by_user: true,
-          },
-        });
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
-    )
-  );
-};
-
-const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
-  const { event_id, student_id, check_out_at, check_out_by } = attendance_data;
-  return await prisma.$transaction(async (tx) => {
-    const event = await tx.events.findUnique({
-      where: { id: event_id },
-    });
-
-    if (!event) {
-      throw new NotFoundError('Event not found');
+  // Cheap pre-check so a full event rejects without writing anything. It is not
+  // the real guard — see the capacity reconciliation below.
+  if (event.capacity !== null && event.capacity !== undefined) {
+    const currentCount = await prisma.attendance.count({ where: { event_id } });
+    if (currentCount >= event.capacity) {
+      throw new Error('Event has reached its maximum capacity');
     }
+  }
 
-    if (event.is_done) {
-      throw new Error('Event has already ended');
-    }
-
-    const student = await tx.student.findUnique({
-      where: { student_id },
-    });
-
-    if (!student) {
-      throw new NotFoundError('Student not found');
-    }
-
-    if (
-      event.department !== 'Open to all Departments' &&
-      student.department !== event.department
-    ) {
-      throw new ForbiddenError(
-        'This event is only open to students from the organizing department'
-      );
-    }
-
-    const existingCheckIn = await tx.attendance.findFirst({
-      where: {
+  let attendance;
+  try {
+    attendance = await prisma.attendance.create({
+      data: {
         event_id,
         student_id,
-      },
-    });
-
-    if (!existingCheckIn) {
-      throw new BadRequestError('Student has not checked in to this event');
-    }
-
-    if (existingCheckIn.check_out_at) {
-      throw new ConflictError('Student has already checked out of this event');
-    }
-
-    return await tx.attendance.update({
-      where: {
-        id: existingCheckIn.id,
-      },
-      data: {
-        check_out_at: check_out_at ?? new Date(),
-        check_out_by,
+        check_in_by,
+        check_in_at: check_in_at ?? new Date().toISOString(),
       },
       include: {
         event: true,
         student: true,
         check_in_by_user: true,
-        check_out_by_user: true,
       },
     });
+  } catch (error) {
+    // The @@unique([event_id, student_id]) index now rejects a double check-in
+    // that the old find-then-insert pair could only catch inside a Serializable
+    // transaction — an isolation level D1 does not implement.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      throw new ConflictError('Student is already checked in to this event');
+    }
+    throw error;
+  }
+
+  // Capacity cannot be enforced by a constraint, and D1 gives us no transaction
+  // to hold the count steady across the check above. Instead, insert first and
+  // then work out this row's position in the event: if concurrent check-ins
+  // pushed it past capacity, withdraw it. This can never overbook — at worst a
+  // simultaneous pair both yield and a slot goes unfilled.
+  if (event.capacity !== null && event.capacity !== undefined) {
+    const position = await prisma.attendance.count({
+      where: { event_id, created_at: { lte: attendance.created_at } },
+    });
+
+    if (position > event.capacity) {
+      await prisma.attendance.delete({ where: { id: attendance.id } });
+      throw new Error('Event has reached its maximum capacity');
+    }
+  }
+
+  return attendance;
+};
+
+const createCheckOutEvent = async (attendance_data: AddCheckOutInterface) => {
+  const { event_id, student_id, check_out_at, check_out_by } = attendance_data;
+  const event = await prisma.events.findUnique({ where: { id: event_id } });
+
+  if (!event) {
+    throw new NotFoundError('Event not found');
+  }
+
+  if (event.is_done) {
+    throw new Error('Event has already ended');
+  }
+
+  const student = await prisma.student.findUnique({ where: { student_id } });
+
+  if (!student) {
+    throw new NotFoundError('Student not found');
+  }
+
+  if (
+    event.department !== 'Open to all Departments' &&
+    student.department !== event.department
+  ) {
+    throw new ForbiddenError(
+      'This event is only open to students from the organizing department'
+    );
+  }
+
+  // Claim the check-out with a single conditional UPDATE. Matching on
+  // `check_out_at: null` means two concurrent scans cannot both succeed —
+  // whichever loses sees count === 0 and reports the conflict — which is the
+  // guarantee the enclosing transaction used to give.
+  const { count } = await prisma.attendance.updateMany({
+    where: { event_id, student_id, check_out_at: null },
+    data: {
+      check_out_at: check_out_at ?? new Date(),
+      check_out_by,
+    },
+  });
+
+  if (count === 0) {
+    const existing = await prisma.attendance.findFirst({
+      where: { event_id, student_id },
+    });
+
+    if (!existing) {
+      throw new BadRequestError('Student has not checked in to this event');
+    }
+
+    throw new ConflictError('Student has already checked out of this event');
+  }
+
+  return prisma.attendance.findFirstOrThrow({
+    where: { event_id, student_id },
+    include: {
+      event: true,
+      student: true,
+      check_in_by_user: true,
+      check_out_by_user: true,
+    },
   });
 };
 
@@ -431,7 +425,6 @@ const getPaginatedAttendeesByEventId = async (
       student: {
         name: {
           contains: search,
-          mode: 'insensitive',
         },
       },
     });
@@ -452,7 +445,6 @@ const getPaginatedAttendeesByEventId = async (
         user: {
           umindanao_email: {
             contains: search,
-            mode: 'insensitive',
           },
         },
       },
@@ -580,22 +572,22 @@ const massCheckOutStudents = async (
 
   const checkoutTimestamp = check_out_at ?? new Date();
 
-  // Process updates in batches, each in its own transaction. Avoids holding
-  // locks for the whole operation and stays well within the tx timeout.
+  // Still batched, to keep each statement well inside D1's query limits. The
+  // transaction wrapper is gone: it only ever held a single `updateMany`, which
+  // is atomic on its own.
+  //
+  // `check_out_at: null` is re-asserted rather than trusting the read that
+  // built `toUpdateIds` — without a transaction an individual check-out could
+  // have landed in between, and it must not be silently overwritten.
   for (let i = 0; i < toUpdateIds.length; i += MASS_CHECKOUT_BATCH_SIZE) {
     const batch = toUpdateIds.slice(i, i + MASS_CHECKOUT_BATCH_SIZE);
-    await prisma.$transaction(
-      async (tx) => {
-        await tx.attendance.updateMany({
-          where: { id: { in: batch } },
-          data: {
-            check_out_at: checkoutTimestamp,
-            check_out_by,
-          },
-        });
+    await prisma.attendance.updateMany({
+      where: { id: { in: batch }, check_out_at: null },
+      data: {
+        check_out_at: checkoutTimestamp,
+        check_out_by,
       },
-      { timeout: 60_000 }
-    );
+    });
   }
 
   const updatedRecords = toUpdateIds.length
@@ -728,71 +720,75 @@ const checkInStudentById = async (
   check_in_by: string,
   check_in_at?: Date
 ) => {
-  return await withSerializationRetry(() =>
-    prisma.$transaction(
-      async (tx) => {
-        const event = await tx.events.findUnique({
-          where: { id: event_id },
-        });
+  const event = await prisma.events.findUnique({ where: { id: event_id } });
 
-        if (!event) {
-          throw new NotFoundError('Event not found');
-        }
+  if (!event) {
+    throw new NotFoundError('Event not found');
+  }
 
-        const student = await tx.student.findUnique({
-          where: { student_id },
-        });
+  const student = await prisma.student.findUnique({ where: { student_id } });
 
-        if (!student) {
-          throw new NotFoundError('Student not found');
-        }
+  if (!student) {
+    throw new NotFoundError('Student not found');
+  }
 
-        if (
-          event.department !== 'Open to all Departments' &&
-          student.department !== event.department
-        ) {
-          throw new ForbiddenError(
-            'This event is only open to students from the organizing department'
-          );
-        }
+  if (
+    event.department !== 'Open to all Departments' &&
+    student.department !== event.department
+  ) {
+    throw new ForbiddenError(
+      'This event is only open to students from the organizing department'
+    );
+  }
 
-        const existingCheckIn = await tx.attendance.findFirst({
-          where: { event_id, student_id },
-        });
+  // Cheap pre-check; the real guard is the position check after the insert.
+  if (event.capacity !== null && event.capacity !== undefined) {
+    const currentCount = await prisma.attendance.count({ where: { event_id } });
+    if (currentCount >= event.capacity) {
+      throw new Error('Event has reached its maximum capacity');
+    }
+  }
 
-        if (existingCheckIn) {
-          throw new ConflictError(
-            'Student has already checked in to this event'
-          );
-        }
-
-        if (event.capacity !== null && event.capacity !== undefined) {
-          const currentCount = await tx.attendance.count({
-            where: { event_id },
-          });
-          if (currentCount >= event.capacity) {
-            throw new Error('Event has reached its maximum capacity');
-          }
-        }
-
-        return await tx.attendance.create({
-          data: {
-            event_id,
-            student_id,
-            check_in_at: check_in_at ?? new Date(),
-            check_in_by,
-          },
-          include: {
-            event: true,
-            student: true,
-            check_in_by_user: true,
-            check_out_by_user: true,
-          },
-        });
+  let attendance;
+  try {
+    attendance = await prisma.attendance.create({
+      data: {
+        event_id,
+        student_id,
+        check_in_at: check_in_at ?? new Date(),
+        check_in_by,
       },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
-    )
-  );
+      include: {
+        event: true,
+        student: true,
+        check_in_by_user: true,
+        check_out_by_user: true,
+      },
+    });
+  } catch (error) {
+    // @@unique([event_id, student_id]) replaces the find-then-insert guard.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      throw new ConflictError('Student has already checked in to this event');
+    }
+    throw error;
+  }
+
+  // Same reconciliation as createCheckInEvent: never overbook, at worst yield.
+  if (event.capacity !== null && event.capacity !== undefined) {
+    const position = await prisma.attendance.count({
+      where: { event_id, created_at: { lte: attendance.created_at } },
+    });
+
+    if (position > event.capacity) {
+      await prisma.attendance.delete({ where: { id: attendance.id } });
+      throw new Error('Event has reached its maximum capacity');
+    }
+  }
+
+  return attendance;
 };
 
 /**
@@ -806,57 +802,56 @@ const checkOutStudentById = async (
   check_out_by: string,
   check_out_at?: Date
 ) => {
-  return await prisma.$transaction(async (tx) => {
-    const event = await tx.events.findUnique({
-      where: { id: event_id },
-    });
+  const event = await prisma.events.findUnique({ where: { id: event_id } });
 
-    if (!event) {
-      throw new NotFoundError('Event not found');
-    }
+  if (!event) {
+    throw new NotFoundError('Event not found');
+  }
 
-    const student = await tx.student.findUnique({
-      where: { student_id },
-    });
+  const student = await prisma.student.findUnique({ where: { student_id } });
 
-    if (!student) {
-      throw new NotFoundError('Student not found');
-    }
+  if (!student) {
+    throw new NotFoundError('Student not found');
+  }
 
-    if (
-      event.department !== 'Open to all Departments' &&
-      student.department !== event.department
-    ) {
-      throw new ForbiddenError(
-        'This event is only open to students from the organizing department'
-      );
-    }
+  if (
+    event.department !== 'Open to all Departments' &&
+    student.department !== event.department
+  ) {
+    throw new ForbiddenError(
+      'This event is only open to students from the organizing department'
+    );
+  }
 
-    const existingCheckIn = await tx.attendance.findFirst({
+  // Conditional UPDATE claims the check-out atomically; see createCheckOutEvent.
+  const { count } = await prisma.attendance.updateMany({
+    where: { event_id, student_id, check_out_at: null },
+    data: {
+      check_out_at: check_out_at ?? new Date(),
+      check_out_by,
+    },
+  });
+
+  if (count === 0) {
+    const existing = await prisma.attendance.findFirst({
       where: { event_id, student_id },
     });
 
-    if (!existingCheckIn) {
+    if (!existing) {
       throw new BadRequestError('Student has not checked in to this event');
     }
 
-    if (existingCheckIn.check_out_at) {
-      throw new ConflictError('Student has already checked out of this event');
-    }
+    throw new ConflictError('Student has already checked out of this event');
+  }
 
-    return await tx.attendance.update({
-      where: { id: existingCheckIn.id },
-      data: {
-        check_out_at: check_out_at ?? new Date(),
-        check_out_by,
-      },
-      include: {
-        event: true,
-        student: true,
-        check_in_by_user: true,
-        check_out_by_user: true,
-      },
-    });
+  return prisma.attendance.findFirstOrThrow({
+    where: { event_id, student_id },
+    include: {
+      event: true,
+      student: true,
+      check_in_by_user: true,
+      check_out_by_user: true,
+    },
   });
 };
 
