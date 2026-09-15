@@ -16,6 +16,11 @@ FRONTEND_URL=http://localhost:5173
 CORS_ORIGIN=http://localhost:5173
 ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 
+# Widens the auth cookies to the registrable domain so the frontend and API
+# hosts share them (e.g. .umattend.site). Leave EMPTY locally — on localhost a
+# host-only cookie is correct and a domain here would stop it being stored.
+COOKIE_DOMAIN=
+
 # ---------- JWT ----------
 # Generate fresh secrets, e.g. `openssl rand -hex 32`. Do not reuse the ones
 # that were previously committed to .env.example.

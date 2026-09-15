@@ -5,6 +5,7 @@ import {
   HTTPSuccessResponse,
 } from '@/utils/responseHandler';
 import { NotFoundError } from '../../utils/customErrors';
+import { accessTokenCookie } from '@/utils/authCookies';
 
 import { NODE_ENV } from '@/constants/app.constants';
 
@@ -49,12 +50,7 @@ const onboardUser = async (req: Request, res: Response) => {
       return HTTPErrorResponse(res, 404, 'User not found') as Response;
     }
 
-    res.cookie('access_token', onboarded.access_token, {
-      httpOnly: true,
-      secure: NODE_ENV === 'PRODUCTION',
-      sameSite: 'strict',
-      maxAge: 1 * 60 * 60 * 1000,
-    });
+    res.cookie('access_token', onboarded.access_token, accessTokenCookie());
 
     return HTTPSuccessResponse(
       res,

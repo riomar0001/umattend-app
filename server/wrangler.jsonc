@@ -118,6 +118,9 @@
 	// Locally they come from .dev.vars (see .dev.vars.example).
 	"vars": {
 		"NODE_ENV": "PRODUCTION",
+		// Widens the auth cookies to the registrable domain so the frontend host
+		// and the API host share them. Leave unset locally (host-only on localhost).
+		"COOKIE_DOMAIN": ".umattend.site",
 		"API_URL": "https://umattend.site",
 		"FRONTEND_URL": "https://umattend.site",
 		"CORS_ORIGIN": "https://umattend.site",
@@ -163,6 +166,9 @@
 			// absent at runtime, and getEnv() will throw on boot.
 			"vars": {
 				"NODE_ENV": "STAGING",
+				// Widens the auth cookies to the registrable domain so the frontend host
+				// and the API host share them. Leave unset locally (host-only on localhost).
+				"COOKIE_DOMAIN": ".umattend.site",
 				"API_URL": "https://api-staging.umattend.site",
 				"FRONTEND_URL": "https://staging.umattend.site",
 				"CORS_ORIGIN": "https://staging.umattend.site",

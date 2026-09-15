@@ -9,9 +9,10 @@ import jwt from 'jsonwebtoken';
 import { AuthenticationError, NotFoundError } from '../../utils/customErrors';
 import { FRONTEND_URL, NODE_ENV } from '../../constants/app.constants';
 import {
-  JWT_ACCESS_TOKEN_TTL,
-  JWT_REFRESH_TOKEN_TTL,
-} from '@/constants/jwt.constants';
+  accessTokenCookie,
+  refreshTokenCookie,
+  clearCookieOptions,
+} from '../../utils/authCookies';
 
 function getClientIp(req: Request): string {
   // CF-Connecting-IP is set by Cloudflare and is the most reliable real-visitor
@@ -98,19 +99,8 @@ const googleCallback = async (req: Request, res: Response) => {
       result.refresh_token
     );
 
-    res.cookie('access_token', result.access_token, {
-      httpOnly: true,
-      secure: NODE_ENV === 'PRODUCTION',
-      sameSite: 'strict',
-      maxAge: Number(JWT_ACCESS_TOKEN_TTL) * 60 * 60 * 1000,
-    });
-
-    res.cookie('refresh_token', result.refresh_token, {
-      httpOnly: true,
-      secure: NODE_ENV === 'PRODUCTION',
-      sameSite: 'strict',
-      maxAge: Number(JWT_REFRESH_TOKEN_TTL) * 60 * 60 * 1000,
-    });
+    res.cookie('access_token', result.access_token, accessTokenCookie());
+    res.cookie('refresh_token', result.refresh_token, refreshTokenCookie());
 
     // Confirms the code was minted and where the browser is being sent — the
     // two things that determine whether the client can exchange it.
@@ -164,12 +154,14 @@ const logoutUser = async (req: Request, res: Response) => {
       await authService.logoutUser(finalRefreshToken);
     }
 
+    // Must carry the same domain/path the cookie was set with, or the browser
+    // treats it as a different cookie and logout leaves the session behind.
     if (req.cookies['refresh_token']) {
-      res.clearCookie('refresh_token');
+      res.clearCookie('refresh_token', clearCookieOptions());
     }
 
     if (req.cookies['access_token']) {
-      res.clearCookie('access_token');
+      res.clearCookie('access_token', clearCookieOptions());
     }
 
     return HTTPSuccessResponse(res, 200, 'Logged out successfully') as Response;
