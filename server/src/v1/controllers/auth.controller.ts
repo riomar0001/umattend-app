@@ -53,7 +53,15 @@ const googleCallback = async (req: Request, res: Response) => {
 
     const frontendUrl = FRONTEND_URL;
 
+    // Each failure below is logged as well as handed back as an error_code.
+    // That code lives 60s in the ephemeral store and is destroyed on first
+    // read, so it is useless for diagnosing a failure after the fact —
+    // Workers Logs are. Keep the user-facing message generic, log the detail.
     if (!code) {
+      console.error('[google/callback] missing authorization code', {
+        currentUri,
+        query: Object.keys(req.query),
+      });
       const error_code = await authService.generateErrorCode(
         'Missing authorization code'
       );
@@ -61,6 +69,7 @@ const googleCallback = async (req: Request, res: Response) => {
     }
 
     if (!GoogleAuth.validateRedirectUri(currentUri)) {
+      console.error('[google/callback] redirect URI rejected', { currentUri });
       const error_code = await authService.generateErrorCode(
         'Invalid redirect URI'
       );
@@ -68,6 +77,9 @@ const googleCallback = async (req: Request, res: Response) => {
     }
 
     if (!GoogleAuth.validateState(state as string)) {
+      console.error('[google/callback] state validation failed', {
+        statePresent: Boolean(state),
+      });
       const error_code = await authService.generateErrorCode(
         'Invalid state parameter'
       );
@@ -100,18 +112,32 @@ const googleCallback = async (req: Request, res: Response) => {
       maxAge: Number(JWT_REFRESH_TOKEN_TTL) * 60 * 60 * 1000,
     });
 
+    // Confirms the code was minted and where the browser is being sent — the
+    // two things that determine whether the client can exchange it.
+    console.log('[google/callback] issued auth_code', {
+      auth_code_prefix: auth_code.slice(0, 8),
+      redirect_to: `${frontendUrl}/?auth_code=…`,
+      has_access_token: Boolean(result.access_token),
+      has_refresh_token: Boolean(result.refresh_token),
+    });
+
     return res.redirect(`${frontendUrl}/?auth_code=${auth_code}`);
   } catch (error: unknown) {
     const frontendUrl = FRONTEND_URL ?? 'http://localhost:3000';
+
+    // Without this the cause is lost entirely: the user only ever sees
+    // 'Internal server error', and the error_code carrying it is gone 60s later.
+    console.error('[google/callback] unhandled failure', {
+      name: error instanceof Error ? error.name : typeof error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
 
     const error_code = await authService.generateErrorCode(
       'Internal server error'
     );
 
     if (error instanceof jwt.TokenExpiredError) {
-      const error_code = await authService.generateErrorCode(
-        'Internal server error'
-      );
       return res.redirect(`${frontendUrl}/?error_code=${error_code}`);
     }
 
