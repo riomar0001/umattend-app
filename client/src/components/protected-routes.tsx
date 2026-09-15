@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
+import { refreshSession } from '@/lib/refreshSession';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -29,19 +30,17 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
 
     const state = useAuthStore.getState();
 
-    // Already have a valid in-memory token — no need to refresh
-    if (state.accessToken !== null && state.user !== null) {
+    // Token survived the reload and hasn't expired — no refresh needed
+    if (state.accessToken !== null && state.user !== null && !state.isAccessTokenExpired()) {
       setIsChecking(false);
       return;
     }
 
-    // User profile persisted from a previous session but no in-memory token.
-    // Attempt a silent refresh using the HttpOnly refresh_token cookie.
+    // Profile is known but the access token is missing or expired. Attempt a
+    // silent refresh using the HttpOnly refresh_token cookie.
     if (state.user) {
-      axios
-        .post('/api/v1/auth/refresh', {}, { withCredentials: true })
-        .then((response) => {
-          state.replaceAccessToken(response.data.data.access_token);
+      refreshSession()
+        .then(() => {
           setIsChecking(false);
         })
         .catch((err) => {

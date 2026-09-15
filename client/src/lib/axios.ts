@@ -1,6 +1,7 @@
 // lib/axios.ts
 import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
+import { refreshSession } from './refreshSession';
 
 export const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -10,8 +11,20 @@ export const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(
-  (config) => {
-    const { accessToken } = useAuthStore.getState();
+  async (config) => {
+    const { accessToken, user, isAccessTokenExpired } = useAuthStore.getState();
+
+    // Only reach for a new token when the current one is actually expired (or
+    // absent while a session is known to exist). A live token is used as-is.
+    if (user && (!accessToken || isAccessTokenExpired())) {
+      try {
+        config.headers.Authorization = `Bearer ${await refreshSession()}`;
+        return config;
+      } catch {
+        // Let the request go out unauthenticated; the response interceptor
+        // handles the 401 and the logout decision.
+      }
+    }
 
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
@@ -33,14 +46,11 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const { replaceAccessToken, logout } = useAuthStore.getState();
+      const { logout } = useAuthStore.getState();
 
       try {
         // Rely on the HttpOnly refresh_token cookie — no token in request body
-        const response = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true });
-
-        const { access_token } = response.data.data;
-        replaceAccessToken(access_token);
+        const access_token = await refreshSession();
 
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return axiosInstance(originalRequest);

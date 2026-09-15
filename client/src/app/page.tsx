@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import ClickSpark from '@/components/ClickSpark';
@@ -9,6 +8,7 @@ import LoginForm from '@/components/auth/login-form';
 import useExchangeCode from '@/hooks/useExchangeCode';
 import { getUserOptions } from '@/api/client/@tanstack/react-query.gen';
 import { useAuthStore } from '@/store/authStore';
+import { refreshSession } from '@/lib/refreshSession';
 
 export default function LoginContent() {
   const router = useRouter();
@@ -97,19 +97,17 @@ export default function LoginContent() {
     const auth_code = searchParams.get('auth_code');
     if (auth_code) return;
 
-    if (isAuthenticated() && !isDoneOnboarding()) {
-      router.replace('/onboarding');
+    const state = useAuthStore.getState();
+    const hasLiveToken = isAuthenticated() && !state.isAccessTokenExpired();
+
+    if (hasLiveToken) {
+      router.replace(isDoneOnboarding() ? '/events' : '/onboarding');
       return;
     }
 
-    if (isAuthenticated() && isDoneOnboarding()) {
-      router.replace('/events');
-      return;
-    }
-
-    // User profile is persisted but tokens are in-memory only — attempt silent refresh
-    const user = useAuthStore.getState().user;
-    if (user) {
+    // Profile is persisted but the access token is missing or expired —
+    // attempt a silent refresh before falling back to the login form
+    if (state.user) {
       setIsRefreshing(true);
       return;
     }
@@ -124,9 +122,7 @@ export default function LoginContent() {
 
     const doRefresh = async () => {
       try {
-        const response = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true });
-        const { access_token } = response.data.data;
-        useAuthStore.getState().replaceAccessToken(access_token);
+        await refreshSession();
         // Redirect based on the refreshed token's user data
         const refreshedUser = useAuthStore.getState().user;
         if (refreshedUser?.done_onboarding) {
