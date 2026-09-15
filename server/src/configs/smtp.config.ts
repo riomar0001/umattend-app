@@ -18,15 +18,7 @@
  */
 
 import { WorkerMailer } from 'worker-mailer';
-import {
-  MAIL_USER,
-  MAIL_PASS,
-  MAIL_HOST,
-  MAIL_PORT,
-  MAIL_SECURE,
-  MAIL_FROM,
-  MAIL_FROM_NAME,
-} from '@/constants/smtp.constants';
+import { getSmtpConfig } from '@/constants/smtp.constants';
 
 export interface OutgoingMail {
   to: string;
@@ -35,24 +27,27 @@ export interface OutgoingMail {
   html?: string;
 }
 
-const secure = MAIL_SECURE === 'true';
-
-const from = MAIL_FROM_NAME
-  ? { name: MAIL_FROM_NAME, email: MAIL_FROM }
-  : MAIL_FROM;
-
 export const sendMail = async ({
   to,
   subject,
   text,
   html,
 }: OutgoingMail): Promise<void> => {
+  // Resolved per call rather than at module scope: this module is in the
+  // Worker's static graph (queue consumer -> smtp.config), and Cloudflare
+  // evaluates that graph at upload time, before any env is available.
+  const config = getSmtpConfig();
+
+  const from = config.fromName
+    ? { name: config.fromName, email: config.from }
+    : config.from;
+
   const mailer = await WorkerMailer.connect({
-    host: MAIL_HOST,
-    port: Number(MAIL_PORT),
-    secure,
-    startTls: !secure,
-    credentials: { username: MAIL_USER, password: MAIL_PASS },
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    startTls: !config.secure,
+    credentials: { username: config.user, password: config.pass },
     // Gmail advertises both; 'login' is the one it actually prefers.
     authType: ['plain', 'login'],
   });
