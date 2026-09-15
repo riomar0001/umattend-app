@@ -34,10 +34,7 @@ module.exports = {
       watch: false,
       env: {
         NODE_ENV: "staging",
-        PORT: 4001,
-        OTEL_SERVICE_NAME: "umattend-server-staging",
-        OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4321",
-      },
+        PORT: 4001,      },
     },
     {
       name: "umattend-production-server",
@@ -49,10 +46,7 @@ module.exports = {
       watch: false,
       env: {
         NODE_ENV: "production",
-        PORT: 4000,
-        OTEL_SERVICE_NAME: "umattend-server",
-        OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4320",
-      },
+        PORT: 4000,      },
     },
     {
       name: "umattend-staging-client",
@@ -65,10 +59,7 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: 3001,
-        HOSTNAME: "127.0.0.1",
-        OTEL_SERVICE_NAME: "umattend-client-staging",
-        OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4321",
-      },
+        HOSTNAME: "127.0.0.1",      },
     },
     {
       name: "umattend-production-client",
@@ -81,10 +72,7 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: 3000,
-        HOSTNAME: "127.0.0.1",
-        OTEL_SERVICE_NAME: "umattend-client",
-        OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:4320",
-      },
+        HOSTNAME: "127.0.0.1",      },
     },
   ],
 };
