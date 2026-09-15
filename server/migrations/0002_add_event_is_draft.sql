@@ -1,0 +1,13 @@
+-- Adds events.is_draft.
+--
+-- This column belongs to the schema that 0001_init.sql was *regenerated* from,
+-- but 0001 had already been applied to the staging database by then. Wrangler
+-- tracks migrations by filename, so the rewritten 0001 was never re-run and the
+-- column was missing at runtime:
+--
+--   The column `main.events.is_draft at offset 351` does not exist
+--
+-- 0001 has been restored to the shape that was actually applied, and the
+-- difference lives here instead. Both paths now converge: an existing database
+-- runs only this migration, a fresh one runs 0001 then 0002.
+ALTER TABLE "events" ADD COLUMN "is_draft" BOOLEAN NOT NULL DEFAULT false;
