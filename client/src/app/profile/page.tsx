@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { getUserAttendanceTokenOptions, getUserAttendedEventsOptions, getUserHostedEventsOptions } from '@/api/client/@tanstack/react-query.gen';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatEventDateRange, getInitials, toTitleCase } from '@/lib/utils';
-import { useAuthStore } from '@/store/authStore';
+import { hasStudentId, useAuthStore } from '@/store/authStore';
 
 const ProfilePage = () => {
   const user = useAuthStore((state) => state.user);
@@ -198,7 +198,7 @@ const ProfilePage = () => {
                   </Avatar>
                   <div className="w-full text-center lg:text-left">
                     <h1 className="text-foreground mb-2 text-center text-2xl font-bold sm:text-3xl">{toTitleCase(user?.name || '')}</h1>
-                    <p className="text-muted-foreground mb-1 text-center text-sm font-bold">{user?.student_id ?? 'No ID number on file'}</p>
+                    <p className="text-muted-foreground mb-1 text-center text-sm font-bold">{hasStudentId(user?.student_id) ? user.student_id : 'No ID number on file'}</p>
                     <p className="text-muted-foreground mb-2 text-center text-sm">{user?.department}</p>
                     <p className="text-muted-foreground mb-2 text-center text-sm">{user?.program}</p>
                     <div className="mt-4 flex justify-center">

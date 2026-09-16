@@ -64,6 +64,17 @@ const writeStoredAccessToken = (accessToken: string | null) => {
   }
 };
 
+/**
+ * Whether the account has a real ID number.
+ *
+ * Not just a null check: accounts created before the ID became nullable carry a
+ * stored 0 — extractStudentID's null run through Number() — and any token minted
+ * by a worker still running that code carries it too. Reading 0 as a valid ID is
+ * what hides the onboarding field from exactly the accounts that need it.
+ */
+export const hasStudentId = (student_id: number | null | undefined): student_id is number =>
+  typeof student_id === 'number' && Number.isSafeInteger(student_id) && student_id > 0;
+
 export const isJwtExpired = (token: string | null): boolean => {
   if (!token) return true;
 
@@ -142,7 +153,7 @@ export const useAuthStore = create<AuthState>()(
       needsOnboarding: () => {
         const state = get();
         if (!state.user) return false;
-        return !state.user.done_onboarding || state.user.student_id === null || state.user.student_id === undefined;
+        return !state.user.done_onboarding || !hasStudentId(state.user.student_id);
       }
     }),
     {

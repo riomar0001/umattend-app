@@ -17,6 +17,7 @@ import crypto from 'crypto';
 import { JWT_REFRESH_TOKEN_SECRET } from '@/constants/jwt.constants.js';
 
 import { sanitizeKey, extractStudentID } from '@/utils/string.utils.js';
+import { isUsableStudentId } from '@/utils/studentId.js';
 
 const googleAuthWithCode = async (
   code: string,
@@ -77,15 +78,18 @@ const googleAuthWithCode = async (
     googleUser.profile_picture
   );
 
+  // Normalised at the token boundary so the client sees one representation of
+  // "no ID". Rows written before the column was nullable hold 0, and so does
+  // anything a worker still running that code creates — null is the only form
+  // the client checks for.
+  const stored_student_id = user.student?.student_id;
+
   const access_token = generateAccessToken({
     user_id: user.id,
     umindanao_email: user.umindanao_email,
     role: user.role,
     done_onboarding: user.done_onboarding,
-    // Carried through as null rather than Number()'d — that turned a missing
-    // ID into NaN, which serialises into the JWT as the JSON literal null
-    // anyway, but only after every numeric comparison on it had gone false.
-    student_id: user.student?.student_id ?? null,
+    student_id: isUsableStudentId(stored_student_id) ? stored_student_id : null,
     name: user.student?.name,
     department: user.student?.department ?? '',
     program: user.student?.program ?? '',
@@ -155,12 +159,14 @@ const refreshAccessToken = async (refresh_token: string) => {
     throw new NotFoundError('User not found');
   }
 
+  const stored_student_id = user.student?.student_id;
+
   return generateAccessToken({
     user_id: user.id,
     umindanao_email: user.umindanao_email,
     role: user.role,
     done_onboarding: user.done_onboarding,
-    student_id: user.student?.student_id ?? null,
+    student_id: isUsableStudentId(stored_student_id) ? stored_student_id : null,
     name: user.student?.name as string,
     department: user.student?.department ?? '',
     program: user.student?.program ?? '',

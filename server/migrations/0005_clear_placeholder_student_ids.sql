@@ -1,0 +1,15 @@
+-- Clears student_id = 0 rows written after 0004.
+--
+-- 0004 made the column nullable and folded the backfill into the table rebuild,
+-- but a migration only cleans what exists when it runs. The worker kept running
+-- the old `Number(extractStudentID(email))` code afterwards, so every signup
+-- from an address carrying no ID number went on storing 0 — staging picked up
+-- one that way within a day.
+--
+-- The application no longer trusts a strict null check anywhere (see
+-- isUsableStudentId), so a lingering 0 is already handled at runtime. This just
+-- brings the stored data in line with what the column now means.
+--
+-- Idempotent, and a no-op once the fixed worker is deployed. Run it AFTER the
+-- deploy, otherwise the old code simply writes fresh 0s behind it.
+UPDATE "students" SET "student_id" = NULL WHERE "student_id" = 0;

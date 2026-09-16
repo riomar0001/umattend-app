@@ -15,6 +15,7 @@ import {
   OnboardedUserInfoResult,
 } from '../interface/auth';
 import { generateAccessToken } from '../services/jwt.service';
+import { isUsableStudentId } from '../../utils/studentId';
 import {
   JWT_ATTENDANCE_TOKEN_SECRET,
   JWT_ATTENDANCE_TOKEN_TTL,
@@ -55,7 +56,7 @@ const onboardUser = async (
   // from being used to overwrite an ID, or to claim someone else's.
   let id_to_write: number | undefined;
 
-  if (existing.student.student_id === null) {
+  if (!isUsableStudentId(existing.student.student_id)) {
     if (student_id === undefined || student_id === null) {
       throw new BadRequestError('ID number is required');
     }
@@ -97,12 +98,14 @@ const onboardUser = async (
     throw new NotFoundError('User not found');
   }
 
+  const stored_student_id = user.student?.student_id;
+
   const access_token = generateAccessToken({
     user_id: user.id,
     umindanao_email: user.umindanao_email,
     role: user.role,
     done_onboarding: user.done_onboarding,
-    student_id: user.student?.student_id ?? null,
+    student_id: isUsableStudentId(stored_student_id) ? stored_student_id : null,
     name: user.student?.name,
     department: user.student?.department ?? '',
     program: user.student?.program ?? '',
@@ -198,9 +201,8 @@ const getAttendanceToken = async (user_id: string): Promise<string> => {
 
   // Split out from the profile check because the two are fixed differently:
   // a missing ID number is the account's own to supply, and the old combined
-  // `!student_id` guard reported it as a missing profile. It also swallowed
-  // the legitimate-looking 0 that unparsed addresses used to be stored with.
-  if (user.student.student_id === null) {
+  // `!student_id` guard reported it as a missing profile.
+  if (!isUsableStudentId(user.student.student_id)) {
     throw new BadRequestError(
       'No ID number on file for this account. Add your ID number in your profile to generate an attendance QR code.'
     );

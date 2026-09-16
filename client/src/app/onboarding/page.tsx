@@ -17,7 +17,7 @@ import { postUserOnboardingMutation, getUserOptions, postAuthLogoutMutation } fr
 import type { PostUserOnboardingError } from '@/api/client/types.gen';
 import { DepartmentAndPrograms } from '@/lib/department-and-program';
 import { getInitials } from '@/lib/utils';
-import { useAuthStore } from '@/store/authStore';
+import { hasStudentId, useAuthStore } from '@/store/authStore';
 
 interface OnboardingFormData {
   department: string;
@@ -85,7 +85,8 @@ export default function OnboardingPage() {
   // Addresses like `s.nolasco.576804@umindanao.edu.ph` carry an ID number and it
   // is already on file; `tan.jessiejames@umindanao.edu.ph` does not, so those
   // accounts have to supply theirs here. Without one they cannot be checked in.
-  const needsStudentId = user?.student_id === null || user?.student_id === undefined;
+  // hasStudentId rather than a null check: older accounts carry a stored 0.
+  const needsStudentId = !hasStudentId(user?.student_id);
 
   const canSubmit = Boolean(selectedDepartment) && Boolean(selectedProgram) && (!needsStudentId || /^\d{1,12}$/.test(enteredStudentId.trim()));
 
