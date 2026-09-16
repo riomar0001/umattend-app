@@ -4,7 +4,7 @@ import {
   HTTPErrorResponse,
   HTTPSuccessResponse,
 } from '@/utils/responseHandler';
-import { NotFoundError } from '../../utils/customErrors';
+import { AppError, NotFoundError } from '../../utils/customErrors';
 import { accessTokenCookie } from '@/utils/authCookies';
 
 import { NODE_ENV } from '@/constants/app.constants';
@@ -36,14 +36,25 @@ const getUserById = async (req: Request, res: Response) => {
 const onboardUser = async (req: Request, res: Response) => {
   try {
     const user_id = req.user.id;
-    const { department, program } = req.body;
+    const { department, program, student_id } = req.body;
     if (!department || !program) {
       return HTTPErrorResponse(res, 400, 'Missing Fields');
     }
+
+    // Optional in the body: only accounts whose email carried no ID number are
+    // asked for one, and the service decides whether it is actually required.
+    // Number('') is 0 and Number(undefined) is NaN, so absence is normalised to
+    // null here rather than handed to the service as a misleading number.
+    const parsed_student_id =
+      student_id === undefined || student_id === null || student_id === ''
+        ? null
+        : Number(student_id);
+
     const onboarded = await userService.onboardUser(
       user_id,
       department,
-      program
+      program,
+      parsed_student_id
     );
 
     if (!onboarded) {
@@ -59,6 +70,13 @@ const onboardUser = async (req: Request, res: Response) => {
       onboarded
     ) as Response;
   } catch (error: unknown) {
+    // AppError carries its own status. The previous `instanceof Error` branch
+    // caught those first and answered 500, so a rejected ID number came back
+    // indistinguishable from a server fault — the client had nothing to tell
+    // the user to fix.
+    if (error instanceof AppError) {
+      return HTTPErrorResponse(res, error.statusCode, error.message);
+    }
     if (error instanceof Error) {
       return HTTPErrorResponse(res, 500, error.message);
     }

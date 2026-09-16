@@ -153,7 +153,8 @@ export const zPutUserResponse = z.object({
 export const zPostUserOnboardingData = z.object({
     body: z.optional(z.object({
         department: z.string(),
-        program: z.string()
+        program: z.string(),
+        student_id: z.optional(z.int())
     })),
     path: z.optional(z.never()),
     query: z.optional(z.never())

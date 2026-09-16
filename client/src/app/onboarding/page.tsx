@@ -10,6 +10,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { postUserOnboardingMutation, getUserOptions, postAuthLogoutMutation } from '@/api/client/@tanstack/react-query.gen';
@@ -21,6 +22,7 @@ import { useAuthStore } from '@/store/authStore';
 interface OnboardingFormData {
   department: string;
   program: string;
+  student_id: string;
 }
 
 export default function OnboardingPage() {
@@ -64,28 +66,48 @@ export default function OnboardingPage() {
   const {
     watch,
     setValue,
+    register,
     handleSubmit,
-    formState: { isValid }
+    formState: { errors }
   } = useForm<OnboardingFormData>({
     mode: 'onChange',
     defaultValues: {
       department: '',
-      program: ''
+      program: '',
+      student_id: ''
     }
   });
 
   const selectedDepartment = watch('department');
   const selectedProgram = watch('program');
+  const enteredStudentId = watch('student_id');
+
+  // Addresses like `s.nolasco.576804@umindanao.edu.ph` carry an ID number and it
+  // is already on file; `tan.jessiejames@umindanao.edu.ph` does not, so those
+  // accounts have to supply theirs here. Without one they cannot be checked in.
+  const needsStudentId = user?.student_id === null || user?.student_id === undefined;
+
+  const canSubmit = Boolean(selectedDepartment) && Boolean(selectedProgram) && (!needsStudentId || /^\d{1,12}$/.test(enteredStudentId.trim()));
 
   useEffect(() => {
     if (!isAuthenticated()) {
       router.push('/');
     }
 
-    if (isDoneOnboarding()) {
+    // Accounts that onboarded before the ID number was ever asked for still
+    // have none on file, and nothing else in the app can set one — so they are
+    // allowed back in here rather than bounced to /events with no way forward.
+    if (isDoneOnboarding() && !needsStudentId) {
       router.push('/events');
     }
-  }, [isAuthenticated, router, isDoneOnboarding]);
+  }, [isAuthenticated, router, isDoneOnboarding, needsStudentId]);
+
+  // Someone sent back here only for a missing ID already chose these; prefill
+  // so they are not made to pick them again.
+  useEffect(() => {
+    if (user?.department) setValue('department', user.department, { shouldValidate: true });
+    if (user?.program) setValue('program', user.program, { shouldValidate: true });
+  }, [user?.department, user?.program, setValue]);
 
   const logoutMutation = useMutation({
     mutationFn: postAuthLogoutMutation().mutationFn,
@@ -175,7 +197,10 @@ export default function OnboardingPage() {
     onboardingMutation.mutate({
       body: {
         department: data.department,
-        program: data.program
+        program: data.program,
+        // Sent only when the account has none on file. The server ignores a
+        // submitted value otherwise, so this keeps the two sides consistent.
+        ...(needsStudentId ? { student_id: Number(data.student_id.trim()) } : {})
       }
     });
   };
@@ -225,11 +250,32 @@ export default function OnboardingPage() {
                     <p className="text-foreground text-base font-semibold">{studentData.name}</p>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
+                    <Label htmlFor="student_id" className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
                       <Hash className="h-3.5 w-3.5" />
                       Student ID
+                      {needsStudentId && <span className="text-destructive">*</span>}
                     </Label>
-                    <p className="text-foreground font-mono text-base font-semibold">{studentData.idNumber}</p>
+                    {needsStudentId ? (
+                      <>
+                        <Input
+                          id="student_id"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          placeholder="e.g. 576804"
+                          aria-invalid={Boolean(errors.student_id)}
+                          className="border-border bg-background font-mono text-base"
+                          {...register('student_id', {
+                            required: 'Your ID number is required',
+                            pattern: { value: /^\d{1,12}$/, message: 'Digits only — no letters, spaces or dashes' }
+                          })}
+                        />
+                        <p className={errors.student_id ? 'text-destructive text-xs' : 'text-muted-foreground text-xs'}>
+                          {errors.student_id?.message ?? 'Your email address does not include your ID number, so please enter it here.'}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-foreground font-mono text-base font-semibold">{studentData.idNumber}</p>
+                    )}
                   </div>
                   <div className="space-y-1.5 sm:col-span-2">
                     <Label className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
@@ -300,7 +346,7 @@ export default function OnboardingPage() {
                   <>
                     <Button
                       type="submit"
-                      disabled={!isValid || onboardingMutation.isPending}
+                      disabled={!canSubmit || onboardingMutation.isPending}
                       className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 w-full text-base font-semibold shadow-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
                       size="lg"
                     >

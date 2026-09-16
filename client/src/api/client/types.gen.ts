@@ -352,6 +352,10 @@ export type PostUserOnboardingData = {
     body?: {
         department: string;
         program: string;
+        /**
+         * Required only when the account has no ID number on file — i.e. the umindanao.edu.ph address did not contain one. Ignored if an ID is already stored.
+         */
+        student_id?: number;
     };
     path?: never;
     query?: never;
@@ -360,7 +364,7 @@ export type PostUserOnboardingData = {
 
 export type PostUserOnboardingErrors = {
     /**
-     * Bad request - Missing fields
+     * Bad request - Missing or invalid fields
      */
     400: {
         success?: boolean;
@@ -377,6 +381,13 @@ export type PostUserOnboardingErrors = {
      * User not found
      */
     404: {
+        success?: boolean;
+        message?: string;
+    };
+    /**
+     * ID number already registered to another account
+     */
+    409: {
         success?: boolean;
         message?: string;
     };

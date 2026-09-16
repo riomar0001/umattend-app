@@ -78,7 +78,7 @@ export default function LoginContent() {
         setAuth(result.accessToken, result.refreshToken);
       }
 
-      router.push(!isDoneOnboarding() ? '/onboarding' : '/events');
+      router.push(useAuthStore.getState().needsOnboarding() ? '/onboarding' : '/events');
     };
 
     const handleErrorCode = async () => {
@@ -101,7 +101,7 @@ export default function LoginContent() {
     const hasLiveToken = isAuthenticated() && !state.isAccessTokenExpired();
 
     if (hasLiveToken) {
-      router.replace(isDoneOnboarding() ? '/events' : '/onboarding');
+      router.replace(state.needsOnboarding() ? '/onboarding' : '/events');
       return;
     }
 
@@ -125,10 +125,10 @@ export default function LoginContent() {
         await refreshSession();
         // Redirect based on the refreshed token's user data
         const refreshedUser = useAuthStore.getState().user;
-        if (refreshedUser?.done_onboarding) {
-          router.replace('/events');
-        } else {
+        if (useAuthStore.getState().needsOnboarding()) {
           router.replace('/onboarding');
+        } else {
+          router.replace('/events');
         }
       } catch {
         useAuthStore.getState().logout();

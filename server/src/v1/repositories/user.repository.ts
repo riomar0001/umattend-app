@@ -12,7 +12,10 @@ const findUserById = async (user_id: string) => {
 const onboardUser = async (
   user_id: string,
   department: string,
-  program: string
+  program: string,
+  // Only set when the account has no ID number yet — the service leaves this
+  // undefined otherwise, so an existing student_id is never overwritten.
+  student_id?: number
 ) => {
   const user = await prisma.user.update({
     where: { id: user_id },
@@ -22,6 +25,7 @@ const onboardUser = async (
         update: {
           department,
           program,
+          ...(student_id === undefined ? {} : { student_id }),
         },
       },
     },

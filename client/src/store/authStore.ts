@@ -29,6 +29,7 @@ interface AuthState {
   isAuthenticated: () => boolean;
   isAccessTokenExpired: () => boolean;
   isDoneOnboarding: () => boolean;
+  needsOnboarding: () => boolean;
 }
 
 // The access token lives in sessionStorage rather than localStorage: it has to
@@ -132,6 +133,16 @@ export const useAuthStore = create<AuthState>()(
       isDoneOnboarding: () => {
         const state = get();
         return state.user?.done_onboarding ?? false;
+      },
+
+      // done_onboarding alone is not enough to let someone through. Accounts
+      // that onboarded before the ID number was asked for still have none, and
+      // the onboarding form is the only place that can set one — so they have
+      // to be routed back to it or they are stuck without a QR code.
+      needsOnboarding: () => {
+        const state = get();
+        if (!state.user) return false;
+        return !state.user.done_onboarding || state.user.student_id === null || state.user.student_id === undefined;
       }
     }),
     {

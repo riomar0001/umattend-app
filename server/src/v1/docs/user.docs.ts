@@ -211,6 +211,12 @@ const onboarding = {
               properties: {
                 department: { type: 'string' },
                 program: { type: 'string' },
+                student_id: {
+                  type: 'integer',
+                  description:
+                    'Required only when the account has no ID number on file — i.e. the umindanao.edu.ph address did not contain one. Ignored if an ID is already stored.',
+                  example: 576804,
+                },
               },
               required: ['department', 'program'],
             },
@@ -256,14 +262,32 @@ const onboarding = {
           },
         },
         400: {
-          description: 'Bad request - Missing fields',
+          description: 'Bad request - Missing or invalid fields',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: false },
-                  message: { type: 'string', example: 'Missing Fields' },
+                  message: { type: 'string', example: 'ID number is required' },
+                },
+              },
+            },
+          },
+        },
+        409: {
+          description: 'ID number already registered to another account',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  message: {
+                    type: 'string',
+                    example:
+                      'That ID number is already registered to another account',
+                  },
                 },
               },
             },
