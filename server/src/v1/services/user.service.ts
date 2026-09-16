@@ -15,7 +15,11 @@ import {
   OnboardedUserInfoResult,
 } from '../interface/auth';
 import { generateAccessToken } from '../services/jwt.service';
-import { isUsableStudentId } from '../../utils/studentId';
+import {
+  isAcceptableStudentId,
+  isUsableStudentId,
+  STUDENT_ID_RULE_MESSAGE,
+} from '../../utils/studentId';
 import {
   JWT_ATTENDANCE_TOKEN_SECRET,
   JWT_ATTENDANCE_TOKEN_TTL,
@@ -61,8 +65,8 @@ const onboardUser = async (
       throw new BadRequestError('ID number is required');
     }
 
-    if (!Number.isSafeInteger(student_id) || student_id <= 0) {
-      throw new ValidationError('ID number must be a positive whole number');
+    if (!isAcceptableStudentId(student_id)) {
+      throw new ValidationError(STUDENT_ID_RULE_MESSAGE);
     }
 
     id_to_write = student_id;
@@ -173,26 +177,78 @@ const getUserHostedEvents = async (
 const updateUserProfile = async (
   user_id: string,
   department?: string,
-  program?: string
+  program?: string,
+  // Correcting an ID number is allowed here, unlike at onboarding, where a
+  // submitted value is ignored once one is on file. The accounts that most
+  // need it are the ones that were given a wrong or placeholder ID by an
+  // earlier build and have no other way to put it right.
+  student_id?: number
 ) => {
-  const user = await userRepository.updateUserProfile(
-    user_id,
-    department,
-    program
-  );
+  if (student_id !== undefined && !isAcceptableStudentId(student_id)) {
+    throw new ValidationError(STUDENT_ID_RULE_MESSAGE);
+  }
+
+  let user: Awaited<ReturnType<typeof userRepository.updateUserProfile>>;
+
+  try {
+    user = await userRepository.updateUserProfile(
+      user_id,
+      department,
+      program,
+      student_id
+    );
+  } catch (error) {
+    // The number is either free or already spoken for. Reported against the
+    // field the user just typed rather than as a generic failure.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002' &&
+      String(error.meta?.target ?? '').includes('student_id')
+    ) {
+      throw new ConflictError(
+        'That ID number is already registered to another account'
+      );
+    }
+
+    throw error;
+  }
+
   if (!user) {
     throw new NotFoundError('User not found');
   }
 
-  return {
-    id: user.id,
+  const stored_student_id = user.student?.student_id;
+
+  // The client reads student_id off the access token, so changing it without
+  // reissuing would leave the profile showing the old number until the token
+  // happened to expire.
+  const access_token = generateAccessToken({
+    user_id: user.id,
     umindanao_email: user.umindanao_email,
-    name: user.student?.name ?? undefined,
-    department: user.student?.department ?? undefined,
-    program: user.student?.program ?? undefined,
-    profile_picture: user.student?.profile_picture ?? undefined,
-    done_onboarding: user.done_onboarding,
     role: user.role,
+    done_onboarding: user.done_onboarding,
+    student_id: isUsableStudentId(stored_student_id) ? stored_student_id : null,
+    name: user.student?.name,
+    department: user.student?.department ?? '',
+    program: user.student?.program ?? '',
+    profile_picture: user.student?.profile_picture ?? '',
+  });
+
+  return {
+    access_token,
+    user: {
+      id: user.id,
+      umindanao_email: user.umindanao_email,
+      name: user.student?.name ?? undefined,
+      student_id: isUsableStudentId(stored_student_id)
+        ? stored_student_id
+        : null,
+      department: user.student?.department ?? undefined,
+      program: user.student?.program ?? undefined,
+      profile_picture: user.student?.profile_picture ?? undefined,
+      done_onboarding: user.done_onboarding,
+      role: user.role,
+    },
   };
 };
 

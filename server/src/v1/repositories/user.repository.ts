@@ -187,7 +187,10 @@ const getUserHostedEvents = async (user_id: string) => {
 const updateUserProfile = async (
   user_id: string,
   department?: string,
-  program?: string
+  program?: string,
+  // Undefined leaves the stored ID alone; the service validates any value that
+  // reaches here, and the unique index rejects one already in use.
+  student_id?: number
 ) => {
   // Update student record for this user. Use updateMany to be safe if student row exists.
   const user = await prisma.user.update({
@@ -197,6 +200,7 @@ const updateUserProfile = async (
         update: {
           ...(department !== undefined ? { department } : {}),
           ...(program !== undefined ? { program } : {}),
+          ...(student_id !== undefined ? { student_id } : {}),
         },
       },
     },

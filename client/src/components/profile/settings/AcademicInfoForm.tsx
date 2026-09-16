@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Building2, GraduationCap } from 'lucide-react';
+import { AxiosError } from 'axios';
+import { Building2, GraduationCap, Hash } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -9,15 +10,19 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { putUserMutation } from '@/api/client/@tanstack/react-query.gen';
+import type { PutUserError } from '@/api/client/types.gen';
 import { DepartmentAndPrograms } from '@/lib/department-and-program';
-import { useAuthStore } from '@/store/authStore';
+import { STUDENT_ID_DIGITS, STUDENT_ID_PATTERN, STUDENT_ID_RULE_MESSAGE } from '@/lib/student-id';
+import { hasStudentId, useAuthStore } from '@/store/authStore';
 
 const academicInfoSchema = z.object({
   department: z.string().min(1, 'Department is required'),
-  program: z.string().min(1, 'Program is required')
+  program: z.string().min(1, 'Program is required'),
+  student_id: z.string().regex(STUDENT_ID_PATTERN, STUDENT_ID_RULE_MESSAGE)
 });
 
 type AcademicInfoFormValues = z.infer<typeof academicInfoSchema>;
@@ -25,13 +30,19 @@ type AcademicInfoFormValues = z.infer<typeof academicInfoSchema>;
 export const AcademicInfoForm = () => {
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
+  const replaceAccessToken = useAuthStore((state) => state.replaceAccessToken);
   const queryClient = useQueryClient();
+
+  // Blank rather than '0' when there is none on file, so the field reads as
+  // empty and not as an ID the account already has.
+  const storedStudentId = hasStudentId(user?.student_id) ? String(user.student_id) : '';
 
   const form = useForm<AcademicInfoFormValues>({
     resolver: zodResolver(academicInfoSchema),
     defaultValues: {
       department: user?.department || '',
-      program: user?.program || ''
+      program: user?.program || '',
+      student_id: storedStudentId
     }
   });
 
@@ -44,10 +55,11 @@ export const AcademicInfoForm = () => {
     if (user?.department && user?.program) {
       form.reset({
         department: user.department,
-        program: user.program
+        program: user.program,
+        student_id: storedStudentId
       });
     }
-  }, [user?.department, user?.program, form]);
+  }, [user?.department, user?.program, storedStudentId, form]);
 
   const updateAcademicInfoMutation = useMutation({
     ...putUserMutation(),
@@ -55,18 +67,24 @@ export const AcademicInfoForm = () => {
       if (data.success && data.data?.user) {
         const apiUser = data.data.user;
 
-        // Update local user state
-        updateUser({
-          user_id: apiUser.id,
-          student_id: user?.student_id,
-          umindanao_email: apiUser.umindanao_email || user?.umindanao_email,
-          name: apiUser.name || user?.name,
-          department: apiUser.department || '',
-          program: apiUser.program || '',
-          role: user?.role || 'student',
-          done_onboarding: apiUser.done_onboarding ?? user?.done_onboarding ?? false,
-          profile_picture: user?.profile_picture || ''
-        });
+        // The ID number lives in the access token, so the store has to be fed
+        // from the reissued one — merging the response alone would leave the
+        // profile and QR code showing the number the user just replaced.
+        if (data.data.access_token) {
+          replaceAccessToken(data.data.access_token);
+        } else {
+          updateUser({
+            user_id: apiUser.id,
+            student_id: apiUser.student_id ?? user?.student_id,
+            umindanao_email: apiUser.umindanao_email || user?.umindanao_email,
+            name: apiUser.name || user?.name,
+            department: apiUser.department || '',
+            program: apiUser.program || '',
+            role: user?.role || 'student',
+            done_onboarding: apiUser.done_onboarding ?? user?.done_onboarding ?? false,
+            profile_picture: user?.profile_picture || ''
+          });
+        }
 
         // Invalidate user-related queries
         queryClient.invalidateQueries({ queryKey: ['getUser'] });
@@ -74,14 +92,23 @@ export const AcademicInfoForm = () => {
         toast.success('Academic information updated successfully!');
         form.reset({
           department: apiUser.department || '',
-          program: apiUser.program || ''
+          program: apiUser.program || '',
+          student_id: hasStudentId(apiUser.student_id) ? String(apiUser.student_id) : ''
         });
       }
     },
-    onError: (error) => {
-      console.error('Update error:', error);
+    onError: (error: AxiosError<PutUserError>) => {
+      // A 409 names the ID number, so it belongs on that field rather than in
+      // a toast the user cannot act on.
+      const message = error?.response?.data?.message;
+
+      if (error?.response?.status === 409 && message) {
+        form.setError('student_id', { type: 'server', message });
+        return;
+      }
+
       toast.error('Failed to update academic information', {
-        description: error.message || 'Please try again later'
+        description: message || error.message || 'Please try again later'
       });
     }
   });
@@ -92,10 +119,16 @@ export const AcademicInfoForm = () => {
   };
 
   const onSubmit = (data: AcademicInfoFormValues) => {
+    const trimmedStudentId = data.student_id.trim();
+
     updateAcademicInfoMutation.mutate({
       body: {
         department: data.department,
-        program: data.program
+        program: data.program,
+        // Sent only when it actually changed. The server would accept a no-op
+        // write, but leaving it out keeps an unchanged ID off the unique index
+        // and out of the reissued token's way.
+        ...(trimmedStudentId !== storedStudentId ? { student_id: Number(trimmedStudentId) } : {})
       }
     });
   };
@@ -107,11 +140,40 @@ export const AcademicInfoForm = () => {
     <Card className="border-border border shadow-sm">
       <CardHeader className="border-border border-b pb-4">
         <CardTitle className="text-foreground text-lg font-semibold">Academic Information</CardTitle>
-        <CardDescription className="text-muted-foreground">Update your department and program information</CardDescription>
+        <CardDescription className="text-muted-foreground">Update your ID number, department and program information</CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="student_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground flex items-center gap-2 text-sm font-semibold">
+                    <Hash className="text-primary h-4 w-4" />
+                    ID Number
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      inputMode="numeric"
+                      autoComplete="off"
+                      maxLength={STUDENT_ID_DIGITS}
+                      placeholder="e.g. 576804"
+                      aria-invalid={Boolean(form.formState.errors.student_id)}
+                      className="border-border bg-background font-mono text-base"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-muted-foreground text-xs">
+                    Used to record your attendance and to generate your QR code. It must be {STUDENT_ID_DIGITS} digits and cannot already belong to another
+                    account.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="department"

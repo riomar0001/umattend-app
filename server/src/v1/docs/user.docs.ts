@@ -103,7 +103,8 @@ const getAndUpdateUser = {
     put: {
       tags: ['User'],
       summary: 'Update user profile',
-      description: 'Update user profile fields such as department and program',
+      description:
+        'Update user profile fields such as department, program and ID number. Every field is optional; whatever is omitted is left as stored.',
       security: [{ bearerAuth: [] }],
       requestBody: {
         content: {
@@ -113,6 +114,14 @@ const getAndUpdateUser = {
               properties: {
                 department: { type: 'string' },
                 program: { type: 'string' },
+                student_id: {
+                  type: 'integer',
+                  description:
+                    'ID number, exactly 6 digits. Replaces whatever is on file, so this is how a wrong or missing one gets corrected. Must not already belong to another account.',
+                  minimum: 100000,
+                  maximum: 999999,
+                  example: 576804,
+                },
               },
             },
           },
@@ -131,12 +140,26 @@ const getAndUpdateUser = {
                   data: {
                     type: 'object',
                     properties: {
+                      access_token: {
+                        type: 'string',
+                        description:
+                          'Reissued so the client picks up the new values — student_id in particular is read from the token.',
+                        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                      },
                       user: {
                         type: 'object',
                         properties: {
                           id: { type: 'string' },
                           umindanao_email: { type: 'string' },
                           name: { type: 'string' },
+                          // 3.1 spells nullability as a type union; the older
+                          // `nullable: true` is ignored by the generator and
+                          // would produce a client type that cannot hold the
+                          // null this endpoint really returns.
+                          student_id: {
+                            type: ['integer', 'null'],
+                            example: 576804,
+                          },
                           department: { type: 'string' },
                           program: { type: 'string' },
                           done_onboarding: { type: 'boolean' },
@@ -150,14 +173,35 @@ const getAndUpdateUser = {
           },
         },
         400: {
-          description: 'Bad request - no fields to update',
+          description: 'Bad request - no fields to update, or invalid ID number',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
                 properties: {
                   success: { type: 'boolean', example: false },
-                  message: { type: 'string', example: 'No fields to update' },
+                  message: {
+                    type: 'string',
+                    example: 'ID number must be exactly 6 digits',
+                  },
+                },
+              },
+            },
+          },
+        },
+        409: {
+          description: 'ID number already registered to another account',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: false },
+                  message: {
+                    type: 'string',
+                    example:
+                      'That ID number is already registered to another account',
+                  },
                 },
               },
             },
@@ -214,7 +258,9 @@ const onboarding = {
                 student_id: {
                   type: 'integer',
                   description:
-                    'Required only when the account has no ID number on file — i.e. the umindanao.edu.ph address did not contain one. Ignored if an ID is already stored.',
+                    'Exactly 6 digits. Required only when the account has no ID number on file — i.e. the umindanao.edu.ph address did not contain one. Ignored if an ID is already stored; use PUT /user to change one.',
+                  minimum: 100000,
+                  maximum: 999999,
                   example: 576804,
                 },
               },

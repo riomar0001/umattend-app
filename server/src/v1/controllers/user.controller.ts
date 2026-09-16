@@ -169,22 +169,40 @@ const getUserHostedEvents = async (req: Request, res: Response) => {
 const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const user_id = req.user.id;
-    const { department, program } = req.body;
+    const { department, program, student_id } = req.body;
 
-    if (department === undefined && program === undefined) {
+    if (
+      department === undefined &&
+      program === undefined &&
+      student_id === undefined
+    ) {
       return HTTPErrorResponse(res, 400, 'No fields to update');
     }
+
+    // Number('') is 0 and Number(undefined) is NaN, so absence is normalised to
+    // undefined — the value that leaves the stored ID untouched — rather than
+    // handed to the service as a number it would then reject.
+    const parsed_student_id =
+      student_id === undefined || student_id === null || student_id === ''
+        ? undefined
+        : Number(student_id);
 
     const updated = await userService.updateUserProfile(
       user_id,
       department,
-      program
+      program,
+      parsed_student_id
     );
 
-    return HTTPSuccessResponse(res, 200, 'User profile updated', {
-      user: updated,
-    });
+    return HTTPSuccessResponse(res, 200, 'User profile updated', updated);
   } catch (error: unknown) {
+    // AppError carries its own status, so a rejected or duplicate ID number
+    // comes back as 400/409 with a message the user can act on rather than as
+    // an indistinguishable 500.
+    if (error instanceof AppError) {
+      return HTTPErrorResponse(res, error.statusCode, error.message);
+    }
+
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }

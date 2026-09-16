@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { postUserOnboardingMutation, getUserOptions, postAuthLogoutMutation } from '@/api/client/@tanstack/react-query.gen';
 import type { PostUserOnboardingError } from '@/api/client/types.gen';
 import { DepartmentAndPrograms } from '@/lib/department-and-program';
+import { STUDENT_ID_DIGITS, STUDENT_ID_PATTERN, STUDENT_ID_RULE_MESSAGE } from '@/lib/student-id';
 import { getInitials } from '@/lib/utils';
 import { hasStudentId, useAuthStore } from '@/store/authStore';
 
@@ -88,7 +89,7 @@ export default function OnboardingPage() {
   // hasStudentId rather than a null check: older accounts carry a stored 0.
   const needsStudentId = !hasStudentId(user?.student_id);
 
-  const canSubmit = Boolean(selectedDepartment) && Boolean(selectedProgram) && (!needsStudentId || /^\d{1,12}$/.test(enteredStudentId.trim()));
+  const canSubmit = Boolean(selectedDepartment) && Boolean(selectedProgram) && (!needsStudentId || STUDENT_ID_PATTERN.test(enteredStudentId.trim()));
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -262,16 +263,17 @@ export default function OnboardingPage() {
                           id="student_id"
                           inputMode="numeric"
                           autoComplete="off"
+                          maxLength={STUDENT_ID_DIGITS}
                           placeholder="e.g. 576804"
                           aria-invalid={Boolean(errors.student_id)}
                           className="border-border bg-background font-mono text-base"
                           {...register('student_id', {
                             required: 'Your ID number is required',
-                            pattern: { value: /^\d{1,12}$/, message: 'Digits only — no letters, spaces or dashes' }
+                            pattern: { value: STUDENT_ID_PATTERN, message: STUDENT_ID_RULE_MESSAGE }
                           })}
                         />
                         <p className={errors.student_id ? 'text-destructive text-xs' : 'text-muted-foreground text-xs'}>
-                          {errors.student_id?.message ?? 'Your email address does not include your ID number, so please enter it here.'}
+                          {errors.student_id?.message ?? `Your email address does not include your ID number, so please enter it here — all ${STUDENT_ID_DIGITS} digits.`}
                         </p>
                       </>
                     ) : (

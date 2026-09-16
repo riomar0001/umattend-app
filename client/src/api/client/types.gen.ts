@@ -294,6 +294,10 @@ export type PutUserData = {
     body?: {
         department?: string;
         program?: string;
+        /**
+         * ID number, exactly 6 digits. Replaces whatever is on file, so this is how a wrong or missing one gets corrected. Must not already belong to another account.
+         */
+        student_id?: number;
     };
     path?: never;
     query?: never;
@@ -302,7 +306,7 @@ export type PutUserData = {
 
 export type PutUserErrors = {
     /**
-     * Bad request - no fields to update
+     * Bad request - no fields to update, or invalid ID number
      */
     400: {
         success?: boolean;
@@ -312,6 +316,13 @@ export type PutUserErrors = {
      * Unauthorized
      */
     401: {
+        success?: boolean;
+        message?: string;
+    };
+    /**
+     * ID number already registered to another account
+     */
+    409: {
         success?: boolean;
         message?: string;
     };
@@ -334,10 +345,15 @@ export type PutUserResponses = {
         success?: boolean;
         message?: string;
         data?: {
+            /**
+             * Reissued so the client picks up the new values — student_id in particular is read from the token.
+             */
+            access_token?: string;
             user?: {
                 id?: string;
                 umindanao_email?: string;
                 name?: string;
+                student_id?: number | null;
                 department?: string;
                 program?: string;
                 done_onboarding?: boolean;
@@ -353,7 +369,7 @@ export type PostUserOnboardingData = {
         department: string;
         program: string;
         /**
-         * Required only when the account has no ID number on file — i.e. the umindanao.edu.ph address did not contain one. Ignored if an ID is already stored.
+         * Exactly 6 digits. Required only when the account has no ID number on file — i.e. the umindanao.edu.ph address did not contain one. Ignored if an ID is already stored; use PUT /user to change one.
          */
         student_id?: number;
     };

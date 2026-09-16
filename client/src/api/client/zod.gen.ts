@@ -126,7 +126,8 @@ export const zGetUserResponse = z.object({
 export const zPutUserData = z.object({
     body: z.optional(z.object({
         department: z.optional(z.string()),
-        program: z.optional(z.string())
+        program: z.optional(z.string()),
+        student_id: z.optional(z.int().gte(100000).lte(999999))
     })),
     path: z.optional(z.never()),
     query: z.optional(z.never())
@@ -139,10 +140,15 @@ export const zPutUserResponse = z.object({
     success: z.optional(z.boolean()),
     message: z.optional(z.string()),
     data: z.optional(z.object({
+        access_token: z.optional(z.string()),
         user: z.optional(z.object({
             id: z.optional(z.string()),
             umindanao_email: z.optional(z.string()),
             name: z.optional(z.string()),
+            student_id: z.optional(z.union([
+                z.int(),
+                z.null()
+            ])),
             department: z.optional(z.string()),
             program: z.optional(z.string()),
             done_onboarding: z.optional(z.boolean())
@@ -154,7 +160,7 @@ export const zPostUserOnboardingData = z.object({
     body: z.optional(z.object({
         department: z.string(),
         program: z.string(),
-        student_id: z.optional(z.int())
+        student_id: z.optional(z.int().gte(100000).lte(999999))
     })),
     path: z.optional(z.never()),
     query: z.optional(z.never())
