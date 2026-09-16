@@ -16,32 +16,27 @@ import { getLocationByIp } from '../../utils/getIPLocation';
 export const generateAccessToken = (
   tokenPayload: AccessTokenPayloadTypes
 ): string => {
-  const {
-    user_id,
-    umindanao_email,
-    role,
-    student_id,
-    name,
-    department,
-    program,
-    done_onboarding,
-  } = tokenPayload;
+  const { user_id, umindanao_email, role, name } = tokenPayload;
 
-  const requiredFields = [
-    {
-      user_id,
-      umindanao_email,
-      role,
-      student_id,
-      name,
-      department,
-      program,
-      done_onboarding,
-    },
-  ];
+  // The list is deliberately short. student_id is null until onboarding
+  // supplies one, department and program are empty until it does, and
+  // done_onboarding is false for every account on its first token — requiring
+  // those would reject exactly the logins that have to succeed.
+  //
+  // The previous version wrapped all eight in an object and tested `!field` on
+  // the object, which is never true, so nothing was ever checked. That is what
+  // let a user with no student row mint a token carrying no name at all: the
+  // account then read as "User" everywhere it was displayed.
+  const requiredFields = { user_id, umindanao_email, role, name };
 
-  if (requiredFields.some((field) => !field)) {
-    throw new GenerateTokenError('Missing required token payload fields');
+  const missing = Object.entries(requiredFields)
+    .filter(([, value]) => !value)
+    .map(([field]) => field);
+
+  if (missing.length > 0) {
+    throw new GenerateTokenError(
+      `Missing required token payload fields: ${missing.join(', ')}`
+    );
   }
 
   return jwt.sign(tokenPayload, JWT_ACCESS_TOKEN_SECRET, {

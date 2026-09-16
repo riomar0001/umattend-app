@@ -45,6 +45,32 @@ const createUser = async (user_data: CreateUserTypes) => {
   });
 };
 
+/**
+ * Attaches the missing student row to a user that has none.
+ *
+ * createUser writes the pair as one nested create, but D1 has no interactive
+ * transactions, so Prisma cannot roll the user row back when the student insert
+ * fails — the account is left with an identity and no profile. Separate from
+ * createUser because this is the repair path: the user row already exists.
+ */
+const createStudentForUser = async (
+  user_id: string,
+  student_data: {
+    name: string;
+    student_id: number | null;
+    profile_picture: string;
+  }
+) => {
+  return await prisma.student.create({
+    data: {
+      user_id,
+      name: student_data.name,
+      student_id: student_data.student_id,
+      profile_picture: student_data.profile_picture,
+    },
+  });
+};
+
 const updateLoginAndProfile = async (
   user_id: string,
   profile_picture: string
@@ -178,6 +204,7 @@ const getEventOragazerByUserId = async (user_id: string, event_id: string) => {
 
 const authRepository = {
   createUser,
+  createStudentForUser,
   updateUser,
   getUserById,
   findUserByEmail,

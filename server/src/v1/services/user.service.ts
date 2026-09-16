@@ -109,6 +109,10 @@ const onboardUser = async (
     name: user.student?.name,
     department: user.student?.department ?? '',
     program: user.student?.program ?? '',
+    // Carried here as it is in the other two mint sites. Without it the client
+    // decodes a token with no picture and blanks the avatar for as long as it
+    // takes the follow-up /user fetch to land.
+    profile_picture: user.student?.profile_picture ?? '',
   });
 
   return {

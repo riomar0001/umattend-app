@@ -73,6 +73,59 @@ const googleAuthWithCode = async (
     }
   }
 
+  // A user row can exist with no student row attached to it. createUser writes
+  // the pair as a single nested create, but D1 has no interactive transactions,
+  // so when the student insert failed — every address the old code could not
+  // parse an ID out of collided on the unique `student_id = 0` — Prisma had no
+  // way to undo the user row it had already written. The P2002 branch above
+  // then found that half-written account and handed it straight back.
+  //
+  // Such an account logs in and looks signed-out-of-itself: the token carries
+  // no name, no picture and no ID, the profile reads "User", and onboarding
+  // rejects it with "User not found" because it has no student row to update.
+  // Nothing else in the app can create one, and only Google knows the name, so
+  // this is the one place the damage can be repaired — on the next login.
+  if (!user.student) {
+    try {
+      await authRepository.createStudentForUser(user.id, {
+        name: googleUser.name,
+        student_id: extractStudentID(googleUser.email),
+        profile_picture: googleUser.profile_picture,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const target = String(error.meta?.target ?? '');
+
+        // The same collision that broke the row in the first place: the ID
+        // number in this address belongs to a student row already. Named, so
+        // it can be resolved, rather than reported as a repair that failed.
+        if (target.includes('student_id')) {
+          throw new AuthenticationError(
+            `The ID number in ${googleUser.email} is already registered to another account`
+          );
+        }
+
+        // student.user_id is unique, so this is a concurrent login for the
+        // same account repairing it first — the outcome we wanted anyway.
+      } else {
+        throw error;
+      }
+    }
+
+    // Re-read rather than patching the object by hand, so the token below is
+    // minted from what the database actually holds.
+    user = await authRepository.findUserByGoogleId(googleUser.google_id);
+
+    if (!user?.student) {
+      throw new AuthenticationError(
+        'Your account is missing its student profile and could not be repaired. Please contact support.'
+      );
+    }
+  }
+
   await authRepository.updateLoginAndProfile(
     user.id,
     googleUser.profile_picture
@@ -159,7 +212,17 @@ const refreshAccessToken = async (refresh_token: string) => {
     throw new NotFoundError('User not found');
   }
 
-  const stored_student_id = user.student?.student_id;
+  // Refreshing cannot repair a half-written account — only the Google callback
+  // has the name to rebuild the student row with. Answer 401 so the client
+  // clears the session and sends them back through login, which does repair it;
+  // minting a nameless token here would just prolong the broken state.
+  if (!user.student) {
+    throw new AuthenticationError(
+      'Account profile is incomplete — please sign in again'
+    );
+  }
+
+  const stored_student_id = user.student.student_id;
 
   return generateAccessToken({
     user_id: user.id,
@@ -167,10 +230,10 @@ const refreshAccessToken = async (refresh_token: string) => {
     role: user.role,
     done_onboarding: user.done_onboarding,
     student_id: isUsableStudentId(stored_student_id) ? stored_student_id : null,
-    name: user.student?.name as string,
-    department: user.student?.department ?? '',
-    program: user.student?.program ?? '',
-    profile_picture: user.student?.profile_picture ?? '',
+    name: user.student.name,
+    department: user.student.department ?? '',
+    program: user.student.program ?? '',
+    profile_picture: user.student.profile_picture ?? '',
   });
 };
 
