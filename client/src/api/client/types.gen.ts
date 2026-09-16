@@ -2502,7 +2502,7 @@ export type GetAdminUsersResponses = {
                 created_at?: string;
                 updated_at?: string;
                 student?: {
-                    student_id?: number;
+                    student_id?: number | null;
                     name?: string;
                     department?: string | null;
                     program?: string | null;
@@ -2624,7 +2624,7 @@ export type PatchAdminUsersByUserIdRoleResponses = {
                 umindanao_email?: string;
                 role?: string;
                 student?: {
-                    student_id?: number;
+                    student_id?: number | null;
                     name?: string;
                     department?: string | null;
                     program?: string | null;

@@ -458,7 +458,7 @@ const getAllUsers = {
                                 {
                                   type: 'object',
                                   properties: {
-                                    student_id: { type: 'number' },
+                                    student_id: { type: ['number', 'null'] },
                                     name: { type: 'string' },
                                     department: {
                                       oneOf: [
@@ -547,7 +547,7 @@ const getUserById = {
                               {
                                 type: 'object',
                                 properties: {
-                                  student_id: { type: 'number' },
+                                  student_id: { type: ['number', 'null'] },
                                   name: { type: 'string' },
                                   department: {
                                     oneOf: [
@@ -644,7 +644,7 @@ const updateUserRole = {
                               {
                                 type: 'object',
                                 properties: {
-                                  student_id: { type: 'number' },
+                                  student_id: { type: ['number', 'null'] },
                                   name: { type: 'string' },
                                   department: {
                                     oneOf: [

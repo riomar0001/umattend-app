@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getAdminUsersOptions, patchAdminUsersByUserIdRoleMutation, deleteAdminUsersByUserIdMutation } from '@/api/client/@tanstack/react-query.gen';
 import { getErrorMessage } from '@/lib/error-utils';
+import { hasStudentId } from '@/store/authStore';
 
 type UserRole = 'student' | 'admin' | 'csg' | 'instructor' | 'organizer';
 const VALID_ROLES: UserRole[] = ['student', 'admin', 'csg', 'instructor', 'organizer'];
@@ -29,7 +30,9 @@ const ROLE_COLORS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 interface AdminUserStudent {
-  student_id: number;
+  // Null until onboarding supplies one, for accounts whose umindanao.edu.ph
+  // address carries no ID number.
+  student_id: number | null;
   name: string;
   department: string | null;
   program: string | null;
@@ -108,7 +111,9 @@ export default function AdminUsersPage() {
       accessorKey: 'student_id',
       header: () => <Th label="Student ID" />,
       accessorFn: (row) => row.student?.student_id,
-      cell: ({ row }) => <div className="text-xs md:text-sm">{row.original.student?.student_id ?? '—'}</div>
+      // hasStudentId rather than a null check: rows written before the column
+      // was nullable hold 0, which is not an ID anyone can be checked in with.
+      cell: ({ row }) => <div className="text-xs md:text-sm">{hasStudentId(row.original.student?.student_id) ? row.original.student?.student_id : '—'}</div>
     },
     {
       accessorKey: 'umindanao_email',
@@ -153,6 +158,35 @@ export default function AdminUsersPage() {
         return (
           <Badge variant="secondary" className={ROLE_COLORS[role] || ''}>
             {role}
+          </Badge>
+        );
+      }
+    },
+    {
+      accessorKey: 'done_onboarding',
+      header: () => <Th label="Onboarded" />,
+      // An account can be flagged done and still be unusable: attendance is
+      // keyed by the ID number, so one without it cannot be checked in. Worth
+      // distinguishing here rather than showing a bare yes/no that hides it.
+      cell: ({ row }) => {
+        const done = row.original.done_onboarding;
+        const missingId = !hasStudentId(row.original.student?.student_id);
+
+        if (done && missingId) {
+          return (
+            <Badge variant="secondary" className="bg-amber-500/15 text-amber-600 dark:text-amber-400">
+              No ID
+            </Badge>
+          );
+        }
+
+        return done ? (
+          <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+            Yes
+          </Badge>
+        ) : (
+          <Badge variant="secondary" className="text-muted-foreground">
+            No
           </Badge>
         );
       }

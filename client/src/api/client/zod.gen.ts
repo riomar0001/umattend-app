@@ -1051,7 +1051,10 @@ export const zGetAdminUsersResponse = z.object({
             updated_at: z.optional(z.iso.datetime()),
             student: z.optional(z.union([
                 z.object({
-                    student_id: z.optional(z.number()),
+                    student_id: z.optional(z.union([
+                        z.number(),
+                        z.null()
+                    ])),
                     name: z.optional(z.string()),
                     department: z.optional(z.union([
                         z.string(),
@@ -1123,7 +1126,10 @@ export const zPatchAdminUsersByUserIdRoleResponse = z.object({
             role: z.optional(z.string()),
             student: z.optional(z.union([
                 z.object({
-                    student_id: z.optional(z.number()),
+                    student_id: z.optional(z.union([
+                        z.number(),
+                        z.null()
+                    ])),
                     name: z.optional(z.string()),
                     department: z.optional(z.union([
                         z.string(),
