@@ -3,7 +3,9 @@ export interface GetStudentByIdInterface {
   id: string;
   created_at: Date;
   updated_at: Date;
-  student_id: number;
+  // null when the account's address carried no ID number and onboarding has
+  // not supplied one yet. Attendance is unreachable until it does.
+  student_id: number | null;
   name: string;
   umindanao_email?: string;
   department: string | null;

@@ -5,7 +5,9 @@ import { persist } from 'zustand/middleware';
 
 interface User {
   user_id?: string; // Database ID
-  student_id?: number; // Student ID number (e.g., 535940)
+  // Student ID number (e.g., 535940). null for accounts whose umindanao.edu.ph
+  // address carries no number (`tan.jessiejames@…`) until onboarding supplies one.
+  student_id?: number | null;
   umindanao_email?: string;
   name?: string;
   department?: string;

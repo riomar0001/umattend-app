@@ -2,7 +2,8 @@ export type CreateUserTypes = {
   umindanao_email: string;
   google_id: string;
   name: string;
-  student_id: number;
+  // null when the umindanao.edu.ph address carried no ID number.
+  student_id: number | null;
   profile_picture: string;
   role: string;
 };

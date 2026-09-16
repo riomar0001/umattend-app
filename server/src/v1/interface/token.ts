@@ -6,7 +6,7 @@ export interface RefreshTokenPayload {
 }
 export interface AccessTokenPayload {
   user_id: string;
-  student_id: number;
+  student_id: number | null;
   umindanao_email: string;
   first_name?: string | null;
   last_name?: string | null;

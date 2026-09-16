@@ -352,6 +352,13 @@ const massCheckOutStudents = async (
     // send emails for updated records
     for (const rec of result.updatedRecords) {
       try {
+        // Unreachable while attendance is keyed by student_id — a foreign key
+        // cannot point at a NULL — but the column is nullable now, so narrow
+        // rather than assert.
+        if (rec.student.student_id === null) {
+          continue;
+        }
+
         const studentbyUserId = await studentRepository.getUserByStudentId(
           rec.student.student_id
         );
@@ -556,10 +563,13 @@ const getEventDetailsById = async (
     throw new NotFoundError('Student not found');
   }
 
-  const attendanceData = await eventRepository.checkIfUserAttended(
-    event_id,
-    student.student_id
-  );
+  // Without an ID number there is nothing attendance could have been recorded
+  // against, so the event simply reads as not-yet-attended rather than 404ing.
+  const attendanceData =
+    student.student_id === null
+      ? null
+      : await eventRepository.checkIfUserAttended(event_id, student.student_id);
+
   const check_in_at = attendanceData?.check_in_at ?? null;
   const check_out_at =
     attendanceData?.check_out_at instanceof Date

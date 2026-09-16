@@ -55,9 +55,16 @@ model user {
 }
 
 model student {
-  id              String  @id @default(cuid())
-  user_id         String  @unique
-  student_id      Int     @unique
+  id      String @id @default(cuid())
+  user_id String @unique
+  // Parsed out of the umindanao.edu.ph address at signup, but not every address
+  // carries one: `s.nolasco.576804@` does, `tan.jessiejames@` does not. Nullable
+  // so those accounts can exist at all — the old NOT NULL column made the first
+  // such signup store 0 and every one after it collide on this unique index,
+  // which failed the OAuth callback outright. SQLite treats NULLs as distinct in
+  // a unique index, so any number of them coexist. Attendance requires a value;
+  // it is collected during onboarding when the email did not supply one.
+  student_id      Int?    @unique
   name            String
   department      String?
   program         String?

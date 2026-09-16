@@ -29,7 +29,9 @@ const googleAuthWithCode = async (
   let user = await authRepository.findUserByGoogleId(googleUser.google_id);
 
   if (!user) {
-    const student_id = Number(extractStudentID(googleUser.email));
+    // null when the address carries no ID number (`tan.jessiejames@…`). Stored
+    // as-is rather than coerced — onboarding asks for the number instead.
+    const student_id = extractStudentID(googleUser.email);
     try {
       user = await authRepository.createUser({
         umindanao_email: googleUser.email,
@@ -40,13 +42,28 @@ const googleAuthWithCode = async (
         profile_picture: googleUser.profile_picture,
       });
     } catch (error) {
-      // A concurrent OAuth callback created the user first — fetch the existing row
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
+        // A concurrent OAuth callback created the user first — fetch the
+        // existing row. A null result means the conflict was on some other
+        // unique column, so the re-fetch cannot resolve it.
         user = await authRepository.findUserByGoogleId(googleUser.google_id);
+
         if (!user) {
+          // student_id is the one that can collide on data rather than on a
+          // race: two accounts whose addresses carry the same ID number. The
+          // bare P2002 gives the user a generic failure and leaves no trace of
+          // which account is already holding the number.
+          const target = String(error.meta?.target ?? '');
+
+          if (target.includes('student_id')) {
+            throw new AuthenticationError(
+              `The ID number in ${googleUser.email} is already registered to another account`
+            );
+          }
+
           throw error;
         }
       } else {
@@ -65,7 +82,10 @@ const googleAuthWithCode = async (
     umindanao_email: user.umindanao_email,
     role: user.role,
     done_onboarding: user.done_onboarding,
-    student_id: Number(user.student?.student_id),
+    // Carried through as null rather than Number()'d — that turned a missing
+    // ID into NaN, which serialises into the JWT as the JSON literal null
+    // anyway, but only after every numeric comparison on it had gone false.
+    student_id: user.student?.student_id ?? null,
     name: user.student?.name,
     department: user.student?.department ?? '',
     program: user.student?.program ?? '',
@@ -140,7 +160,7 @@ const refreshAccessToken = async (refresh_token: string) => {
     umindanao_email: user.umindanao_email,
     role: user.role,
     done_onboarding: user.done_onboarding,
-    student_id: user.student?.student_id as number,
+    student_id: user.student?.student_id ?? null,
     name: user.student?.name as string,
     department: user.student?.department ?? '',
     program: user.student?.program ?? '',

@@ -2,7 +2,8 @@ export type AccessTokenPayloadTypes = {
   user_id: string;
   umindanao_email: string;
   role: string;
-  student_id?: number;
+  // null until an ID number exists for the account — see student.student_id.
+  student_id?: number | null;
   name?: string;
   department?: string;
   program?: string;
