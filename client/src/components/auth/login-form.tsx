@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import AnimatedContent from '@/components/AnimatedContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,7 +78,14 @@ export default function LoginForm({
                     </Button>
 
                     <p className="text-muted-foreground text-center text-xs leading-relaxed">
-                      By continuing, you agree to our Terms of Service and Privacy Policy
+                      By continuing, you agree to our{' '}
+                      <Link href="/terms" className="text-foreground underline underline-offset-4 hover:opacity-80">
+                        Terms of Service
+                      </Link>{' '}
+                      and{' '}
+                      <Link href="/privacy" className="text-foreground underline underline-offset-4 hover:opacity-80">
+                        Privacy Policy
+                      </Link>
                     </p>
                   </>
                 ) : (
