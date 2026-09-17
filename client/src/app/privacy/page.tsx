@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { LegalPage, Section, List, DataRow } from '@/components/legal-page';
+import { LegalPage, Section, List, DataRow, NotAffiliatedNotice, OPERATOR } from '@/components/legal-page';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — UMAttend',
@@ -10,20 +10,25 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy Policy" updated="17 September 2026">
+      <NotAffiliatedNotice />
+
       <Section heading="1. Who handles your data">
         <p>
-          UMAttend is operated by the UMAttend Engineering Team under the College of Computing Education, University of Mindanao, Matina Campus, Matina
-          Crossing, Davao City, Davao del Sur 8000, Philippines. We are the personal information controller for the data described below, and we handle it
-          under the Data Privacy Act of 2012 (Republic Act No. 10173).
+          UMAttend is operated by {OPERATOR.name}, {OPERATOR.description}. For the purposes of the Data Privacy Act of 2012 (Republic Act No. 10173), that team
+          is the personal information controller for the data described below.
+        </p>
+        <p>
+          No university or school is the controller of this data, and none of it is held on a university system. It is stored on third-party infrastructure that
+          the team rents and administers, described in section 5.
         </p>
       </Section>
 
       <Section heading="2. What we collect">
-        <p>We collect only what the service needs to record attendance. We do not buy data, and we do not run advertising or third-party analytics.</p>
+        <p>We collect only what is needed to record attendance. We do not sell data, and we run no advertising or third-party analytics.</p>
 
         <div className="mt-4">
           <h4 className="text-foreground mb-1 text-sm font-semibold">From your Google sign-in</h4>
-          <DataRow what="Email address" why="Identifies your account. Sign-in is restricted to umindanao.edu.ph accounts." />
+          <DataRow what="Email address" why={`Identifies your account. Sign-in is restricted to ${OPERATOR.domain} accounts.`} />
           <DataRow what="Google account ID" why="Links your session to the same account each time you sign in." />
           <DataRow what="Name and profile picture" why="Shown on your profile and to organizers when you check in." />
           <p className="mt-2 text-xs">
@@ -36,7 +41,7 @@ export default function PrivacyPage() {
           <h4 className="text-foreground mb-1 text-sm font-semibold">Your student profile</h4>
           <DataRow
             what="Student number"
-            why="Attendance is recorded against it. Taken from your university email where it contains one; otherwise you enter it during onboarding."
+            why="Attendance is recorded against it. Taken from your campus email where it contains one; otherwise you enter it during onboarding."
           />
           <DataRow what="Department and program" why="Lets organizers group and report attendance, and is included in event exports." />
         </div>
@@ -62,14 +67,14 @@ export default function PrivacyPage() {
       </Section>
 
       <Section heading="3. Why we are allowed to hold it">
-        <p>Under the Data Privacy Act, we rely on:</p>
-        <List
-          items={[
-            'Your consent, given when you sign in and complete onboarding.',
-            'The legitimate interests of the university in recording attendance at its events and keeping the service secure.',
-            'Compliance with the university’s own record-keeping requirements.'
-          ]}
-        />
+        <p>
+          Our basis is <span className="text-foreground font-medium">your consent</span>, given when you sign in and complete onboarding, together with our
+          legitimate interest in keeping the service running and secure.
+        </p>
+        <p>
+          We cannot and do not rely on any university mandate to process your data — we are not acting on a university’s behalf. If you withdraw consent, we
+          stop processing your data and your account is closed; the trade-off is that attendance can no longer be recorded for you here.
+        </p>
       </Section>
 
       <Section heading="4. Who can see your data">
@@ -77,18 +82,19 @@ export default function PrivacyPage() {
           items={[
             <>
               <span className="text-foreground font-medium">Event organizers.</span> For events you attend, organizers can see your name, student number,
-              department, program, and your check-in and check-out times, and can export those to a spreadsheet.
+              department, program, and your check-in and check-out times, and can export those to a spreadsheet. Once exported, that file is in their hands and
+              outside our control — what they do with it is governed by their own obligations, not this policy.
             </>,
             <>
-              <span className="text-foreground font-medium">Administrators.</span> UMAttend administrators can view accounts, events, and attendance in order to
-              operate and support the service.
+              <span className="text-foreground font-medium">The maintainers.</span> A small number of team members hold administrator access in order to operate
+              and support the service.
             </>,
             <>
               <span className="text-foreground font-medium">You.</span> Your own profile, attendance history, and login history are visible to you.
             </>
           ]}
         />
-        <p>We do not sell personal data, and we do not share it with anyone for marketing.</p>
+        <p>We do not sell personal data and we do not share it for marketing. We disclose it to public authorities only where the law requires it.</p>
       </Section>
 
       <Section heading="5. Service providers we rely on">
@@ -99,8 +105,8 @@ export default function PrivacyPage() {
               <span className="text-foreground font-medium">Google</span> — authenticates your sign-in and delivers our notification emails.
             </>,
             <>
-              <span className="text-foreground font-medium">Cloudflare</span> — hosts the application and database, and provides network protection. Data is
-              stored on Cloudflare infrastructure and may be processed outside the Philippines.
+              <span className="text-foreground font-medium">Cloudflare</span> — hosts the application and database, and provides network protection. Your data
+              is stored on Cloudflare infrastructure and may be processed outside the Philippines.
             </>,
             <>
               <span className="text-foreground font-medium">ip-api.com</span> — your IP address is sent to this service to turn it into an approximate city and
@@ -130,11 +136,15 @@ export default function PrivacyPage() {
         <List
           items={[
             'Account and profile data is kept while your account exists.',
-            'Attendance records are kept as university event records, and are retained even if your account is closed — they document events that took place.',
+            'Attendance records are kept so that the organizers who ran those events can still refer to them. They are not held under any university retention rule — we keep them because the service would be useless otherwise, and you can ask us to remove yours.',
             'Session records expire automatically, and expired sessions are cleared on a regular schedule.',
-            'When an account is deleted it is marked as deleted and stops being usable; it is excluded from the service rather than immediately erased, so that historical attendance stays intelligible.'
+            'A closed account is marked as deleted and stops being usable. Ask us if you want it erased outright rather than deactivated, and we will do that.'
           ]}
         />
+        <p>
+          Because this is a volunteer project rather than an institution, we cannot promise indefinite storage either. If UMAttend is ever shut down we will
+          give notice where we reasonably can, and delete what we hold.
+        </p>
       </Section>
 
       <Section heading="9. Your rights">
@@ -144,7 +154,7 @@ export default function PrivacyPage() {
             'Be informed about how your data is collected and used.',
             'Access the personal data we hold about you.',
             'Correct data that is inaccurate or out of date.',
-            'Object to processing, or withdraw consent — noting that without the data above the service cannot record your attendance.',
+            'Object to processing, or withdraw consent.',
             'Erasure or blocking, where the data is incomplete, outdated, unlawfully obtained, or no longer necessary.',
             'Data portability — receive your data in a portable electronic format.',
             'Damages, where you suffer as a result of inaccurate, unlawfully obtained, or unauthorized use of your data.'
@@ -166,28 +176,56 @@ export default function PrivacyPage() {
             'Sensitive endpoints are rate-limited to resist automated abuse.'
           ]}
         />
-        <p>No system is perfectly secure. If you believe your account has been accessed by someone else, revoke your sessions and contact us immediately.</p>
+        <p>
+          Administrative access is held by as few maintainers as possible, and the credentials the service uses to reach its own infrastructure are stored as
+          encrypted secrets rather than in the codebase.
+        </p>
+        <p>
+          We are students maintaining this in our spare time, not a security team, and no system is perfectly secure. Please do not store anything here you
+          would not be willing to lose or have exposed. If you believe your account has been accessed by someone else, revoke your sessions and contact us
+          immediately.
+        </p>
+        <p>
+          If you think you have found a security flaw, please report it privately — see{' '}
+          <Link href="/terms" className="text-foreground underline underline-offset-4">
+            section 7 of our Terms
+          </Link>
+          . We will not treat good-faith research as a breach of the terms.
+        </p>
       </Section>
 
-      <Section heading="11. Children">
-        <p>UMAttend is intended for university students, faculty, and staff, and accounts can only be created with a university email address.</p>
+      <Section heading="11. If there is a data breach">
+        <p>
+          If personal data held here is exposed, altered, or accessed without authorization in a way that is likely to put you at risk, we will notify the
+          National Privacy Commission and everyone affected within{' '}
+          <span className="text-foreground font-medium">72 hours</span> of becoming aware of it, as the Data Privacy Act requires.
+        </p>
+        <p>
+          Our notice will tell you what data was involved, what we know about how it happened, what we have done in response, and what you can do to protect
+          yourself. We will tell you even where doing so is embarrassing for us.
+        </p>
       </Section>
 
-      <Section heading="12. Changes to this policy">
+      <Section heading="12. Children">
+        <p>UMAttend is intended for students, faculty, and staff at the campus it serves, and accounts can only be created with a campus email address.</p>
+      </Section>
+
+      <Section heading="13. Changes to this policy">
         <p>We will update this page when our practices change, and the “last updated” date will change with it.</p>
       </Section>
 
-      <Section heading="13. Contact us">
+      <Section heading="14. Contact us">
         <p>
           To exercise any of the rights above, or to ask how your data is handled, use the{' '}
           <Link href="/contact" className="text-foreground underline underline-offset-4">
             contact form
           </Link>{' '}
-          or email <span className="text-foreground font-medium">cce_csg@umindanao.edu.ph</span>.
+          or email <span className="text-foreground font-medium">{OPERATOR.email}</span>.
         </p>
         <p>
-          If you believe your rights have been violated, you may also complain to the National Privacy Commission of the Philippines at{' '}
-          <span className="text-foreground font-medium">privacy.gov.ph</span>.
+          If you believe your rights have been violated, you may complain to the National Privacy Commission of the Philippines at{' '}
+          <span className="text-foreground font-medium">privacy.gov.ph</span>. Complaints about this service should be directed to {OPERATOR.name}, not to the
+          university.
         </p>
       </Section>
     </LegalPage>

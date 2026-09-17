@@ -2,6 +2,25 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 /**
+ * Identity of the people operating UMAttend.
+ *
+ * Kept in one place because it is load-bearing in both legal pages: it names the
+ * personal information controller under RA 10173 and the party the terms are an
+ * agreement with. UMAttend is a volunteer student project, **not** a system of
+ * the University of Mindanao — so the university cannot be named as controller,
+ * and nothing here may imply official status or university enforcement.
+ */
+export const OPERATOR = {
+  name: 'the UMAttend Engineering Team',
+  /** Used where a sentence needs the name capitalised at the start. */
+  nameCapitalised: 'The UMAttend Engineering Team',
+  description: 'a volunteer community of student developers',
+  email: 'cce_csg@umindanao.edu.ph',
+  /** The domain sign-in is restricted to. */
+  domain: 'umindanao.edu.ph'
+} as const;
+
+/**
  * Shared shell for the public legal pages.
  *
  * These deliberately sit outside `ProtectedRoute` — the login screen links to
@@ -46,6 +65,26 @@ export function LegalPage({ title, updated, children }: { title: string; updated
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Callout stating that UMAttend is not an official university system.
+ *
+ * Deliberately placed above the numbered sections on both pages rather than
+ * buried in one: a reader who signs in with a university email will otherwise
+ * reasonably assume the university runs this and stands behind it.
+ */
+export function NotAffiliatedNotice() {
+  return (
+    <aside className="border-border bg-muted/40 rounded-md border p-4">
+      <p className="text-foreground text-sm font-medium">UMAttend is not a University of Mindanao system.</p>
+      <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+        It is built and run by {OPERATOR.description} who volunteer their time. It is not operated, endorsed, or officially supported by the University of
+        Mindanao or any of its offices, and signing in with a university email address does not make it one. Records kept here are not official university
+        records.
+      </p>
+    </aside>
   );
 }
 
