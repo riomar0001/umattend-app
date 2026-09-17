@@ -114,22 +114,6 @@ const assertInspectable = (queueName: string): string => {
 };
 
 /**
- * Email jobs carry a fully rendered HTML body — roughly 10KB each. Shipping
- * those verbatim would make a page of ten jobs a ~100KB response to render a
- * table nobody reads the markup in, so long strings are clipped for display.
- * Retry is unaffected: it re-sends the untouched body straight off the queue
- * and never goes through this.
- */
-const PREVIEW_LIMIT = 200;
-
-const clip = (value: unknown): unknown => {
-  if (typeof value === 'string' && value.length > PREVIEW_LIMIT) {
-    return `${value.slice(0, PREVIEW_LIMIT)}… (${value.length} chars)`;
-  }
-  return value;
-};
-
-/**
  * Unwrap a dead letter into the original job plus whatever context came with it.
  *
  * Two shapes arrive in the DLQ. Consumers that caught their own failure send an
@@ -170,20 +154,17 @@ const toJob = (message: PulledMessage) => {
       ? String((job as { type: unknown }).type)
       : 'unknown';
 
-  const preview =
-    typeof job === 'object' && job !== null
-      ? Object.fromEntries(
-          Object.entries(job as Record<string, unknown>).map(([k, v]) => [
-            k,
-            clip(v),
-          ])
-        )
-      : { value: clip(job) };
-
   return {
     id: message.id,
     name: type,
-    data: preview,
+    /**
+     * The full job, unclipped. The detail sheet needs it, and fetching it
+     * separately would mean a second pull — which costs a delivery attempt and
+     * would race the lease the list itself just took. Response size is bounded
+     * instead by only building jobs for the requested page (see getFailedJobs)
+     * and by the 128KB ceiling Queues puts on a message.
+     */
+    data: job as Record<string, unknown>,
     failedReason: reason,
     /** Origin queue, when the consumer recorded it. */
     queue,
@@ -237,18 +218,20 @@ const getFailedJobs = async (
     visibilityTimeoutMs: LIST_VISIBILITY_MS,
   });
 
-  const jobs = messages.map(toJob);
+  // Slice before building jobs: bodies are returned whole, so mapping the full
+  // batch would serialise up to 100 messages to send back ten.
   const start = (page - 1) * limit;
+  const data = messages.slice(start, start + limit).map(toJob);
 
   return {
-    data: jobs.slice(start, start + limit),
+    data,
     backlog,
     truncated: backlog > messages.length,
     pagination: {
       page,
       limit,
       total: backlog,
-      totalPages: Math.max(1, Math.ceil(jobs.length / limit)),
+      totalPages: Math.max(1, Math.ceil(messages.length / limit)),
     },
   };
 };

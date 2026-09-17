@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { RefreshCw, Trash2, RotateCcw, AlertTriangle, Inbox } from 'lucide-react';
+import { RefreshCw, Trash2, RotateCcw, AlertTriangle, Inbox, FileWarning } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
+import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   getAdminQueuesOptions,
@@ -39,7 +41,6 @@ interface FailedJob {
    * a crash or CPU timeout, where no catch block ran to record a reason.
    */
   failedReason: string | null;
-  /** Origin queue, when the consumer recorded it. */
   queue: string | null;
   attemptsMade: number;
   timestamp: number | null;
@@ -54,12 +55,70 @@ interface FailedResponse {
 
 const PAGE_SIZE = 10;
 
+// ---------------------------------------------------------------------------
+// Formatting
+// ---------------------------------------------------------------------------
+
+/**
+ * A thrown Error serialises as "Name: message\n  at frame…". The first line
+ * carries the whole diagnosis; the stack only matters once you are already
+ * looking closely, so it stays in the detail sheet.
+ */
+function errorHeadline(reason: string): string {
+  return reason.split('\n')[0].trim();
+}
+
+/**
+ * One-line gist of a job, chosen per type rather than dumping JSON — the
+ * payload column is for recognising *which* job this is at a glance.
+ */
+function summarise(job: FailedJob): string {
+  const d = job.data ?? {};
+  const str = (k: string) => (typeof d[k] === 'string' ? (d[k] as string) : undefined);
+
+  switch (job.name) {
+    case 'send-email':
+      return [str('to'), str('subject')].filter(Boolean).join(' — ') || '(no recipient)';
+    case 'event-start':
+    case 'event-done':
+      return str('event_id') ? `event ${str('event_id')}` : '(no event id)';
+    default: {
+      const keys = Object.keys(d);
+      return keys.length ? keys.slice(0, 4).join(', ') : '(empty)';
+    }
+  }
+}
+
 const Th = ({ label }: { label: string }) => <div className="text-foreground text-xs font-medium md:text-sm">{label}</div>;
+
+/** Key/value row used throughout the detail sheet. */
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[110px_1fr] items-start gap-2 py-1.5">
+      <div className="text-muted-foreground text-xs">{label}</div>
+      <div className="min-w-0 text-xs break-words">{children}</div>
+    </div>
+  );
+}
+
+/** Scrollable monospace block for stacks and JSON. */
+function CodeBlock({ children, tone = 'default' }: { children: string; tone?: 'default' | 'danger' }) {
+  return (
+    <pre
+      className={`bg-muted/50 max-h-80 overflow-auto rounded-md border p-3 font-mono text-[11px] leading-relaxed whitespace-pre-wrap ${
+        tone === 'danger' ? 'text-red-600 dark:text-red-400' : ''
+      }`}
+    >
+      {children}
+    </pre>
+  );
+}
 
 export default function AdminQueuesPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [confirmDialog, setConfirmDialog] = useState<'clean' | 'retry-all' | null>(null);
+  const [selected, setSelected] = useState<FailedJob | null>(null);
 
   // The queue list is only used to discover the environment's DLQ name, which
   // differs between production and staging.
@@ -93,6 +152,7 @@ export default function AdminQueuesPage() {
     ...postAdminQueuesByQueueNameFailedByJobIdRetryMutation(),
     onSuccess: () => {
       toast.success('Job re-queued');
+      setSelected(null);
       invalidateAll();
     },
     onError: (err) => toast.error(getErrorMessage(err, 'Failed to retry job'))
@@ -102,6 +162,7 @@ export default function AdminQueuesPage() {
     ...deleteAdminQueuesByQueueNameFailedByJobIdMutation(),
     onSuccess: () => {
       toast.success('Job discarded');
+      setSelected(null);
       invalidateAll();
     },
     onError: (err) => toast.error(getErrorMessage(err, 'Failed to discard job'))
@@ -131,6 +192,7 @@ export default function AdminQueuesPage() {
   });
 
   const busy = retryAll.isPending || cleanAll.isPending;
+  const rowBusy = retryJob.isPending || deleteJob.isPending;
 
   // ------------------------------------------------------------------
   // Columns
@@ -140,7 +202,7 @@ export default function AdminQueuesPage() {
       accessorKey: 'name',
       header: () => <Th label="Type" />,
       cell: ({ row }) => (
-        <Badge variant="secondary" className="text-xs">
+        <Badge variant="secondary" className="font-mono text-[10px] whitespace-nowrap md:text-xs">
           {row.original.name}
         </Badge>
       )
@@ -152,20 +214,15 @@ export default function AdminQueuesPage() {
         const reason = row.original.failedReason;
         if (!reason) {
           return (
-            <div
-              className="text-muted-foreground max-w-75 text-xs italic"
-              title="The platform dead-lettered this job, so no consumer recorded a reason. Check Workers logs around the queued time."
-            >
-              Not recorded
+            <div className="text-muted-foreground flex items-center gap-1.5 text-xs" title="No consumer recorded a reason — the platform dead-lettered this job after a crash or timeout. Check Workers logs.">
+              <FileWarning className="h-3.5 w-3.5 shrink-0" />
+              <span className="italic">Not recorded</span>
             </div>
           );
         }
         return (
-          <div
-            className="bg-secondary/30 max-w-75 truncate rounded-sm border p-1 text-xs text-red-600 hover:text-wrap dark:text-red-400"
-            title={reason}
-          >
-            {reason}
+          <div className="max-w-80 truncate font-mono text-[11px] text-red-600 md:text-xs dark:text-red-400" title={errorHeadline(reason)}>
+            {errorHeadline(reason)}
           </div>
         );
       }
@@ -173,30 +230,27 @@ export default function AdminQueuesPage() {
     {
       accessorKey: 'data',
       header: () => <Th label="Payload" />,
-      cell: ({ row }) => {
-        const json = JSON.stringify(row.original.data);
-        return (
-          <div className="bg-secondary/30 max-w-90 truncate rounded-sm border p-1 font-mono text-[10px] hover:text-wrap md:text-xs" title={json}>
-            {json}
-          </div>
-        );
-      }
+      cell: ({ row }) => (
+        <div className="text-muted-foreground max-w-70 truncate text-xs" title={summarise(row.original)}>
+          {summarise(row.original)}
+        </div>
+      )
     },
     {
       accessorKey: 'attemptsMade',
-      header: () => <Th label="Deliveries" />,
+      header: () => <Th label="Tries" />,
       cell: ({ row }) => (
-        <Badge variant="outline" className="text-xs" title="Includes deliveries caused by viewing this page">
+        <Badge variant="outline" className="text-xs">
           {row.original.attemptsMade}
         </Badge>
       )
     },
     {
       accessorKey: 'timestamp',
-      header: () => <Th label="Queued" />,
+      header: () => <Th label="Failed" />,
       cell: ({ row }) => {
         const ts = row.original.timestamp;
-        return <div className="text-muted-foreground text-xs">{ts ? new Date(ts).toLocaleString() : '—'}</div>;
+        return <div className="text-muted-foreground text-xs whitespace-nowrap">{ts ? new Date(ts).toLocaleString() : '—'}</div>;
       }
     },
     {
@@ -204,25 +258,8 @@ export default function AdminQueuesPage() {
       header: () => <div className="text-right text-xs font-medium md:text-sm">Actions</div>,
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            title="Re-queue this job"
-            disabled={retryJob.isPending || !dlq}
-            onClick={() => retryJob.mutate({ path: { queueName: dlq!.name, jobId: row.original.id } })}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-red-500 hover:text-red-600"
-            title="Discard permanently"
-            disabled={deleteJob.isPending || !dlq}
-            onClick={() => deleteJob.mutate({ path: { queueName: dlq!.name, jobId: row.original.id } })}
-          >
-            <Trash2 className="h-4 w-4" />
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setSelected(row.original)}>
+            View
           </Button>
         </div>
       )
@@ -262,9 +299,7 @@ export default function AdminQueuesPage() {
                   </li>
                 ))}
             </ul>
-            <p className="text-muted-foreground mt-2 text-xs">
-              Queues with a Worker consumer cannot be read — depth and contents are unavailable from the API.
-            </p>
+            <p className="text-muted-foreground mt-2 text-xs">Queues with a Worker consumer cannot be read — depth and contents are unavailable from the API.</p>
           </CardContent>
         </Card>
       </div>
@@ -309,6 +344,79 @@ export default function AdminQueuesPage() {
           </div>
         }
       />
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Detail sheet                                                      */}
+      {/* ---------------------------------------------------------------- */}
+      <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+          {selected && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {selected.name}
+                  </Badge>
+                  Failed job
+                </SheetTitle>
+                <SheetDescription>
+                  {selected.failedReason
+                    ? 'The consumer recorded why this job failed before dead-lettering it.'
+                    : 'Dead-lettered by the platform, so no reason was captured — see Workers logs around the time below.'}
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="px-4 pb-6">
+                <div className="divide-border divide-y">
+                  <Field label="Job ID">
+                    <span className="font-mono">{selected.id}</span>
+                  </Field>
+                  <Field label="Origin queue">{selected.queue ? <span className="font-mono">{selected.queue}</span> : <span className="text-muted-foreground italic">unknown</span>}</Field>
+                  <Field label="Attempts">{selected.attemptsMade}</Field>
+                  <Field label="Failed at">{selected.timestamp ? new Date(selected.timestamp).toLocaleString() : '—'}</Field>
+                </div>
+
+                <Separator className="my-4" />
+
+                <h3 className="mb-2 text-sm font-semibold">Failed reason</h3>
+                {selected.failedReason ? (
+                  <CodeBlock tone="danger">{selected.failedReason}</CodeBlock>
+                ) : (
+                  <p className="text-muted-foreground bg-muted/50 rounded-md border p-3 text-xs">
+                    Not recorded. This job did not fail inside a <code className="font-mono">catch</code> block — it was a CPU timeout, an isolate crash, or a throw before the handler
+                    started. Cloudflare dead-lettered the message verbatim, so only the payload survived.
+                  </p>
+                )}
+
+                <Separator className="my-4" />
+
+                <h3 className="mb-2 text-sm font-semibold">Payload</h3>
+                <CodeBlock>{JSON.stringify(selected.data, null, 2)}</CodeBlock>
+
+                <div className="mt-6 flex gap-2">
+                  <Button
+                    className="flex-1"
+                    disabled={rowBusy || !dlq}
+                    onClick={() => dlq && retryJob.mutate({ path: { queueName: dlq.name, jobId: selected.id } })}
+                  >
+                    <RefreshCw className="mr-1 h-4 w-4" />
+                    {retryJob.isPending ? 'Re-queuing...' : 'Re-queue'}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    disabled={rowBusy || !dlq}
+                    onClick={() => dlq && deleteJob.mutate({ path: { queueName: dlq.name, jobId: selected.id } })}
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    {deleteJob.isPending ? 'Discarding...' : 'Discard'}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={!!confirmDialog} onOpenChange={() => setConfirmDialog(null)}>
         <DialogContent>
