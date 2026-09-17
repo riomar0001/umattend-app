@@ -337,11 +337,14 @@ onto its original queue or discarded.
 
 Two limits are worth knowing before you go looking:
 
-- **The reason a job failed is not in the DLQ.** A dead-lettered message is the
-  original body verbatim and nothing else — no error, no stack. The error exists
-  only in Workers logs (`observability.logs` is on at 100% sampling), so
-  correlate by timestamp and payload. Capturing the reason would mean recording
-  it in the source consumer's `catch` block as it happens.
+- **Some jobs show no reason, and that is meaningful.** On its final attempt a
+  consumer dead-letters itself, attaching the error, origin queue and real
+  attempt count (`src/worker/deadLetter.ts`). Cloudflare's own dead-lettering
+  copies the body verbatim with none of that, so a job showing *"Not recorded"*
+  did not fail in a `catch` block — it was a CPU timeout, an isolate crash, or a
+  throw before the handler's `try`. Go to Workers logs for those
+  (`observability.logs` is on at 100% sampling) and correlate by timestamp.
+  The distinction is worth reading as a signal, not a gap.
 - **Listing is not free.** Each pull counts as a delivery attempt against the
   consumer's retry budget, which is why the admin page refreshes only when asked
   rather than on a timer. Do not add polling to it.

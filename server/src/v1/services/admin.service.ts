@@ -14,6 +14,7 @@ import {
 } from '../../configs/queuesApi.config';
 import { getQueuesConfig } from '@/constants/queues.constants';
 import { bindings } from '@/worker/runtime';
+import { isDeadLetterEnvelope } from '@/worker/deadLetter';
 
 const VALID_ROLES = ['student', 'admin', 'csg', 'instructor', 'organizer'];
 
@@ -112,28 +113,86 @@ const assertInspectable = (queueName: string): string => {
   return dlq;
 };
 
-const toJob = (message: PulledMessage) => {
-  let data: unknown;
+/**
+ * Email jobs carry a fully rendered HTML body — roughly 10KB each. Shipping
+ * those verbatim would make a page of ten jobs a ~100KB response to render a
+ * table nobody reads the markup in, so long strings are clipped for display.
+ * Retry is unaffected: it re-sends the untouched body straight off the queue
+ * and never goes through this.
+ */
+const PREVIEW_LIMIT = 200;
+
+const clip = (value: unknown): unknown => {
+  if (typeof value === 'string' && value.length > PREVIEW_LIMIT) {
+    return `${value.slice(0, PREVIEW_LIMIT)}… (${value.length} chars)`;
+  }
+  return value;
+};
+
+/**
+ * Unwrap a dead letter into the original job plus whatever context came with it.
+ *
+ * Two shapes arrive in the DLQ. Consumers that caught their own failure send an
+ * envelope carrying the error (see worker/deadLetter.ts); anything the platform
+ * dead-lettered — a crash or CPU timeout, where no catch ran — is the bare body.
+ * The second kind has no reason to report, and says so rather than inventing one.
+ */
+const unwrap = (
+  body: string
+): { job: unknown; reason: string | null; queue: string | null; attempts: number | null; failedAt: number | null } => {
+  let parsed: unknown;
   try {
-    data = JSON.parse(message.body);
+    parsed = JSON.parse(body);
   } catch {
     // A message that is not JSON is still worth showing, just not parsed.
-    data = { raw: message.body };
+    return { job: { raw: body }, reason: null, queue: null, attempts: null, failedAt: null };
   }
 
+  if (isDeadLetterEnvelope(parsed)) {
+    const at = Date.parse(parsed.failed_at);
+    return {
+      job: parsed.body,
+      reason: parsed.error,
+      queue: parsed.queue,
+      attempts: parsed.attempts,
+      failedAt: Number.isNaN(at) ? null : at,
+    };
+  }
+
+  return { job: parsed, reason: null, queue: null, attempts: null, failedAt: null };
+};
+
+const toJob = (message: PulledMessage) => {
+  const { job, reason, queue, attempts, failedAt } = unwrap(message.body);
+
   const type =
-    typeof data === 'object' && data !== null && 'type' in data
-      ? String((data as { type: unknown }).type)
+    typeof job === 'object' && job !== null && 'type' in job
+      ? String((job as { type: unknown }).type)
       : 'unknown';
+
+  const preview =
+    typeof job === 'object' && job !== null
+      ? Object.fromEntries(
+          Object.entries(job as Record<string, unknown>).map(([k, v]) => [
+            k,
+            clip(v),
+          ])
+        )
+      : { value: clip(job) };
 
   return {
     id: message.id,
     name: type,
-    data: data as Record<string, unknown>,
-    // Not recoverable from a dead-lettered message — see the header comment.
-    failedReason: null,
-    attemptsMade: message.attempts,
-    timestamp: message.timestamp_ms,
+    data: preview,
+    failedReason: reason,
+    /** Origin queue, when the consumer recorded it. */
+    queue,
+    /**
+     * Deliveries from the *source* queue when known. `message.attempts` is the
+     * DLQ's own counter, which counts every time this panel listed the job.
+     */
+    attemptsMade: attempts ?? message.attempts,
+    timestamp: failedAt ?? message.timestamp_ms,
     finishedOn: null,
     processedOn: null,
   };
@@ -216,12 +275,13 @@ const retryJob = async (queueName: string, jobId: string) => {
   const dlq = assertInspectable(queueName);
   const message = await leaseById(dlq, jobId);
 
-  let body: { type?: string };
-  try {
-    body = JSON.parse(message.body);
-  } catch {
+  // Unwrap first: an enriched dead letter nests the real job under `body`, and
+  // re-sending the envelope would enqueue the bookkeeping instead of the work.
+  const { job } = unwrap(message.body);
+  if (typeof job !== 'object' || job === null) {
     throw new BadRequestError('Job body is not valid JSON and cannot be retried.');
   }
+  const body = job as { type?: string };
 
   const { EMAIL_QUEUE, EVENT_STATUS_QUEUE } = bindings();
 
@@ -261,7 +321,7 @@ const retryAllFailed = async (queueName: string) => {
 
   for (const message of messages) {
     try {
-      const body = JSON.parse(message.body) as { type?: string };
+      const body = unwrap(message.body).job as { type?: string };
       if (body.type === 'send-email') {
         await EMAIL_QUEUE.send(body as never);
       } else if (body.type === 'event-start' || body.type === 'event-done') {

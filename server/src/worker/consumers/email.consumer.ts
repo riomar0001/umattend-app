@@ -9,10 +9,14 @@
 
 import { sendMail } from '../../configs/smtp.config';
 import type { EmailMessage } from '../messages';
+import { retryOrDeadLetter } from '../deadLetter';
 
 /** Exponential-ish backoff, mirroring BullMQ's 2s base delay. */
 const retryDelay = (attempts: number): number =>
   Math.min(2 ** attempts, 900);
+
+/** Mirrors `max_retries` on the umattend-email consumer in wrangler.jsonc. */
+const MAX_RETRIES = 3;
 
 export const consumeEmailBatch = async (
   batch: MessageBatch<EmailMessage>
@@ -29,7 +33,13 @@ export const consumeEmailBatch = async (
         `Failed to send email to ${to} (attempt ${message.attempts}):`,
         error
       );
-      message.retry({ delaySeconds: retryDelay(message.attempts) });
+      await retryOrDeadLetter(
+        message,
+        batch.queue,
+        MAX_RETRIES,
+        error,
+        retryDelay(message.attempts)
+      );
     }
   }
 };

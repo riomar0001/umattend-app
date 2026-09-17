@@ -19,6 +19,10 @@ import prisma from '../../configs/prisma.config';
 import type { Env } from '../env';
 import { delayUntil, type EventStatusMessage } from '../messages';
 import { doneDueAt, startDueAt } from '../eventStatus';
+import { retryOrDeadLetter } from '../deadLetter';
+
+/** Mirrors `max_retries` on the umattend-event-status consumer in wrangler.jsonc. */
+const MAX_RETRIES = 5;
 
 const handle = async (
   body: EventStatusMessage,
@@ -101,7 +105,13 @@ export const consumeEventStatusBatch = async (
         `[${message.body?.type}] failed for event ${message.body?.event_id} (attempt ${message.attempts}):`,
         error
       );
-      message.retry({ delaySeconds: Math.min(60 * message.attempts, 900) });
+      await retryOrDeadLetter(
+        message,
+        batch.queue,
+        MAX_RETRIES,
+        error,
+        Math.min(60 * message.attempts, 900)
+      );
     }
   }
 };

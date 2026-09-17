@@ -35,10 +35,12 @@ interface FailedJob {
   name: string;
   data: Record<string, unknown>;
   /**
-   * Always null. A dead-lettered message carries the original body verbatim and
-   * nothing about why it failed — the error only exists in Workers logs.
+   * Null when the platform dead-lettered the job rather than the consumer —
+   * a crash or CPU timeout, where no catch block ran to record a reason.
    */
   failedReason: string | null;
+  /** Origin queue, when the consumer recorded it. */
+  queue: string | null;
   attemptsMade: number;
   timestamp: number | null;
 }
@@ -144,12 +146,37 @@ export default function AdminQueuesPage() {
       )
     },
     {
+      accessorKey: 'failedReason',
+      header: () => <Th label="Failed Reason" />,
+      cell: ({ row }) => {
+        const reason = row.original.failedReason;
+        if (!reason) {
+          return (
+            <div
+              className="text-muted-foreground max-w-75 text-xs italic"
+              title="The platform dead-lettered this job, so no consumer recorded a reason. Check Workers logs around the queued time."
+            >
+              Not recorded
+            </div>
+          );
+        }
+        return (
+          <div
+            className="bg-secondary/30 max-w-75 truncate rounded-sm border p-1 text-xs text-red-600 hover:text-wrap dark:text-red-400"
+            title={reason}
+          >
+            {reason}
+          </div>
+        );
+      }
+    },
+    {
       accessorKey: 'data',
       header: () => <Th label="Payload" />,
       cell: ({ row }) => {
         const json = JSON.stringify(row.original.data);
         return (
-          <div className="bg-secondary/30 max-w-[360px] truncate rounded-sm border p-1 font-mono text-[10px] hover:text-wrap md:text-xs" title={json}>
+          <div className="bg-secondary/30 max-w-90 truncate rounded-sm border p-1 font-mono text-[10px] hover:text-wrap md:text-xs" title={json}>
             {json}
           </div>
         );

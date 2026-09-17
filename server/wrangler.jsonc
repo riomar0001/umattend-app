@@ -52,6 +52,14 @@
 			{
 				"binding": "EVENT_STATUS_QUEUE",
 				"queue": "umattend-event-status"
+			},
+			// The consumers dead-letter explicitly so the failure reason is
+			// recorded — see src/worker/deadLetter.ts. The `dead_letter_queue`
+			// settings below remain as the backstop for failures no catch block
+			// can see (CPU timeout, isolate crash).
+			{
+				"binding": "DLQ",
+				"queue": "umattend-dlq"
 			}
 		],
 		"consumers": [
@@ -222,6 +230,10 @@
 					{
 						"binding": "EVENT_STATUS_QUEUE",
 						"queue": "umattend-event-status-staging"
+					},
+					{
+						"binding": "DLQ",
+						"queue": "umattend-dlq-staging"
 					}
 				],
 				"consumers": [

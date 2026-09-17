@@ -42,6 +42,8 @@ export interface Env {
   // ---------- queues (producers) ----------
   EMAIL_QUEUE: Queue<EmailMessage>;
   EVENT_STATUS_QUEUE: Queue<EventStatusMessage>;
+  /** Written directly by the consumers to record *why* a job failed. */
+  DLQ: Queue<import('./deadLetter').DeadLetterEnvelope>;
 
   /**
    * Queue names, mirroring the bindings above. Bindings carry no name at
