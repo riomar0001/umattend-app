@@ -24,7 +24,8 @@
 			"enabled": true,
 			"head_sampling_rate": 1,
 			"persist": true
-		}
+		},
+		"redact_query_string": false
 	},
 	// ---------- database ----------
 	// The code reads `env.DB`, so that is the only binding needed here.
@@ -130,15 +131,15 @@
 		// Attendance QR token lifetime, in SECONDS (user.service.ts passes it to
 		// jwt.sign as a bare number). Unlike the other TTLs, which are hours.
 		// ASSUMED VALUE — no prior setting was recorded anywhere; confirm it.
-		"JWT_ATTENDANCE_TOKEN_TTL": "300",
+		"JWT_ATTENDANCE_TOKEN_TTL": "3600",
 		"GOOGLE_CLIENT_ID": "908931193191-1iv9dq0kc6quu5skd1g4m2m9iq799jqb.apps.googleusercontent.com",
 		"GOOGLE_REDIRECT_URI": "https://umattend.site/api/v1/auth/google/callback",
 		// Gmail submission port: plaintext connect upgraded via STARTTLS.
 		"MAIL_HOST": "smtp.gmail.com",
 		"MAIL_PORT": "587",
 		"MAIL_SECURE": "false",
-		"MAIL_USER": "inguitomario00@gmail.com",
-		"MAIL_FROM": "attendance@umattend.site",
+		"MAIL_USER": "marioinguitolp@gmail.com",
+		"MAIL_FROM": "admin@umattend.site",
 		"MAIL_FROM_NAME": "UMAttend"
 	},
 	"env": {
@@ -248,5 +249,14 @@
 				]
 			}
 		}
-	}
+	},
+	"routes": [
+		{
+			"pattern": "api.umattend.site",
+			"zone_name": "umattend.site",
+			"custom_domain": true,
+			"enabled": true,
+			"previews_enabled": false
+		}
+	]
 }
