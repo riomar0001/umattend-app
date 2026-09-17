@@ -24,11 +24,8 @@ export function AddOrganizerDialog({ onAddOrganizer }: AddOrganizerDialogProps) 
       return;
     }
 
-    // Validate email format
-    if (!email.endsWith('@umindanao.edu.ph')) {
-      alert('Email must be a valid UMindanao email address (@umindanao.edu.ph)');
-      return;
-    }
+    // No domain check here — any address is fine so long as it belongs to a
+    // registered user, which the API verifies when it looks the account up.
 
     // Pass minimal data - API only needs email
     onAddOrganizer({
@@ -56,15 +53,15 @@ export function AddOrganizerDialog({ onAddOrganizer }: AddOrganizerDialogProps) 
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Add New Organizer</DialogTitle>
-            <DialogDescription>Enter the UMindanao email address of the person you want to add as an organizer.</DialogDescription>
+            <DialogDescription>Enter the registered email address of the person you want to add as an organizer.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">UMindanao Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="e.g., j.delacruz.123456@umindanao.edu.ph"
+                placeholder="e.g., j.delacruz@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

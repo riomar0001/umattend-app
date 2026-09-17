@@ -130,16 +130,14 @@ export const EventValidSchema = {
 };
 
 export const AddOrganizerValidSchema = {
+  // No university-address pattern here on purpose: any email works as long as
+  // it belongs to a registered user, which the service verifies on lookup.
   umindanao_email: {
     notEmpty: {
-      errorMessage: 'University email cannot be empty',
+      errorMessage: 'Email cannot be empty',
     },
     isEmail: {
       errorMessage: 'Invalid email address',
-    },
-    matches: {
-      options: /^[a-z]\.[a-z]+\.\d{6}@umindanao\.edu\.ph$/,
-      errorMessage: 'Invalid University Email Address',
     },
   },
   event_id: {
@@ -157,16 +155,14 @@ export const AddOrganizerValidSchema = {
 };
 
 export const RemoveOrganizerValidSchema = {
+  // Mirrors AddOrganizerValidSchema: anyone who could be added must be
+  // removable, so the address pattern is not enforced here either.
   umindanao_email: {
     notEmpty: {
-      errorMessage: 'University email cannot be empty',
+      errorMessage: 'Email cannot be empty',
     },
     isEmail: {
       errorMessage: 'Invalid email address',
-    },
-    matches: {
-      options: /^[a-z]\.[a-z]+\.\d{6}@umindanao\.edu\.ph$/,
-      errorMessage: 'Invalid University Email Address',
     },
   },
   event_id: {
