@@ -1,4 +1,92 @@
 // ---------------------------------------------------------------------------
+// Statistics
+// ---------------------------------------------------------------------------
+
+const countBreakdown = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      label: { type: 'string', example: 'student' },
+      count: { type: 'number', example: 412 },
+    },
+  },
+};
+
+const getStatistics = {
+  '/admin/stats': {
+    get: {
+      tags: ['Admin'],
+      summary: 'Dashboard statistics for users, events and attendance',
+      description:
+        'Aggregate counts for the admin overview. Soft-deleted users are ' +
+        'excluded from every figure except `users.deleted`. Admin only.',
+      security: [{ bearerAuth: [] }],
+      responses: {
+        200: {
+          description: 'Statistics retrieved successfully',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean', example: true },
+                  message: { type: 'string', example: 'Statistics retrieved' },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      users: {
+                        type: 'object',
+                        properties: {
+                          total: { type: 'number', example: 512 },
+                          deleted: { type: 'number', example: 3 },
+                          onboarded: { type: 'number', example: 480 },
+                          pendingOnboarding: { type: 'number', example: 32 },
+                          newLast30Days: { type: 'number', example: 64 },
+                          activeLast7Days: { type: 'number', example: 210 },
+                          scannableStudents: { type: 'number', example: 470 },
+                          byRole: countBreakdown,
+                        },
+                      },
+                      events: {
+                        type: 'object',
+                        properties: {
+                          total: { type: 'number', example: 48 },
+                          draft: { type: 'number', example: 5 },
+                          published: { type: 'number', example: 43 },
+                          upcoming: { type: 'number', example: 12 },
+                          ongoing: { type: 'number', example: 2 },
+                          done: { type: 'number', example: 29 },
+                          newLast30Days: { type: 'number', example: 9 },
+                          byDepartment: countBreakdown,
+                        },
+                      },
+                      attendance: {
+                        type: 'object',
+                        properties: {
+                          total: { type: 'number', example: 1840 },
+                          checkedOut: { type: 'number', example: 1502 },
+                          stillCheckedIn: { type: 'number', example: 338 },
+                          last7Days: { type: 'number', example: 260 },
+                          averagePerRunEvent: { type: 'number', example: 59.4 },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden — Admin only' },
+        500: { description: 'Internal server error' },
+      },
+    },
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Dead Letter Queue
 // ---------------------------------------------------------------------------
 
@@ -1033,6 +1121,7 @@ const updateEvent = {
 };
 
 export const admin = {
+  ...getStatistics,
   ...getQueues,
   ...getFailedJobs,
   ...retryFailedJob,

@@ -96,7 +96,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return (
     <div className="grid grid-cols-[110px_1fr] items-start gap-2 py-1.5">
       <div className="text-muted-foreground text-xs">{label}</div>
-      <div className="min-w-0 text-xs break-words">{children}</div>
+      <div className="min-w-0 text-xs wrap-break-word">{children}</div>
     </div>
   );
 }

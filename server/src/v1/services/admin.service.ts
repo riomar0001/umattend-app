@@ -336,6 +336,12 @@ const cleanAllFailed = async (queueName: string) => {
 };
 
 // ---------------------------------------------------------------------------
+// Statistics
+// ---------------------------------------------------------------------------
+
+const getStatistics = async () => adminRepository.getStatistics();
+
+// ---------------------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------------------
 
@@ -462,6 +468,7 @@ const deleteAllRateLimits = async (): Promise<number> => {
 
 
 const adminService = {
+  getStatistics,
   getAllQueues,
   getFailedJobs,
   retryJob,

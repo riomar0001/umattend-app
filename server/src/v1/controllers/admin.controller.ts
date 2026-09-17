@@ -14,6 +14,22 @@ import eventRepository from '../repositories/event.repository';
 import { NODE_ENV } from '@/constants/app.constants';
 
 // ---------------------------------------------------------------------------
+// Statistics
+// ---------------------------------------------------------------------------
+
+const getStatistics = async (_req: Request, res: Response) => {
+  try {
+    const stats = await adminService.getStatistics();
+    return HTTPSuccessResponse(res, 200, 'Statistics retrieved', stats);
+  } catch (error) {
+    if (NODE_ENV === 'DEVELOPMENT') {
+      console.error('getStatistics error:', error);
+    }
+    return HTTPErrorResponse(res, 500, 'Internal server error');
+  }
+};
+
+// ---------------------------------------------------------------------------
 // Dead Letter Queue
 // ---------------------------------------------------------------------------
 
@@ -338,6 +354,7 @@ const deleteAllRateLimits = async (_req: Request, res: Response) => {
 };
 
 const adminController = {
+  getStatistics,
   getQueues,
   getFailedJobs,
   retryFailedJob,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, Calendar, MessageSquareWarning, Gauge } from 'lucide-react';
+import { Users, Calendar, MessageSquareWarning, Gauge, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import Footer from '@/components/Footer';
@@ -24,6 +24,9 @@ import {
 import { useAuthStore } from '@/store/authStore';
 
 const ADMIN_TABS = [
+  // `exact` because every other tab's path starts with /admin — a prefix match
+  // would leave Overview permanently highlighted.
+  { href: '/admin', label: 'Overview', icon: LayoutDashboard, exact: true },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/events', label: 'Events', icon: Calendar },
   { href: '/admin/queues', label: 'Dead Letter Queue', icon: MessageSquareWarning },
@@ -85,7 +88,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
               <SidebarMenu>
                 {ADMIN_TABS.map((tab) => {
                   const Icon = tab.icon;
-                  const isActive = pathname.startsWith(tab.href);
+                  const isActive = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
                   return (
                     <SidebarMenuItem key={tab.href}>
                       <SidebarMenuButton asChild isActive={isActive}>

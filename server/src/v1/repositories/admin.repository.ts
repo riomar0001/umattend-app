@@ -175,12 +175,137 @@ const findAllEvents = async (
   return { data, total };
 };
 
+// ---------------------------------------------------------------------------
+// Statistics
+// ---------------------------------------------------------------------------
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Dashboard aggregates for users and events.
+ *
+ * Every figure is a `count` or `groupBy` executed by SQLite rather than rows
+ * pulled into the Worker and counted in JS — the tables grow without bound and
+ * D1 charges by rows read. The queries are independent, so they are issued
+ * together; D1 has no transactions, and these are reads, so there is nothing to
+ * make atomic. The slight skew between counts taken microseconds apart does not
+ * matter for a dashboard.
+ *
+ * Soft-deleted users are excluded everywhere except `deleted`, which reports
+ * them explicitly.
+ */
+const getStatistics = async () => {
+  const now = Date.now();
+  const last7 = new Date(now - 7 * DAY_MS);
+  const last30 = new Date(now - 30 * DAY_MS);
+
+  const live = { deleted_at: null };
+
+  const [
+    usersTotal,
+    usersDeleted,
+    usersOnboarded,
+    usersNew30,
+    usersActive7,
+    usersByRole,
+    studentsWithId,
+    eventsTotal,
+    eventsDraft,
+    eventsOngoing,
+    eventsDone,
+    eventsNew30,
+    eventsByDepartment,
+    attendanceTotal,
+    attendanceCheckedOut,
+    attendance7,
+  ] = await Promise.all([
+    prisma.user.count({ where: live }),
+    prisma.user.count({ where: { NOT: { deleted_at: null } } }),
+    prisma.user.count({ where: { ...live, done_onboarding: true } }),
+    prisma.user.count({ where: { ...live, created_at: { gte: last30 } } }),
+    prisma.user.count({ where: { ...live, last_login_at: { gte: last7 } } }),
+    prisma.user.groupBy({
+      by: ['role'],
+      where: live,
+      _count: { _all: true },
+    }),
+    // Attendance requires a student_id; accounts without one cannot be scanned.
+    prisma.student.count({ where: { NOT: { student_id: null } } }),
+
+    prisma.events.count(),
+    prisma.events.count({ where: { is_draft: true } }),
+    prisma.events.count({
+      where: { is_draft: false, is_started: true, is_done: false },
+    }),
+    prisma.events.count({ where: { is_draft: false, is_done: true } }),
+    prisma.events.count({ where: { created_at: { gte: last30 } } }),
+    prisma.events.groupBy({
+      by: ['department'],
+      _count: { _all: true },
+    }),
+
+    prisma.attendance.count(),
+    prisma.attendance.count({ where: { NOT: { check_out_at: null } } }),
+    prisma.attendance.count({ where: { check_in_at: { gte: last7 } } }),
+  ]);
+
+  const published = eventsTotal - eventsDraft;
+  // Anything published that has neither started nor finished is still to come.
+  const eventsUpcoming = published - eventsOngoing - eventsDone;
+
+  const toBreakdown = (
+    rows: { _count: { _all: number } }[],
+    key: string
+  ): { label: string; count: number }[] =>
+    rows
+      .map((row) => ({
+        label: String((row as unknown as Record<string, unknown>)[key] ?? '—'),
+        count: row._count._all,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+  return {
+    users: {
+      total: usersTotal,
+      deleted: usersDeleted,
+      onboarded: usersOnboarded,
+      pendingOnboarding: usersTotal - usersOnboarded,
+      newLast30Days: usersNew30,
+      activeLast7Days: usersActive7,
+      scannableStudents: studentsWithId,
+      byRole: toBreakdown(usersByRole, 'role'),
+    },
+    events: {
+      total: eventsTotal,
+      draft: eventsDraft,
+      published,
+      upcoming: Math.max(0, eventsUpcoming),
+      ongoing: eventsOngoing,
+      done: eventsDone,
+      newLast30Days: eventsNew30,
+      byDepartment: toBreakdown(eventsByDepartment, 'department').slice(0, 8),
+    },
+    attendance: {
+      total: attendanceTotal,
+      checkedOut: attendanceCheckedOut,
+      stillCheckedIn: attendanceTotal - attendanceCheckedOut,
+      last7Days: attendance7,
+      // Only meaningful against events that actually ran.
+      averagePerRunEvent:
+        eventsOngoing + eventsDone > 0
+          ? Math.round((attendanceTotal / (eventsOngoing + eventsDone)) * 10) / 10
+          : 0,
+    },
+  };
+};
+
 const adminRepository = {
   findAllUsers,
   findUserById,
   updateUserRole,
   softDeleteUser,
   findAllEvents,
+  getStatistics,
 };
 
 export default adminRepository;

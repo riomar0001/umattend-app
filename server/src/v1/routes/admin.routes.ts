@@ -14,6 +14,9 @@ const router = express.Router();
 // All admin routes require authentication + admin role
 router.use(authMiddleware, checkRole('admin'));
 
+// GET /stats — dashboard aggregates for users, events and attendance
+router.get('/stats', adminController.getStatistics);
+
 // ---------------------------------------------------------------------------
 // Dead Letter Queue
 // ---------------------------------------------------------------------------
