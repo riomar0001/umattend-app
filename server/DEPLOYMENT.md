@@ -67,6 +67,41 @@ $queues = @(
 foreach ($q in $queues) { npx wrangler queues create $q }
 ```
 
+Then attach an HTTP pull consumer to each dead-letter queue, so the admin panel
+can read it:
+
+```bash
+wrangler queues consumer http add umattend-dlq \
+  --batch-size 100 --message-retries 100 --visibility-timeout-secs 30
+wrangler queues consumer http add umattend-dlq-staging \
+  --batch-size 100 --message-retries 100 --visibility-timeout-secs 30
+```
+
+Three things about this step are easy to get wrong:
+
+- **It is not in `wrangler.jsonc` and cannot be.** The config schema accepts
+  only `type: "worker"` for a consumer, so pull consumers exist purely as
+  account state. `wrangler deploy` will not recreate them, and nothing in the
+  repo will tell you they are missing — the admin page just errors.
+- **A queue gets exactly one consumer.** This works for the DLQs because they
+  have none. `umattend-email` and `umattend-event-status` already have Worker
+  consumers, which is why their depth and contents can never be read.
+- **`--message-retries` has to be generous.** Every pull counts as a delivery
+  attempt, including the ones the admin page makes just to display the list, and
+  a message that exceeds the budget is dropped. 100 is high enough that browsing
+  cannot destroy anything.
+
+Raise dead-letter retention too — it defaults to 24 hours, which will silently
+discard failures over a weekend. 14 days (1209600s) is the maximum:
+
+```bash
+for ID in $(wrangler queues list --json | jq -r '.[] | select(.queue_name | test("dlq")) | .queue_id'); do
+  curl -X PATCH "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/queues/$ID" \
+    -H "Authorization: Bearer $CF_API_TOKEN" -H 'Content-Type: application/json' \
+    -d '{"settings":{"message_retention_period":1209600}}'
+done
+```
+
 ### 3. Apply the schema
 
 ```bash
@@ -109,7 +144,7 @@ point; step 6 fixes it.
 
 ### 6. Upload the secrets
 
-**Only these six are secrets.** Run them one at a time — each command prompts
+**Only these seven are secrets.** Run them one at a time — each command prompts
 for the value, waits for you to paste it, and confirms before moving on. The
 syntax is identical in bash and PowerShell.
 
@@ -124,6 +159,7 @@ npx wrangler secret put JWT_GOOGLE_STATE_SECRET --env staging
 npx wrangler secret put JWT_ATTENDANCE_TOKEN_SECRET --env staging
 npx wrangler secret put GOOGLE_CLIENT_SECRET --env staging
 npx wrangler secret put MAIL_PASS --env staging
+npx wrangler secret put CF_API_TOKEN --env staging
 ```
 
 **Production:**
@@ -135,7 +171,15 @@ npx wrangler secret put JWT_GOOGLE_STATE_SECRET --env=""
 npx wrangler secret put JWT_ATTENDANCE_TOKEN_SECRET --env=""
 npx wrangler secret put GOOGLE_CLIENT_SECRET --env=""
 npx wrangler secret put MAIL_PASS --env=""
+npx wrangler secret put CF_API_TOKEN --env=""
 ```
+
+`CF_API_TOKEN` is a Cloudflare API token with **Queues Read *and* Write** on
+this account, used to read the dead-letter queue from the admin panel. Write is
+not optional: a pull consumer mutates queue state in order to acknowledge, so a
+read-only token cannot even list messages. Create one at
+<https://dash.cloudflare.com/profile/api-tokens>. Without it the app runs
+normally and only `/admin/queues` fails — the value is read lazily, per request.
 
 Check what landed where — the values are write-only, so only names are listed:
 
@@ -161,6 +205,9 @@ What already differs between the two `vars` blocks:
 | `ALLOWED_ORIGINS`     | `https://staging.umattend.site`                              | `https://umattend.site,https://www.umattend.site`   |
 | `GOOGLE_REDIRECT_URI` | `https://staging.umattend.site/api/v1/auth/google/callback`  | `https://umattend.site/api/v1/auth/google/callback` |
 | `MAIL_FROM_NAME`      | `UMAttend (Staging)`                                         | `UMAttend`                                          |
+| `EMAIL_QUEUE_NAME`    | `umattend-email-staging`                                     | `umattend-email`                                    |
+| `EVENT_STATUS_QUEUE_NAME` | `umattend-event-status-staging`                          | `umattend-event-status`                             |
+| `DLQ_NAME`            | `umattend-dlq-staging`                                       | `umattend-dlq`                                      |
 
 Both redirect URIs must also be listed in Google Cloud Console → Credentials →
 your OAuth client → **Authorised redirect URIs**, byte-identical.
@@ -284,7 +331,33 @@ wrangler queues consumer list umattend-email
 wrangler queues list
 ```
 
-The DLQs have no consumer by design — they are there to be inspected.
+Inspect the DLQ from the admin panel (`/admin/queues`), which reads it through
+the pull consumer attached in setup step 2. From there a job can be re-queued
+onto its original queue or discarded.
+
+Two limits are worth knowing before you go looking:
+
+- **The reason a job failed is not in the DLQ.** A dead-lettered message is the
+  original body verbatim and nothing else — no error, no stack. The error exists
+  only in Workers logs (`observability.logs` is on at 100% sampling), so
+  correlate by timestamp and payload. Capturing the reason would mean recording
+  it in the source consumer's `catch` block as it happens.
+- **Listing is not free.** Each pull counts as a delivery attempt against the
+  consumer's retry budget, which is why the admin page refreshes only when asked
+  rather than on a timer. Do not add polling to it.
+
+`wrangler queues list` reports `producers: 0` for both DLQs. That is expected:
+dead-lettering is internal platform routing, not a producer binding, so the
+source queues never appear as producers and the dashboard bindings graph cannot
+draw the edge either. To confirm dead-lettering is actually configured, check
+the consumer instead:
+
+```bash
+curl -H "Authorization: Bearer $CF_API_TOKEN" \
+  "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/queues/$QUEUE_ID/consumers"
+```
+
+and look for `dead_letter_queue` in the response.
 
 **Cron triggers** (`0 */12 * * *` token cleanup, `*/15 * * * *` event status
 reconciliation) fire only on deployed Workers, not in `wrangler dev`. Trigger

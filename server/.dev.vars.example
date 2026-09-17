@@ -61,3 +61,20 @@ MAIL_PASS=
 # Gmail rewrites the From header back to MAIL_USER.
 MAIL_FROM=
 MAIL_FROM_NAME=
+
+# ---------- Queues ----------
+# Queue names matching the bindings in wrangler.jsonc. The admin dead-letter
+# viewer reads the DLQ over the Queues REST API, which addresses queues by name
+# — a binding carries none at runtime.
+EMAIL_QUEUE_NAME=umattend-email
+EVENT_STATUS_QUEUE_NAME=umattend-event-status
+DLQ_NAME=umattend-dlq
+
+# Only needed to open the admin dead-letter page; everything else runs without
+# them (getQueuesConfig() is read lazily, per request).
+#
+# CF_API_TOKEN needs Queues **Read and Write** — a pull consumer writes queue
+# state in order to acknowledge, so a read-only token cannot even list messages.
+# Create one at https://dash.cloudflare.com/profile/api-tokens
+CF_ACCOUNT_ID=b8d3ac74f68e959d2c02abaff44dd65f
+CF_API_TOKEN=

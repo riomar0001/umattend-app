@@ -41,6 +41,9 @@ const getFailedJobs = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
+    }
     if (NODE_ENV === 'DEVELOPMENT') {
       console.error('getFailedJobs error:', error);
     }
@@ -56,6 +59,9 @@ const retryFailedJob = async (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
+    }
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
     }
     if (NODE_ENV === 'DEVELOPMENT') {
       console.error('retryFailedJob error:', error);
@@ -73,6 +79,9 @@ const deleteFailedJob = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
+    }
     if (NODE_ENV === 'DEVELOPMENT') {
       console.error('deleteFailedJob error:', error);
     }
@@ -89,6 +98,9 @@ const retryAllFailedJobs = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
     }
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
+    }
     if (NODE_ENV === 'DEVELOPMENT') {
       console.error('retryAllFailedJobs error:', error);
     }
@@ -104,6 +116,9 @@ const cleanAllFailedJobs = async (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
+    }
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
     }
     if (NODE_ENV === 'DEVELOPMENT') {
       console.error('cleanAllFailedJobs error:', error);

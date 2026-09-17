@@ -875,11 +875,7 @@ export const zGetAdminQueuesResponse = z.object({
 export const zDeleteAdminQueuesByQueueNameFailedData = z.object({
     body: z.optional(z.never()),
     path: z.object({
-        queueName: z.enum([
-            'email-queue',
-            'event-start-status-queue',
-            'event-end-status-queue'
-        ])
+        queueName: z.string()
     }),
     query: z.optional(z.never())
 });
@@ -898,11 +894,7 @@ export const zDeleteAdminQueuesByQueueNameFailedResponse = z.object({
 export const zGetAdminQueuesByQueueNameFailedData = z.object({
     body: z.optional(z.never()),
     path: z.object({
-        queueName: z.enum([
-            'email-queue',
-            'event-start-status-queue',
-            'event-end-status-queue'
-        ])
+        queueName: z.string()
     }),
     query: z.optional(z.object({
         page: z.optional(z.int().gte(1)).default(1),
@@ -951,11 +943,7 @@ export const zGetAdminQueuesByQueueNameFailedResponse = z.object({
 export const zPostAdminQueuesByQueueNameFailedByJobIdRetryData = z.object({
     body: z.optional(z.never()),
     path: z.object({
-        queueName: z.enum([
-            'email-queue',
-            'event-start-status-queue',
-            'event-end-status-queue'
-        ]),
+        queueName: z.string(),
         jobId: z.string()
     }),
     query: z.optional(z.never())
@@ -976,11 +964,7 @@ export const zPostAdminQueuesByQueueNameFailedByJobIdRetryResponse = z.object({
 export const zDeleteAdminQueuesByQueueNameFailedByJobIdData = z.object({
     body: z.optional(z.never()),
     path: z.object({
-        queueName: z.enum([
-            'email-queue',
-            'event-start-status-queue',
-            'event-end-status-queue'
-        ]),
+        queueName: z.string(),
         jobId: z.string()
     }),
     query: z.optional(z.never())
@@ -1001,11 +985,7 @@ export const zDeleteAdminQueuesByQueueNameFailedByJobIdResponse = z.object({
 export const zPostAdminQueuesByQueueNameFailedRetryAllData = z.object({
     body: z.optional(z.never()),
     path: z.object({
-        queueName: z.enum([
-            'email-queue',
-            'event-start-status-queue',
-            'event-end-status-queue'
-        ])
+        queueName: z.string()
     }),
     query: z.optional(z.never())
 });

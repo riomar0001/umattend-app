@@ -6,9 +6,12 @@ const getQueues = {
   '/admin/queues': {
     get: {
       tags: ['Admin'],
-      summary: 'List all queues with job counts',
+      summary: 'List queues and which of them can be inspected',
       description:
-        'Returns all BullMQ queues (email, start-event, end-event) with their current job counts (waiting, active, delayed, completed, failed). Admin only.',
+        'Returns the queues this Worker uses, flagging which can be read. Only ' +
+        'the dead-letter queue is inspectable (it has an HTTP pull consumer); ' +
+        'queues with a Worker consumer expose no depth or contents. Use this to ' +
+        'discover the environment-specific DLQ name. Admin only.',
       security: [{ bearerAuth: [] }],
       responses: {
         200: {
@@ -25,17 +28,11 @@ const getQueues = {
                     items: {
                       type: 'object',
                       properties: {
-                        name: { type: 'string', example: 'email-queue' },
-                        counts: {
-                          type: 'object',
-                          properties: {
-                            waiting: { type: 'number', example: 0 },
-                            active: { type: 'number', example: 0 },
-                            delayed: { type: 'number', example: 0 },
-                            completed: { type: 'number', example: 42 },
-                            failed: { type: 'number', example: 2 },
-                            paused: { type: 'number', example: 0 },
-                          },
+                        name: { type: 'string', example: 'umattend-dlq' },
+                        inspectable: { type: 'boolean', example: true },
+                        note: {
+                          type: 'string',
+                          example: 'Jobs that exhausted their retries.',
                         },
                       },
                     },
@@ -66,15 +63,11 @@ const getFailedJobs = {
           in: 'path',
           name: 'queueName',
           required: true,
-          schema: {
-            type: 'string',
-            enum: [
-              'email-queue',
-              'event-start-status-queue',
-              'event-end-status-queue',
-            ],
-          },
-          description: 'Queue name',
+          schema: { type: 'string' },
+          description:
+            'Queue name. Only the dead-letter queue can be inspected, and its ' +
+            'name differs per environment (umattend-dlq / umattend-dlq-staging), ' +
+            'so discover it from GET /admin/queues rather than hard-coding it.',
         },
         {
           in: 'query',
@@ -161,15 +154,11 @@ const getFailedJobs = {
           in: 'path',
           name: 'queueName',
           required: true,
-          schema: {
-            type: 'string',
-            enum: [
-              'email-queue',
-              'event-start-status-queue',
-              'event-end-status-queue',
-            ],
-          },
-          description: 'Queue name',
+          schema: { type: 'string' },
+          description:
+            'Queue name. Only the dead-letter queue can be inspected, and its ' +
+            'name differs per environment (umattend-dlq / umattend-dlq-staging), ' +
+            'so discover it from GET /admin/queues rather than hard-coding it.',
         },
       ],
       responses: {
@@ -214,15 +203,11 @@ const retryFailedJob = {
           in: 'path',
           name: 'queueName',
           required: true,
-          schema: {
-            type: 'string',
-            enum: [
-              'email-queue',
-              'event-start-status-queue',
-              'event-end-status-queue',
-            ],
-          },
-          description: 'Queue name',
+          schema: { type: 'string' },
+          description:
+            'Queue name. Only the dead-letter queue can be inspected, and its ' +
+            'name differs per environment (umattend-dlq / umattend-dlq-staging), ' +
+            'so discover it from GET /admin/queues rather than hard-coding it.',
         },
         {
           in: 'path',
@@ -276,15 +261,11 @@ const deleteFailedJob = {
           in: 'path',
           name: 'queueName',
           required: true,
-          schema: {
-            type: 'string',
-            enum: [
-              'email-queue',
-              'event-start-status-queue',
-              'event-end-status-queue',
-            ],
-          },
-          description: 'Queue name',
+          schema: { type: 'string' },
+          description:
+            'Queue name. Only the dead-letter queue can be inspected, and its ' +
+            'name differs per environment (umattend-dlq / umattend-dlq-staging), ' +
+            'so discover it from GET /admin/queues rather than hard-coding it.',
         },
         {
           in: 'path',
@@ -338,15 +319,11 @@ const retryAllFailedJobs = {
           in: 'path',
           name: 'queueName',
           required: true,
-          schema: {
-            type: 'string',
-            enum: [
-              'email-queue',
-              'event-start-status-queue',
-              'event-end-status-queue',
-            ],
-          },
-          description: 'Queue name',
+          schema: { type: 'string' },
+          description:
+            'Queue name. Only the dead-letter queue can be inspected, and its ' +
+            'name differs per environment (umattend-dlq / umattend-dlq-staging), ' +
+            'so discover it from GET /admin/queues rather than hard-coding it.',
         },
       ],
       responses: {

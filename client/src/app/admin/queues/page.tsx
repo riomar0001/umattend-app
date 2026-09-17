@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { RefreshCw, Trash2, RotateCcw, Inbox, AlertTriangle, Clock, CheckCircle, CircleDashed, Timer } from 'lucide-react';
+import { RefreshCw, Trash2, RotateCcw, AlertTriangle, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -19,86 +19,78 @@ import {
   deleteAdminQueuesByQueueNameFailedMutation
 } from '@/api/client/@tanstack/react-query.gen';
 import { getErrorMessage } from '@/lib/error-utils';
-import { cn } from '@/lib/utils';
-
-type QueueName = 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-interface QueueCounts {
-  waiting: number;
-  active: number;
-  delayed: number;
-  completed: number;
-  failed: number;
-  paused: number;
-}
-
 interface QueueInfo {
-  name: QueueName;
-  counts: QueueCounts;
+  name: string;
+  inspectable: boolean;
+  note: string;
 }
 
 interface FailedJob {
   id: string;
   name: string;
   data: Record<string, unknown>;
+  /**
+   * Always null. A dead-lettered message carries the original body verbatim and
+   * nothing about why it failed — the error only exists in Workers logs.
+   */
   failedReason: string | null;
   attemptsMade: number;
   timestamp: number | null;
-  finishedOn: number | null;
-  processedOn: number | null;
 }
 
-interface Pagination {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
+interface FailedResponse {
+  data: FailedJob[];
+  backlog: number;
+  truncated: boolean;
+  pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
-const QUEUE_LABELS: Record<QueueName, string> = {
-  'email-queue': 'Email Queue',
-  'event-start-status-queue': 'Event Start Status',
-  'event-end-status-queue': 'Event End Status'
-};
-
-const QUEUE_ICONS: Record<QueueName, React.ElementType> = {
-  'email-queue': Inbox,
-  'event-start-status-queue': Timer,
-  'event-end-status-queue': CheckCircle
-};
+const PAGE_SIZE = 10;
 
 const Th = ({ label }: { label: string }) => <div className="text-foreground text-xs font-medium md:text-sm">{label}</div>;
 
 export default function AdminQueuesPage() {
   const queryClient = useQueryClient();
-  const [selectedQueue, setSelectedQueue] = useState<QueueName>('email-queue');
-  const [failedPageState, setFailedPageState] = useState(1);
-  const [confirmDialog, setConfirmDialog] = useState<{
-    type: 'clean' | 'retry-all';
-    queue: QueueName;
-  } | null>(null);
+  const [page, setPage] = useState(1);
+  const [confirmDialog, setConfirmDialog] = useState<'clean' | 'retry-all' | null>(null);
 
-  const queuesQuery = useQuery({
-    ...getAdminQueuesOptions(),
-    refetchInterval: 10_000
-  });
+  // The queue list is only used to discover the environment's DLQ name, which
+  // differs between production and staging.
+  const queuesQuery = useQuery(getAdminQueuesOptions());
+  const queues = (queuesQuery.data?.data as QueueInfo[] | undefined) ?? [];
+  const dlq = queues.find((q) => q.inspectable);
 
   const failedQuery = useQuery({
     ...getAdminQueuesByQueueNameFailedOptions({
-      path: { queueName: selectedQueue },
-      query: { page: failedPageState, limit: 10 }
+      path: { queueName: dlq?.name ?? '' },
+      query: { page, limit: PAGE_SIZE }
     }),
-    refetchInterval: 10_000
+    // Deliberately not polled. Listing pulls messages, and every pull increments
+    // a message's delivery attempts — a timer would age messages out on its own.
+    refetchOnWindowFocus: false,
+    enabled: Boolean(dlq)
   });
+
+  const failed = failedQuery.data?.data as FailedResponse | undefined;
+  const jobs = failed?.data ?? [];
+  const backlog = failed?.backlog ?? 0;
+  const pagination = failed?.pagination ?? { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 };
+
+  function invalidateAll() {
+    queryClient.invalidateQueries({
+      queryKey: getAdminQueuesByQueueNameFailedOptions({ path: { queueName: dlq?.name ?? '' } }).queryKey
+    });
+  }
 
   const retryJob = useMutation({
     ...postAdminQueuesByQueueNameFailedByJobIdRetryMutation(),
     onSuccess: () => {
-      toast.success('Job retried');
+      toast.success('Job re-queued');
       invalidateAll();
     },
     onError: (err) => toast.error(getErrorMessage(err, 'Failed to retry job'))
@@ -107,17 +99,18 @@ export default function AdminQueuesPage() {
   const deleteJob = useMutation({
     ...deleteAdminQueuesByQueueNameFailedByJobIdMutation(),
     onSuccess: () => {
-      toast.success('Job removed');
+      toast.success('Job discarded');
       invalidateAll();
     },
-    onError: (err) => toast.error(getErrorMessage(err, 'Failed to remove job'))
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to discard job'))
   });
 
   const retryAll = useMutation({
     ...postAdminQueuesByQueueNameFailedRetryAllMutation(),
     onSuccess: (data) => {
-      const retried = (data?.data as { retried?: number } | undefined)?.retried ?? 0;
-      toast.success(`${retried} jobs retried`);
+      const result = data?.data as { retried?: number; skipped?: number } | undefined;
+      const skipped = result?.skipped ?? 0;
+      toast.success(`${result?.retried ?? 0} jobs re-queued${skipped ? `, ${skipped} skipped` : ''}`);
       setConfirmDialog(null);
       invalidateAll();
     },
@@ -128,72 +121,54 @@ export default function AdminQueuesPage() {
     ...deleteAdminQueuesByQueueNameFailedMutation(),
     onSuccess: (data) => {
       const removed = (data?.data as { removed?: number } | undefined)?.removed ?? 0;
-      toast.success(`${removed} jobs cleaned`);
+      toast.success(`${removed} jobs discarded`);
       setConfirmDialog(null);
       invalidateAll();
     },
-    onError: (err) => toast.error(getErrorMessage(err, 'Failed to clean jobs'))
+    onError: (err) => toast.error(getErrorMessage(err, 'Failed to discard jobs'))
   });
 
-  function invalidateAll() {
-    queryClient.invalidateQueries({ queryKey: getAdminQueuesOptions({}).queryKey });
-    queryClient.invalidateQueries({
-      queryKey: getAdminQueuesByQueueNameFailedOptions({ path: { queueName: selectedQueue } }).queryKey
-    });
-  }
-
-  const queues = (queuesQuery.data?.data as QueueInfo[] | undefined) ?? [];
-  const failedData = failedQuery.data?.data as { data: FailedJob[]; pagination: Pagination } | undefined;
-  const failedJobs = failedData?.data ?? [];
-  const pagination = failedData?.pagination ?? { page: 1, limit: 10, total: 0, totalPages: 1 };
+  const busy = retryAll.isPending || cleanAll.isPending;
 
   // ------------------------------------------------------------------
-  // Failed jobs columns
+  // Columns
   // ------------------------------------------------------------------
-  const failedColumns: ColumnDef<FailedJob>[] = [
+  const columns: ColumnDef<FailedJob>[] = [
     {
-      accessorKey: 'id',
-      header: () => <Th label="Job ID" />,
+      accessorKey: 'name',
+      header: () => <Th label="Type" />,
       cell: ({ row }) => (
-        <div className="max-w-[100px] font-mono text-[10px] md:text-xs" title={row.original.id}>
-          {row.original.id}
-        </div>
+        <Badge variant="secondary" className="text-xs">
+          {row.original.name}
+        </Badge>
       )
     },
     {
-      accessorKey: 'name',
-      header: () => <Th label="Name" />,
-      cell: ({ row }) => <div className="text-xs md:text-sm">{row.original.name || '—'}</div>
-    },
-    {
-      accessorKey: 'failedReason',
-      header: () => <Th label="Failed Reason" />,
+      accessorKey: 'data',
+      header: () => <Th label="Payload" />,
       cell: ({ row }) => {
-        const reason = row.original.failedReason;
+        const json = JSON.stringify(row.original.data);
         return (
-          <div
-            className="bg-secondary/30 max-w-[260px] truncate rounded-sm border p-1 text-xs text-red-600 hover:text-wrap dark:text-red-400"
-            title={reason ?? ''}
-          >
-            {reason || 'Unknown'}
+          <div className="bg-secondary/30 max-w-[360px] truncate rounded-sm border p-1 font-mono text-[10px] hover:text-wrap md:text-xs" title={json}>
+            {json}
           </div>
         );
       }
     },
     {
       accessorKey: 'attemptsMade',
-      header: () => <Th label="Attempts" />,
+      header: () => <Th label="Deliveries" />,
       cell: ({ row }) => (
-        <Badge variant="secondary" className="text-xs">
+        <Badge variant="outline" className="text-xs" title="Includes deliveries caused by viewing this page">
           {row.original.attemptsMade}
         </Badge>
       )
     },
     {
-      accessorKey: 'finishedOn',
-      header: () => <Th label="Finished" />,
+      accessorKey: 'timestamp',
+      header: () => <Th label="Queued" />,
       cell: ({ row }) => {
-        const ts = row.original.finishedOn;
+        const ts = row.original.timestamp;
         return <div className="text-muted-foreground text-xs">{ts ? new Date(ts).toLocaleString() : '—'}</div>;
       }
     },
@@ -206,13 +181,9 @@ export default function AdminQueuesPage() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            title="Retry"
-            disabled={retryJob.isPending}
-            onClick={() =>
-              retryJob.mutate({
-                path: { queueName: selectedQueue, jobId: row.original.id }
-              })
-            }
+            title="Re-queue this job"
+            disabled={retryJob.isPending || !dlq}
+            onClick={() => retryJob.mutate({ path: { queueName: dlq!.name, jobId: row.original.id } })}
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -220,13 +191,9 @@ export default function AdminQueuesPage() {
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-red-500 hover:text-red-600"
-            title="Delete"
-            disabled={deleteJob.isPending}
-            onClick={() =>
-              deleteJob.mutate({
-                path: { queueName: selectedQueue, jobId: row.original.id }
-              })
-            }
+            title="Discard permanently"
+            disabled={deleteJob.isPending || !dlq}
+            onClick={() => deleteJob.mutate({ path: { queueName: dlq!.name, jobId: row.original.id } })}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -239,124 +206,91 @@ export default function AdminQueuesPage() {
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Dead Letter Queue</h1>
-        <p className="text-muted-foreground mt-1 text-sm">Monitor and manage failed background jobs across all queues.</p>
+        <p className="text-muted-foreground mt-1 text-sm">Jobs that exhausted their retries. Re-queue them to run again, or discard them.</p>
       </div>
 
-      {/* Queue Overview Cards */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        {queuesQuery.isLoading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="bg-muted h-4 w-24 rounded" />
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  <div className="bg-muted h-8 w-12 rounded" />
-                  <div className="bg-muted h-8 w-12 rounded" />
-                  <div className="bg-muted h-8 w-12 rounded" />
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : queuesQuery.isError ? (
-          <Card className="sm:col-span-3">
-            <CardContent className="flex items-center justify-center py-8">
-              <p className="text-muted-foreground text-sm">Failed to load queues</p>
-              <Button className="ml-4" variant="outline" size="sm" onClick={() => queuesQuery.refetch()}>
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          queues.map((q) => {
-            const name = q.name;
-            const Icon = QUEUE_ICONS[name] || CircleDashed;
-            const counts = q.counts || {};
-            const hasFailed = (counts.failed || 0) > 0;
-            return (
-              <Card
-                key={name}
-                className={cn('hover:border-primary/50 cursor-pointer transition-colors', selectedQueue === name && 'border-primary ring-primary ring-1')}
-                onClick={() => {
-                  setSelectedQueue(name);
-                  setFailedPageState(1);
-                }}
-              >
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">{QUEUE_LABELS[name]}</CardTitle>
-                  <Icon className="text-muted-foreground h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                    <Stat icon={CircleDashed} label="Waiting" value={counts.waiting} />
-                    <Stat icon={Timer} label="Delayed" value={counts.delayed} />
-                    <Stat icon={Clock} label="Active" value={counts.active} />
-                    <Stat icon={CheckCircle} label="Done" value={counts.completed} />
-                    <Stat icon={AlertTriangle} label="Failed" value={counts.failed} highlight={hasFailed} />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
+      <div className="mb-8 grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">{dlq?.name ?? 'Dead letter queue'}</CardTitle>
+            {backlog > 0 ? <AlertTriangle className="h-4 w-4 text-red-500" /> : <Inbox className="text-muted-foreground h-4 w-4" />}
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-semibold ${backlog > 0 ? 'text-red-500' : ''}`}>{failedQuery.isLoading ? '—' : backlog}</div>
+            <p className="text-muted-foreground mt-1 text-xs">{backlog === 1 ? 'message waiting' : 'messages waiting'}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Not inspectable</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="text-muted-foreground space-y-1 text-xs">
+              {queues
+                .filter((q) => !q.inspectable)
+                .map((q) => (
+                  <li key={q.name} className="font-mono">
+                    {q.name}
+                  </li>
+                ))}
+            </ul>
+            <p className="text-muted-foreground mt-2 text-xs">
+              Queues with a Worker consumer cannot be read — depth and contents are unavailable from the API.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mb-2 flex flex-col gap-1">
+        <h2 className="text-lg font-semibold">Failed Jobs</h2>
+        {failed?.truncated && (
+          <p className="text-muted-foreground text-sm">
+            Showing the first {jobs.length} of {backlog}. The queue API returns one batch at a time and has no cursor.
+          </p>
         )}
       </div>
 
-      {/* Failed Jobs Section */}
-      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Failed Jobs</h2>
-          <p className="text-muted-foreground text-sm">{QUEUE_LABELS[selectedQueue]}</p>
-        </div>
-      </div>
-
       <DataTable
-        columns={failedColumns}
-        data={failedJobs}
+        columns={columns}
+        data={jobs}
         searchPlaceholder="Search jobs..."
         searchValue=""
         onSearchChange={() => {}}
         page={pagination.page}
-        onPageChange={setFailedPageState}
-        pageSize={10}
+        onPageChange={setPage}
+        pageSize={PAGE_SIZE}
         totalPages={pagination.totalPages}
         totalRecords={pagination.total}
         isLoading={failedQuery.isLoading}
         error={failedQuery.isError ? failedQuery.error : undefined}
-        emptyMessage="No failed jobs — the queue is healthy."
+        emptyMessage="No failed jobs — nothing has exhausted its retries."
         toolbar={
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={retryAll.isPending || pagination.total === 0}
-              onClick={() => setConfirmDialog({ type: 'retry-all', queue: selectedQueue })}
-            >
+            <Button variant="outline" size="sm" disabled={failedQuery.isFetching} onClick={() => failedQuery.refetch()}>
+              <RefreshCw className="mr-1 h-4 w-4" />
+              Refresh
+            </Button>
+            <Button variant="outline" size="sm" disabled={busy || backlog === 0} onClick={() => setConfirmDialog('retry-all')}>
               <RotateCcw className="mr-1 h-4 w-4" />
               Retry All
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={cleanAll.isPending || pagination.total === 0}
-              onClick={() => setConfirmDialog({ type: 'clean', queue: selectedQueue })}
-            >
+            <Button variant="outline" size="sm" disabled={busy || backlog === 0} onClick={() => setConfirmDialog('clean')}>
               <Trash2 className="mr-1 h-4 w-4" />
-              Clean All
+              Discard All
             </Button>
           </div>
         }
       />
 
-      {/* Confirmation Dialog */}
       <Dialog open={!!confirmDialog} onOpenChange={() => setConfirmDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{confirmDialog?.type === 'clean' ? 'Clean All Failed Jobs' : 'Retry All Failed Jobs'}</DialogTitle>
+            <DialogTitle>{confirmDialog === 'clean' ? 'Discard All Failed Jobs' : 'Retry All Failed Jobs'}</DialogTitle>
             <DialogDescription>
-              {confirmDialog?.type === 'clean'
-                ? `This will permanently remove all failed jobs from ${QUEUE_LABELS[confirmDialog?.queue ?? 'email-queue']}. This action cannot be undone.`
-                : `This will retry all failed jobs in ${QUEUE_LABELS[confirmDialog?.queue ?? 'email-queue']}. Jobs may fail again.`}
+              {confirmDialog === 'clean'
+                ? 'This permanently deletes every message currently in the dead letter queue. This cannot be undone.'
+                : 'This re-sends every message in the dead letter queue to its original queue. Jobs may fail again and come straight back.'}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -364,32 +298,22 @@ export default function AdminQueuesPage() {
               Cancel
             </Button>
             <Button
-              variant={confirmDialog?.type === 'clean' ? 'destructive' : 'default'}
-              disabled={retryAll.isPending || cleanAll.isPending}
+              variant={confirmDialog === 'clean' ? 'destructive' : 'default'}
+              disabled={busy || !dlq}
               onClick={() => {
-                if (!confirmDialog) return;
-                if (confirmDialog.type === 'clean') {
-                  cleanAll.mutate({ path: { queueName: confirmDialog.queue } });
+                if (!confirmDialog || !dlq) return;
+                if (confirmDialog === 'clean') {
+                  cleanAll.mutate({ path: { queueName: dlq.name } });
                 } else {
-                  retryAll.mutate({ path: { queueName: confirmDialog.queue } });
+                  retryAll.mutate({ path: { queueName: dlq.name } });
                 }
               }}
             >
-              {retryAll.isPending || cleanAll.isPending ? 'Processing...' : confirmDialog?.type === 'clean' ? 'Clean All' : 'Retry All'}
+              {busy ? 'Processing...' : confirmDialog === 'clean' ? 'Discard All' : 'Retry All'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function Stat({ icon: Icon, label, value = 0, highlight }: { icon: React.ElementType; label: string; value: number; highlight?: boolean }) {
-  return (
-    <div className="flex items-center gap-1">
-      <Icon className={cn('h-3 w-3', highlight ? 'text-red-500' : 'text-muted-foreground')} />
-      <span className={cn('text-muted-foreground', highlight && 'text-red-500')}>{label}:</span>
-      <span className={cn('font-medium', highlight && 'text-red-500')}>{value ?? 0}</span>
     </div>
   );
 }

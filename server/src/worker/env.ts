@@ -43,6 +43,19 @@ export interface Env {
   EMAIL_QUEUE: Queue<EmailMessage>;
   EVENT_STATUS_QUEUE: Queue<EventStatusMessage>;
 
+  /**
+   * Queue names, mirroring the bindings above. Bindings carry no name at
+   * runtime, and the Queues REST API used to read the DLQ addresses queues by
+   * name/id rather than by binding — see `configs/queuesApi.config.ts`.
+   */
+  EMAIL_QUEUE_NAME: string;
+  EVENT_STATUS_QUEUE_NAME: string;
+  DLQ_NAME: string;
+
+  /** Account id and a Queues Read+Write token, for the DLQ pull consumer. */
+  CF_ACCOUNT_ID: string;
+  CF_API_TOKEN: string;
+
   // ---------- durable objects ----------
   EPHEMERAL_STORE: DurableObjectNamespace<
     import('./ephemeralStore.do').EphemeralStore

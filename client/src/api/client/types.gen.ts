@@ -2190,7 +2190,7 @@ export type DeleteAdminQueuesByQueueNameFailedData = {
         /**
          * Queue name
          */
-        queueName: 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
+        queueName: string;
     };
     query?: never;
     url: '/admin/queues/{queueName}/failed';
@@ -2236,7 +2236,7 @@ export type GetAdminQueuesByQueueNameFailedData = {
         /**
          * Queue name
          */
-        queueName: 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
+        queueName: string;
     };
     query?: {
         /**
@@ -2308,7 +2308,7 @@ export type PostAdminQueuesByQueueNameFailedByJobIdRetryData = {
         /**
          * Queue name
          */
-        queueName: 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
+        queueName: string;
         /**
          * Job ID
          */
@@ -2359,7 +2359,7 @@ export type DeleteAdminQueuesByQueueNameFailedByJobIdData = {
         /**
          * Queue name
          */
-        queueName: 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
+        queueName: string;
         /**
          * Job ID
          */
@@ -2410,7 +2410,7 @@ export type PostAdminQueuesByQueueNameFailedRetryAllData = {
         /**
          * Queue name
          */
-        queueName: 'email-queue' | 'event-start-status-queue' | 'event-end-status-queue';
+        queueName: string;
     };
     query?: never;
     url: '/admin/queues/{queueName}/failed/retry-all';

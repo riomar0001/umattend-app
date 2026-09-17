@@ -16,7 +16,7 @@ import {
 } from '@/utils/customErrors';
 import { formatDateTime, generateExportFileName } from '@/utils/export.utils';
 import { NODE_ENV } from '@/constants/app.constants';
-import { decodeAndVerifyQR } from '@/utils/decodeAndVerifyQR';
+import { decodeAndVerifyQR, qrFailureMessage } from '@/utils/decodeAndVerifyQR';
 
 const addEvent = async (req: Request, res: Response) => {
   try {
@@ -214,17 +214,13 @@ const createCheckInEvent = async (
     }
     let student_id: number = 0;
     if (qr_code) {
-      try {
-        const { valid, student_id: qrStudentId } = decodeAndVerifyQR(qr_code);
+      const verified = decodeAndVerifyQR(qr_code);
 
-        if (!valid || !qrStudentId) {
-          return HTTPErrorResponse(res, 400, 'Invalid or expired QR code');
-        }
-
-        student_id = Number(qrStudentId);
-      } catch {
-        return HTTPErrorResponse(res, 400, 'Invalid or expired QR code');
+      if (!verified.valid) {
+        return HTTPErrorResponse(res, 400, qrFailureMessage(verified.reason));
       }
+
+      student_id = Number(verified.student_id);
     }
 
     const { umindanao_email, done_onboarding } = req.user;
@@ -305,17 +301,13 @@ const createCheckOutEvent = async (
     let student_id: number = 0;
 
     if (!student_id && qr_code) {
-      try {
-        const { valid, student_id: qrStudentId } = decodeAndVerifyQR(qr_code);
+      const verified = decodeAndVerifyQR(qr_code);
 
-        if (!valid || !qrStudentId) {
-          return HTTPErrorResponse(res, 400, 'Invalid or expired QR code');
-        }
-
-        student_id = Number(qrStudentId);
-      } catch {
-        return HTTPErrorResponse(res, 400, 'Invalid or expired QR code');
+      if (!verified.valid) {
+        return HTTPErrorResponse(res, 400, qrFailureMessage(verified.reason));
       }
+
+      student_id = Number(verified.student_id);
     }
 
     const { umindanao_email, done_onboarding } = req.user;

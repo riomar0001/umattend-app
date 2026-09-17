@@ -7,81 +7,289 @@ import rateLimitStore from '../../configs/rateLimit.config';
 import adminRepository from '../repositories/admin.repository';
 import eventRepository from '../repositories/event.repository';
 import { WINDOW_MS } from '../middlewares/rateLimiter.middleware';
+import {
+  ackMessages,
+  pullMessages,
+  type PulledMessage,
+} from '../../configs/queuesApi.config';
+import { getQueuesConfig } from '@/constants/queues.constants';
+import { bindings } from '@/worker/runtime';
 
 const VALID_ROLES = ['student', 'admin', 'csg', 'instructor', 'organizer'];
 
 // ---------------------------------------------------------------------------
-// Queues
+// Dead-letter queue
 // ---------------------------------------------------------------------------
 //
 // BullMQ kept every job in Redis, so the admin panel could count them, page
-// through failures, and retry or delete an individual job by id.
+// through failures, and retry or delete an individual job by id. Cloudflare
+// Queues has no equivalent for a queue with a Worker consumer — `umattend-email`
+// and `umattend-event-status` are genuinely write-and-forget, and nothing here
+// can report their depth.
 //
-// Cloudflare Queues exposes none of that. A queue is write-and-forget: there is
-// no API to enumerate messages, read backlog contents, or address a single
-// message. Retries and dead-lettering happen inside the platform, driven by the
-// `max_retries` / `dead_letter_queue` settings in wrangler.jsonc, and the
-// dead-letter queue can only be *consumed* — never browsed.
+// What *is* inspectable is the dead-letter queue, because it has an HTTP pull
+// consumer instead of a Worker one. Everything below therefore operates on the
+// DLQ only: it is the list of jobs that exhausted their retries, which is what
+// the panel was for. See `configs/queuesApi.config.ts` for the lease semantics
+// these functions depend on.
 //
-// Rather than return invented numbers, these report that the capability is
-// gone and the mutating operations refuse outright. Restoring the panel means
-// recording job outcomes ourselves (a `failed_job` table in D1 written by the
-// consumers in src/worker/consumers/), which is a feature build, not a port.
+// What is still unavailable, and deliberately not faked:
+//   - why a job failed. The DLQ carries the original message body verbatim; the
+//     error lives only in the source consumer's catch block and Workers logs.
+//   - waiting/active/delayed/completed counts. Those are BullMQ concepts.
 
-const QUEUE_NAMES = [
-  'umattend-email',
-  'umattend-event-status',
-  'umattend-dlq',
-] as const;
+/**
+ * Short, so that a message pulled for display is visible again almost
+ * immediately and a follow-up retry/delete can still find it.
+ */
+const LIST_VISIBILITY_MS = 1_000;
 
-const UNSUPPORTED =
-  'Per-job inspection is not available on Cloudflare Queues. Retries and ' +
-  'dead-lettering are handled by the platform; see the dead-letter queue and ' +
-  'Workers logs instead.';
+/**
+ * Long enough that the ack issued a few statements later lands on a live lease.
+ */
+const ACTION_VISIBILITY_MS = 30_000;
 
-const getAllQueues = async () => {
-  return QUEUE_NAMES.map((name) => ({
-    name,
-    counts: {},
-    supported: false,
-    note: UNSUPPORTED,
-  }));
+/**
+ * Acting on a job almost always follows listing it, and listing leases every
+ * message it returns. Until that lease lapses the message is invisible, so a
+ * single pull would report a job as gone when it is merely hidden — which is
+ * indistinguishable, from the caller's side, from someone else having handled
+ * it. Re-pull for a little longer than LIST_VISIBILITY_MS before believing it.
+ */
+const ACTION_ATTEMPTS = 4;
+const ACTION_RETRY_DELAY_MS = 400;
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Pull until `find` matches, or the visibility window has certainly lapsed.
+ * Returns the last batch pulled so callers can distinguish "queue is empty"
+ * from "nothing matched".
+ */
+const pullForAction = async (
+  dlq: string,
+  find?: (message: PulledMessage) => boolean
+): Promise<PulledMessage[]> => {
+  let last: PulledMessage[] = [];
+
+  for (let attempt = 0; attempt < ACTION_ATTEMPTS; attempt += 1) {
+    if (attempt > 0) {
+      await sleep(ACTION_RETRY_DELAY_MS);
+    }
+
+    const { messages, backlog } = await pullMessages(dlq, {
+      batchSize: 100,
+      visibilityTimeoutMs: ACTION_VISIBILITY_MS,
+    });
+    last = messages;
+
+    if (find ? messages.some(find) : messages.length > 0) {
+      return messages;
+    }
+    // Genuinely empty, rather than temporarily hidden — stop early.
+    if (backlog === 0) {
+      return messages;
+    }
+  }
+
+  return last;
 };
 
+const dlqName = (): string => getQueuesConfig().dlq;
+
+/**
+ * Only the DLQ is readable. Passing anything else is a caller bug rather than
+ * a missing feature, so it fails loudly instead of returning an empty list.
+ */
+const assertInspectable = (queueName: string): string => {
+  const dlq = dlqName();
+  if (queueName !== dlq) {
+    throw new BadRequestError(
+      `Only "${dlq}" can be inspected. Queues with a Worker consumer cannot be read.`
+    );
+  }
+  return dlq;
+};
+
+const toJob = (message: PulledMessage) => {
+  let data: unknown;
+  try {
+    data = JSON.parse(message.body);
+  } catch {
+    // A message that is not JSON is still worth showing, just not parsed.
+    data = { raw: message.body };
+  }
+
+  const type =
+    typeof data === 'object' && data !== null && 'type' in data
+      ? String((data as { type: unknown }).type)
+      : 'unknown';
+
+  return {
+    id: message.id,
+    name: type,
+    data: data as Record<string, unknown>,
+    // Not recoverable from a dead-lettered message — see the header comment.
+    failedReason: null,
+    attemptsMade: message.attempts,
+    timestamp: message.timestamp_ms,
+    finishedOn: null,
+    processedOn: null,
+  };
+};
+
+const getAllQueues = async () => {
+  const { emailQueue, eventStatusQueue, dlq } = getQueuesConfig();
+  return [
+    {
+      name: dlq,
+      inspectable: true,
+      note: 'Jobs that exhausted their retries.',
+    },
+    {
+      name: emailQueue,
+      inspectable: false,
+      note: 'Worker consumer — depth and contents are not readable.',
+    },
+    {
+      name: eventStatusQueue,
+      inspectable: false,
+      note: 'Worker consumer — depth and contents are not readable.',
+    },
+  ];
+};
+
+/**
+ * `page` slices a single pulled batch rather than paging the queue: there is no
+ * cursor, no ordering guarantee, and no way to address messages beyond the
+ * first batch. `total` is the true backlog, so the UI can say when there is
+ * more than one batch's worth.
+ */
 const getFailedJobs = async (
   queueName: string,
   page: number,
   limit: number
 ) => {
-  void queueName;
+  const dlq = assertInspectable(queueName);
+
+  const { messages, backlog } = await pullMessages(dlq, {
+    batchSize: 100,
+    visibilityTimeoutMs: LIST_VISIBILITY_MS,
+  });
+
+  const jobs = messages.map(toJob);
+  const start = (page - 1) * limit;
+
   return {
-    data: [],
-    supported: false,
-    note: UNSUPPORTED,
-    pagination: { page, limit, total: 0, totalPages: 0 },
+    data: jobs.slice(start, start + limit),
+    backlog,
+    truncated: backlog > messages.length,
+    pagination: {
+      page,
+      limit,
+      total: backlog,
+      totalPages: Math.max(1, Math.ceil(jobs.length / limit)),
+    },
   };
 };
 
+/** Pull a batch and locate one message by its (pull-stable) id. */
+const leaseById = async (dlq: string, jobId: string) => {
+  const messages = await pullForAction(dlq, (m) => m.id === jobId);
+
+  const message = messages.find((m) => m.id === jobId);
+  if (!message) {
+    throw new NotFoundError(
+      'Job is no longer in the dead-letter queue — it may have expired, or another admin already handled it.'
+    );
+  }
+  return message;
+};
+
+/**
+ * Re-runs the original job by sending its body back to the producer queue, then
+ * acknowledging the dead-lettered copy. The order matters: a failed `send()`
+ * must leave the message in the DLQ rather than silently dropping it.
+ */
 const retryJob = async (queueName: string, jobId: string) => {
-  void queueName;
-  void jobId;
-  throw new BadRequestError(UNSUPPORTED);
+  const dlq = assertInspectable(queueName);
+  const message = await leaseById(dlq, jobId);
+
+  let body: { type?: string };
+  try {
+    body = JSON.parse(message.body);
+  } catch {
+    throw new BadRequestError('Job body is not valid JSON and cannot be retried.');
+  }
+
+  const { EMAIL_QUEUE, EVENT_STATUS_QUEUE } = bindings();
+
+  switch (body.type) {
+    case 'send-email':
+      await EMAIL_QUEUE.send(body as never);
+      break;
+    case 'event-start':
+    case 'event-done':
+      await EVENT_STATUS_QUEUE.send(body as never);
+      break;
+    default:
+      throw new BadRequestError(
+        `Unrecognised job type "${body.type ?? 'unknown'}"; refusing to retry.`
+      );
+  }
+
+  await ackMessages(dlq, [message.lease_id]);
+  return { id: jobId, retried: true };
 };
 
 const removeJob = async (queueName: string, jobId: string) => {
-  void queueName;
-  void jobId;
-  throw new BadRequestError(UNSUPPORTED);
+  const dlq = assertInspectable(queueName);
+  const message = await leaseById(dlq, jobId);
+
+  await ackMessages(dlq, [message.lease_id]);
+  return { id: jobId, removed: true };
 };
 
 const retryAllFailed = async (queueName: string) => {
-  void queueName;
-  throw new BadRequestError(UNSUPPORTED);
+  const dlq = assertInspectable(queueName);
+  const messages = await pullForAction(dlq);
+
+  const { EMAIL_QUEUE, EVENT_STATUS_QUEUE } = bindings();
+  const sent: string[] = [];
+  const skipped: string[] = [];
+
+  for (const message of messages) {
+    try {
+      const body = JSON.parse(message.body) as { type?: string };
+      if (body.type === 'send-email') {
+        await EMAIL_QUEUE.send(body as never);
+      } else if (body.type === 'event-start' || body.type === 'event-done') {
+        await EVENT_STATUS_QUEUE.send(body as never);
+      } else {
+        skipped.push(message.id);
+        continue;
+      }
+      sent.push(message.lease_id);
+    } catch {
+      // Leave anything that could not be re-sent in the queue.
+      skipped.push(message.id);
+    }
+  }
+
+  await ackMessages(dlq, sent);
+  return { retried: sent.length, skipped: skipped.length };
 };
 
 const cleanAllFailed = async (queueName: string) => {
-  void queueName;
-  throw new BadRequestError(UNSUPPORTED);
+  const dlq = assertInspectable(queueName);
+  const messages = await pullForAction(dlq);
+
+  await ackMessages(
+    dlq,
+    messages.map((m) => m.lease_id)
+  );
+  return { removed: messages.length };
 };
 
 // ---------------------------------------------------------------------------

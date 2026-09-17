@@ -115,10 +115,18 @@
 	//   wrangler secret put <NAME> --env=""        (production)
 	//   wrangler secret put <NAME> --env staging   (staging)
 	// namely: JWT_ACCESS_TOKEN_SECRET, JWT_REFRESH_TOKEN_SECRET,
-	// JWT_GOOGLE_STATE_SECRET, GOOGLE_CLIENT_SECRET, MAIL_PASS.
+	// JWT_GOOGLE_STATE_SECRET, GOOGLE_CLIENT_SECRET, MAIL_PASS, CF_API_TOKEN.
 	// Locally they come from .dev.vars (see .dev.vars.example).
 	"vars": {
 		"NODE_ENV": "PRODUCTION",
+		// Queue names matching the bindings below. The admin DLQ viewer talks to
+		// the Queues REST API, which addresses queues by name rather than by
+		// binding, so the names have to be readable at runtime.
+		"EMAIL_QUEUE_NAME": "umattend-email",
+		"EVENT_STATUS_QUEUE_NAME": "umattend-event-status",
+		"DLQ_NAME": "umattend-dlq",
+		// Not a secret; the paired CF_API_TOKEN is.
+		"CF_ACCOUNT_ID": "b8d3ac74f68e959d2c02abaff44dd65f",
 		// Widens the auth cookies to the registrable domain so the frontend host
 		// and the API host share them. Leave unset locally (host-only on localhost).
 		"COOKIE_DOMAIN": ".umattend.site",
@@ -138,8 +146,8 @@
 		"MAIL_HOST": "smtp.gmail.com",
 		"MAIL_PORT": "587",
 		"MAIL_SECURE": "false",
-		"MAIL_USER": "marioinguitolp@gmail.com",
-		"MAIL_FROM": "admin@umattend.site",
+		"MAIL_USER": "m.inguito.484470@umindanao.edu.ph",
+		"MAIL_FROM": "attendance_admin@umattend.site",
 		"MAIL_FROM_NAME": "UMAttend"
 	},
 	"env": {
@@ -167,6 +175,10 @@
 			// absent at runtime, and getEnv() will throw on boot.
 			"vars": {
 				"NODE_ENV": "STAGING",
+				"EMAIL_QUEUE_NAME": "umattend-email-staging",
+				"EVENT_STATUS_QUEUE_NAME": "umattend-event-status-staging",
+				"DLQ_NAME": "umattend-dlq-staging",
+				"CF_ACCOUNT_ID": "b8d3ac74f68e959d2c02abaff44dd65f",
 				// Widens the auth cookies to the registrable domain so the frontend host
 				// and the API host share them. Leave unset locally (host-only on localhost).
 				"COOKIE_DOMAIN": ".umattend.site",
