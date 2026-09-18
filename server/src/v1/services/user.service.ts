@@ -252,7 +252,25 @@ const updateUserProfile = async (
   };
 };
 
-const getAttendanceToken = async (user_id: string): Promise<string> => {
+export interface AttendanceToken {
+  token: string;
+  /**
+   * Lifetime in seconds, so the client can schedule its refresh from the real
+   * value instead of assuming one.
+   *
+   * The QR display used to refetch on a hardcoded 59-minute timer, which only
+   * worked because production happened to set a 3600s TTL. Staging sets 300s,
+   * so the displayed code was expired for 54 of every 59 minutes and every scan
+   * of it failed with "This QR code has expired". Reporting the TTL removes the
+   * coupling: changing JWT_ATTENDANCE_TOKEN_TTL no longer silently breaks the
+   * frontend.
+   */
+  expires_in: number;
+}
+
+const getAttendanceToken = async (
+  user_id: string
+): Promise<AttendanceToken> => {
   const user = await userRepository.findUserById(user_id);
 
   if (!user?.student) {
@@ -268,11 +286,18 @@ const getAttendanceToken = async (user_id: string): Promise<string> => {
     );
   }
 
-  return jwt.sign(
+  // Guard the parse: an unset or malformed TTL would reach jwt.sign as NaN,
+  // which it rejects — turning a config typo into a 500 on every QR load.
+  const parsed = Number(JWT_ATTENDANCE_TOKEN_TTL);
+  const expires_in = Number.isFinite(parsed) && parsed > 0 ? parsed : 300;
+
+  const token = jwt.sign(
     { student_id: user.student.student_id },
     JWT_ATTENDANCE_TOKEN_SECRET,
-    { expiresIn: Number(JWT_ATTENDANCE_TOKEN_TTL) } as jwt.SignOptions
+    { expiresIn: expires_in } as jwt.SignOptions
   );
+
+  return { token, expires_in };
 };
 
 const userService = {

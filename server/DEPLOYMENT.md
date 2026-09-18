@@ -279,6 +279,59 @@ npm run tail:prod
 
 ---
 
+## Local development against remote data
+
+`wrangler dev` runs the Worker locally in workerd. By default every binding is
+also local — a SQLite file under `.wrangler/state`, in-memory queues, local
+Durable Objects. Bindings marked `"remote": true` in `wrangler.jsonc` instead
+proxy to the real Cloudflare resource while the code still runs on your machine.
+
+```bash
+npm run dev                  # everything local (safe default)
+npm run dev:remote:staging   # local Worker + REAL staging D1
+npm run dev:remote:prod      # local Worker + REAL production D1
+```
+
+Requires `wrangler login` (or `CLOUDFLARE_API_TOKEN`). Confirm what you got from
+the startup banner, which prints a Mode column per binding:
+
+```
+env.DB (umattend-staging)    D1 Database    remote
+env.EMAIL_QUEUE (...)        Queue          local
+env.EPHEMERAL_STORE (...)    Durable Object local
+```
+
+### What can and cannot be remote
+
+| Binding | Remote in dev? | Notes |
+| --- | --- | --- |
+| `DB` (D1) | yes | Reads **and writes** hit the real database. |
+| `EMAIL_QUEUE`, `EVENT_STATUS_QUEUE`, `DLQ` (producers) | possible, not enabled | See below. |
+| Queue **consumers** | **no** | Not supported, and not a version gap. |
+| `EPHEMERAL_STORE`, `RATE_LIMITER` (Durable Objects) | no | Always local in dev. Both hold short-lived state (auth codes, rate-limit windows), so a local copy is the right behaviour anyway. |
+
+**Queue consumers cannot run locally against a remote queue.** Cloudflare Queues
+pushes messages to the *deployed* Worker; nothing routes them to a dev session.
+`wrangler.jsonc` therefore leaves the queues local, which is also the more useful
+setup: messages your local code produces are consumed by your local `queue()`
+handler, so the whole produce-consume loop works end to end on your machine.
+
+Marking the *producers* `"remote": true` is supported, but it would send real
+messages to the real queue, where the **deployed** Worker picks them up — a local
+check-in test would make production email an actual student. Left local for that
+reason; enable it deliberately if you specifically need to inspect a remote DLQ.
+
+### Before pointing at production
+
+`dev:remote:prod` is a live connection to the production database, and nothing
+about the local server makes its writes less real. Prefer `dev:remote:staging`.
+When you do need production, treat it as production: read-only work, no
+migrations, no seed scripts.
+
+Note that `npm run dev` pins `--local` for exactly this reason. Without it,
+`wrangler dev --env=""` would pick up the production `remote: true` binding,
+because the top-level block in `wrangler.jsonc` *is* the production environment.
+
 ## Changing the schema
 
 Migrations are plain SQL under `migrations/`, shared by both environments and

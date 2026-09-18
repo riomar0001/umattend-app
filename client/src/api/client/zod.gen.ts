@@ -267,7 +267,8 @@ export const zGetUserAttendanceTokenResponse = z.object({
     success: z.optional(z.boolean()),
     message: z.optional(z.string()),
     data: z.optional(z.object({
-        token: z.optional(z.string())
+        token: z.optional(z.string()),
+        expires_in: z.optional(z.number().int())
     }))
 });
 

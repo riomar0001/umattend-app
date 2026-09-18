@@ -4,7 +4,11 @@ import {
   HTTPErrorResponse,
   HTTPSuccessResponse,
 } from '@/utils/responseHandler';
-import { AppError, NotFoundError } from '../../utils/customErrors';
+import {
+  AppError,
+  BadRequestError,
+  NotFoundError,
+} from '../../utils/customErrors';
 import { accessTokenCookie } from '@/utils/authCookies';
 
 import { NODE_ENV } from '@/constants/app.constants';
@@ -216,13 +220,26 @@ const updateUserProfile = async (req: Request, res: Response) => {
 
 const getAttendanceToken = async (req: Request, res: Response) => {
   try {
-    const token = await userService.getAttendanceToken(req.user.id);
+    const { token, expires_in } = await userService.getAttendanceToken(
+      req.user.id
+    );
+    // `expires_in` is what lets the QR view refresh before the code dies,
+    // rather than on a hardcoded interval that has to be kept in step with
+    // JWT_ATTENDANCE_TOKEN_TTL by hand. See user.service.
     return HTTPSuccessResponse(res, 200, 'Attendance token generated', {
       token,
+      expires_in,
     });
   } catch (error: unknown) {
     if (error instanceof NotFoundError) {
       return HTTPErrorResponse(res, 404, error.message);
+    }
+    // "No ID number on file for this account…" is the account's own to fix and
+    // the message says how. Without this branch it fell through to the 500
+    // below and was reported as a server fault, so the one person who could
+    // resolve it was told to try again later instead.
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
     }
     if (NODE_ENV === 'DEVELOPMENT') {
       return HTTPErrorResponse(res, 500, error);

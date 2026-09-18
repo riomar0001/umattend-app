@@ -63,7 +63,32 @@ const ProfilePage = () => {
   } = useQuery({
     ...getUserAttendanceTokenOptions(),
     enabled: !!user,
-    refetchInterval: 3540000,
+    // Refresh from the TTL the API reports, at 80% of its lifetime.
+    //
+    // This was a hardcoded 3540000ms (59 minutes), which only ever lined up
+    // with production's 3600s JWT_ATTENDANCE_TOKEN_TTL. Staging issues a 300s
+    // token, so the code on screen was expired for 54 of every 59 minutes and
+    // every scan of it came back "This QR code has expired". Deriving the
+    // interval means changing the TTL on either environment can no longer leave
+    // a dead QR on display.
+    refetchInterval: (query) => {
+      const ttl = query.state.data?.data?.expires_in;
+      if (typeof ttl !== 'number' || !Number.isFinite(ttl) || ttl <= 0) {
+        // The API did not report one (older deploy). Poll often enough to be
+        // safe under the shortest TTL in use rather than assuming the longest.
+        return 60_000;
+      }
+      // 80% of the lifetime, so the code is replaced before it dies rather
+      // than as it dies. The lower bound is deliberately small: it only
+      // applies below a ~2.5s TTL, and a bound above the TTL would reintroduce
+      // the original bug for short-lived tokens (.dev.vars uses TTL=5).
+      // The upper bound keeps a very long TTL refreshing within the hour.
+      return Math.min(Math.max(ttl * 800, 2_000), 3_600_000);
+    },
+    // Without this the timer is suspended while the tab is in the background —
+    // a student who opens their phone at the event would otherwise present a
+    // code that stopped refreshing when they last looked away.
+    refetchIntervalInBackground: true,
     retry: false
   });
 

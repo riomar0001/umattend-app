@@ -729,6 +729,12 @@ const getAttendanceToken = {
                         type: 'string',
                         example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
                       },
+                      expires_in: {
+                        type: 'integer',
+                        description:
+                          'Token lifetime in seconds. The QR display schedules its refresh from this rather than assuming a fixed interval, so changing JWT_ATTENDANCE_TOKEN_TTL cannot leave a stale code on screen.',
+                        example: 3600,
+                      },
                     },
                   },
                 },

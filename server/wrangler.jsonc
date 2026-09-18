@@ -29,12 +29,22 @@
 	},
 	// ---------- database ----------
 	// The code reads `env.DB`, so that is the only binding needed here.
+	//
+	// `remote: true` makes `wrangler dev` run the Worker locally in workerd while
+	// this binding talks to the REAL D1 database over the network. Pass `--local`
+	// to opt back out and use the local SQLite copy in .wrangler/state.
+	//
+	// Because this block is the production environment, `wrangler dev --env=""`
+	// now reads and WRITES the live database. The `dev` npm script therefore
+	// pins `--local`; use `dev:remote:staging` / `dev:remote:prod` to opt in
+	// deliberately. See DEPLOYMENT.md.
 	"d1_databases": [
 		{
 			"binding": "DB",
 			"database_name": "umattend",
 			"database_id": "7badcf38-cb56-415a-923d-7dc3b1cc334c",
-			"migrations_dir": "migrations"
+			"migrations_dir": "migrations",
+			"remote": true
 		},
 		{
 			"binding": "umattend_staging",
@@ -227,7 +237,10 @@
 					// reusing production's id here would silently point staging
 					// at live data.
 					"database_id": "80bf6428-2c0c-4afc-96da-5f1307a8d550",
-					"migrations_dir": "migrations"
+					"migrations_dir": "migrations",
+					// Local Worker, real staging database — see the production
+					// binding above. This is the one to develop against.
+					"remote": true
 				}
 			],
 			"queues": {

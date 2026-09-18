@@ -634,6 +634,10 @@ export type GetUserAttendanceTokenResponses = {
         message?: string;
         data?: {
             token?: string;
+            /**
+             * Token lifetime in seconds. The QR display schedules its refresh from this rather than assuming a fixed interval, so changing JWT_ATTENDANCE_TOKEN_TTL cannot leave a stale code on screen.
+             */
+            expires_in?: number;
         };
     };
 };
