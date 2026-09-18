@@ -123,8 +123,17 @@
 	//   wrangler secret put <NAME> --env=""        (production)
 	//   wrangler secret put <NAME> --env staging   (staging)
 	// namely: JWT_ACCESS_TOKEN_SECRET, JWT_REFRESH_TOKEN_SECRET,
-	// JWT_GOOGLE_STATE_SECRET, GOOGLE_CLIENT_SECRET, MAIL_PASS, CF_API_TOKEN.
+	// JWT_GOOGLE_STATE_SECRET, JWT_ATTENDANCE_TOKEN_SECRET,
+	// GOOGLE_CLIENT_SECRET, MAIL_PASS, CF_API_TOKEN.
+	//
+	// API_PROXY_SECRET is optional and shared with the frontend's Next.js
+	// middleware; without it the Worker cannot tell a visitor's IP from the
+	// proxy's. See src/utils/clientIp.ts.
 	// Locally they come from .dev.vars (see .dev.vars.example).
+	//
+	// Every one of these is read at module scope, so a missing secret is not a
+	// degraded feature — src/app.ts throws while evaluating and worker/http.ts
+	// caches that rejection, taking down every route until the next deploy.
 	"vars": {
 		"NODE_ENV": "PRODUCTION",
 		// Queue names matching the bindings below. The admin DLQ viewer talks to

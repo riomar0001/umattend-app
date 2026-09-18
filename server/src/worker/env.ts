@@ -22,6 +22,17 @@ export interface Env {
   JWT_REFRESH_TOKEN_TTL: string;
   JWT_GOOGLE_STATE_SECRET: string;
 
+  /**
+   * Signs the student attendance QR tokens.
+   *
+   * Required, and read at module scope by `constants/jwt.constants`. If it is
+   * missing, `src/app.ts` throws during module evaluation and `httpHandler()`
+   * caches the rejection — so every request for the life of the isolate fails,
+   * not just the QR ones. TTL is in SECONDS, unlike the hour-based TTLs above.
+   */
+  JWT_ATTENDANCE_TOKEN_SECRET: string;
+  JWT_ATTENDANCE_TOKEN_TTL: string;
+
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   GOOGLE_REDIRECT_URI: string;
@@ -57,6 +68,18 @@ export interface Env {
   /** Account id and a Queues Read+Write token, for the DLQ pull consumer. */
   CF_ACCOUNT_ID: string;
   CF_API_TOKEN: string;
+
+  /**
+   * Shared with the frontend's Next.js middleware, which proxies /api/*.
+   *
+   * The proxy is the party that connects to Cloudflare, so CF-Connecting-IP is
+   * the proxy's address rather than the visitor's. The middleware forwards the
+   * real IP and location, and this secret is what makes those headers
+   * trustworthy — without it they are a claim anyone could make by calling the
+   * API host directly. Optional: when unset, both sides fall back to
+   * CF-Connecting-IP. See `utils/clientIp.ts`.
+   */
+  API_PROXY_SECRET?: string;
 
   // ---------- durable objects ----------
   EPHEMERAL_STORE: DurableObjectNamespace<

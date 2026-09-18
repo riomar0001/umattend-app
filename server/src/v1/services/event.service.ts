@@ -21,6 +21,9 @@ import { events } from '@/generated/prisma/client';
 import { endEventStatusQueue } from '../queues/endEvent.queue';
 import authRepository from '../repositories/auth.repository';
 import { startEventStatusQueue } from '../queues/startEvent.queue';
+// Same derivation the queue consumer and the cron sweep use, so "did this edit
+// move the due time?" is answered identically everywhere.
+import { doneDueAt, startDueAt } from '@/worker/eventStatus';
 import { GetStudentsByEventIdInterface } from '../interface/student';
 import studentRepository from '../repositories/student.repository';
 import { CHECK_IN_EMAIL } from '../template/checkIn.email';
@@ -103,16 +106,24 @@ const updateEvent = async (eventId: string, event_data: AddEventInterface) => {
   }
   const updated_event = await eventRepository.updateEvent(eventId, event_data);
 
-  // Remove existing jobs best-effort — ignore "job not found" errors so a
-  // concurrent update or missing job doesn't abort the whole operation.
-  await Promise.allSettled([
-    startEventStatusQueue.remove(`event-start-${updated_event.id}`),
-    endEventStatusQueue.remove(`event-done-${updated_event.id}`),
-  ]);
+  // Only enqueue when the edit actually moved a due time.
+  //
+  // The two `remove()` calls that used to sit here were no-ops — Cloudflare
+  // Queues cannot withdraw an enqueued message — so every save added two more
+  // messages on top of the ones already in flight, and each of those re-enqueues
+  // itself every 24h until the event flips (see eventStatus.consumer). An event
+  // edited twenty times carried forty-two live messages, all doing the same
+  // work. The messages already out there stay correct regardless: the consumer
+  // re-derives the due time from the row rather than trusting the payload, which
+  // is what makes skipping the enqueue safe.
+  const startMoved =
+    startDueAt(event)?.getTime() !== startDueAt(updated_event)?.getTime();
+  const doneMoved =
+    doneDueAt(event)?.getTime() !== doneDueAt(updated_event)?.getTime();
 
   await Promise.all([
-    scheduleStartEventStatusJob(updated_event),
-    scheduleEndEventStatusJob(updated_event),
+    startMoved ? scheduleStartEventStatusJob(updated_event) : undefined,
+    doneMoved ? scheduleEndEventStatusJob(updated_event) : undefined,
   ]);
 
   return updated_event;

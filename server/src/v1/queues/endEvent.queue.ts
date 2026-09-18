@@ -27,10 +27,6 @@ export const endEventStatusQueue = {
       { delaySeconds }
     );
   },
-
-  async remove(_jobId: string): Promise<void> {
-    // Intentionally empty — cancellation is handled consumer-side.
-  },
 };
 
 export default endEventStatusQueue;

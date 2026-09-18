@@ -52,6 +52,11 @@ export class EphemeralStore extends DurableObject {
       return this.setex(value, ttlSeconds);
     }
     await this.ctx.storage.put<Entry>(KEY, { value, expiresAt: null });
+    // An alarm left over from an earlier setex() on this same key would still
+    // be pending, and alarm() calls deleteAll() — so without this the value
+    // just written as non-expiring would be wiped at the *old* expiry. Matches
+    // Redis, where a plain SET clears any TTL on the key.
+    await this.ctx.storage.deleteAlarm();
     return 'OK';
   }
 

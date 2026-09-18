@@ -18,12 +18,15 @@ import { JWT_REFRESH_TOKEN_SECRET } from '@/constants/jwt.constants.js';
 
 import { sanitizeKey, extractStudentID } from '@/utils/string.utils.js';
 import { isUsableStudentId } from '@/utils/studentId.js';
+import type { RequestLocation } from '@/utils/geoHeaders';
 
 const googleAuthWithCode = async (
   code: string,
   state: string,
   ip_address: string,
-  userAgent: string
+  userAgent: string,
+  /** Where the login came from; resolved from request headers by the caller. */
+  location: RequestLocation
 ) => {
   const googleUser = await GoogleAuth.exchangeCodeForUserInfo(code, state);
 
@@ -152,7 +155,8 @@ const googleAuthWithCode = async (
   const refresh_token = await generateRefreshToken(
     user.id,
     ip_address,
-    userAgent
+    userAgent,
+    location
   );
 
   return { access_token, refresh_token, user };

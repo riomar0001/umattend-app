@@ -14,6 +14,7 @@
 import type { Env } from './env';
 import { seedRuntime } from './runtime';
 import { httpHandler } from './http';
+import { withGeoHeaders } from './geo';
 import type { EmailMessage, EventStatusMessage } from './messages';
 import { consumeEmailBatch } from './consumers/email.consumer';
 import { consumeEventStatusBatch } from './consumers/eventStatus.consumer';
@@ -32,7 +33,10 @@ export default {
   ): Promise<Response> {
     seedRuntime(env);
     const handler = await httpHandler();
-    return handler.fetch(request, env, ctx);
+    // Cloudflare's geolocation lives on `request.cf`, which Express cannot
+    // see. Copied onto headers here so the login-history recorder can read it
+    // without an external IP lookup — see ./geo.
+    return handler.fetch(withGeoHeaders(request), env, ctx);
   },
 
   async queue(
@@ -74,6 +78,15 @@ export default {
     ctx: ExecutionContext
   ): Promise<void> {
     seedRuntime(env);
-    ctx.waitUntil(runScheduled(event.cron, env));
+
+    // Awaited rather than handed to ctx.waitUntil(). waitUntil() lets the
+    // handler resolve immediately, so a throw from runScheduled never reached
+    // the platform and the invocation was recorded as successful no matter what
+    // happened — the sweep could fail on every tick while the dashboard stayed
+    // green. Awaiting propagates the failure so it is visible in Workers Logs
+    // and in the cron trigger's status.
+    await runScheduled(event.cron, env);
+
+    void ctx;
   },
 };

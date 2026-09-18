@@ -30,9 +30,16 @@ export const getSmtpConfig = (): SmtpConfig => {
   // from.
   const user = getEnv('MAIL_USER');
 
+  // Defaulted rather than parsed straight through: getEnv(_, false) returns
+  // undefined when unset, and parseInt(undefined) is NaN, which reaches
+  // WorkerMailer.connect as the port and fails with a connection error that
+  // says nothing about the missing variable. 587 is the submission port the
+  // rest of this file documents.
+  const port = Number.parseInt(getEnv('MAIL_PORT', false) ?? '', 10);
+
   return {
     host: getEnv('MAIL_HOST'),
-    port: parseInt(getEnv('MAIL_PORT', false)),
+    port: Number.isInteger(port) ? port : 587,
     secure: getEnv('MAIL_SECURE', false) === 'true',
     user,
     pass: getEnv('MAIL_PASS'),

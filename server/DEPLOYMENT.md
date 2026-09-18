@@ -160,6 +160,7 @@ npx wrangler secret put JWT_ATTENDANCE_TOKEN_SECRET --env staging
 npx wrangler secret put GOOGLE_CLIENT_SECRET --env staging
 npx wrangler secret put MAIL_PASS --env staging
 npx wrangler secret put CF_API_TOKEN --env staging
+npx wrangler secret put API_PROXY_SECRET --env staging
 ```
 
 **Production:**
@@ -172,6 +173,7 @@ npx wrangler secret put JWT_ATTENDANCE_TOKEN_SECRET --env=""
 npx wrangler secret put GOOGLE_CLIENT_SECRET --env=""
 npx wrangler secret put MAIL_PASS --env=""
 npx wrangler secret put CF_API_TOKEN --env=""
+npx wrangler secret put API_PROXY_SECRET --env=""
 ```
 
 `CF_API_TOKEN` is a Cloudflare API token with **Queues Read *and* Write** on

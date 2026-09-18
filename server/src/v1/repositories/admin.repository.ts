@@ -1,5 +1,6 @@
 import prisma from '../../configs/prisma.config';
 import { Prisma } from '@/generated/prisma/client';
+import { queryInBatches } from '@/utils/d1';
 
 const findAllUsers = async (page: number, limit: number, search?: string) => {
   const skip = (page - 1) * limit;
@@ -145,17 +146,19 @@ const findAllEvents = async (
     prisma.events.count({ where }),
   ]);
 
+  // Batched: `limit` reaches here straight from the query string, so this
+  // filter can carry more ids than D1 allows bound parameters. See utils/d1.
   const eventIds = events.map((e) => e.id);
-  const checkoutCounts = eventIds.length
-    ? await prisma.attendance.groupBy({
-        by: ['event_id'],
-        where: {
-          event_id: { in: eventIds },
-          NOT: { check_out_at: null },
-        },
-        _count: { _all: true },
-      })
-    : [];
+  const checkoutCounts = await queryInBatches(eventIds, (batch) =>
+    prisma.attendance.groupBy({
+      by: ['event_id'],
+      where: {
+        event_id: { in: batch },
+        NOT: { check_out_at: null },
+      },
+      _count: { _all: true },
+    })
+  );
 
   const checkoutMap = new Map(
     checkoutCounts.map((c) => [c.event_id, c._count._all])

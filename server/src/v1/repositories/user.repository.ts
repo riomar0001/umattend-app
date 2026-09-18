@@ -1,4 +1,5 @@
 import prisma from '../../configs/prisma.config';
+import { queryInBatches } from '@/utils/d1';
 
 const findUserById = async (user_id: string) => {
   return await prisma.user.findUnique({
@@ -154,17 +155,19 @@ const getUserHostedEvents = async (user_id: string) => {
     },
   });
 
+  // Batched: an organizer's hosted-event list is unpaginated, and D1 caps a
+  // statement at 100 bound parameters. See utils/d1.
   const eventIds = hostedEvents.map((e) => e.id);
-  const checkoutCounts = eventIds.length
-    ? await prisma.attendance.groupBy({
-        by: ['event_id'],
-        where: {
-          event_id: { in: eventIds },
-          NOT: { check_out_at: null },
-        },
-        _count: { _all: true },
-      })
-    : [];
+  const checkoutCounts = await queryInBatches(eventIds, (batch) =>
+    prisma.attendance.groupBy({
+      by: ['event_id'],
+      where: {
+        event_id: { in: batch },
+        NOT: { check_out_at: null },
+      },
+      _count: { _all: true },
+    })
+  );
 
   const checkoutMap = new Map(
     checkoutCounts.map((c) => [c.event_id, c._count._all])

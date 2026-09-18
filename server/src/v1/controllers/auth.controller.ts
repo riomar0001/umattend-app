@@ -8,24 +8,13 @@ import {
 import jwt from 'jsonwebtoken';
 import { AuthenticationError, NotFoundError } from '../../utils/customErrors';
 import { FRONTEND_URL, NODE_ENV } from '../../constants/app.constants';
+import { clientIp } from '@/utils/clientIp';
+import { locationFromRequest } from '@/utils/geoHeaders';
 import {
   accessTokenCookie,
   refreshTokenCookie,
   clearCookieOptions,
 } from '../../utils/authCookies';
-
-function getClientIp(req: Request): string {
-  // CF-Connecting-IP is set by Cloudflare and is the most reliable real-visitor
-  // IP when the stack is Cloudflare → Nginx → Express.
-  const cfIp = req.headers['cf-connecting-ip'] as string | undefined;
-  if (cfIp) {
-    return cfIp.trim();
-  }
-
-  // Fallback: leftmost entry of X-Forwarded-For (added by Nginx/proxies)
-  const forwarded = req.headers['x-forwarded-for'] as string | undefined;
-  return forwarded?.split(',')[0]?.trim() ?? req.ip ?? 'unknown';
-}
 
 const googleAuth = async (req: Request, res: Response) => {
   try {
@@ -90,8 +79,9 @@ const googleCallback = async (req: Request, res: Response) => {
     const result = await authService.googleAuthWithCode(
       code as string,
       state as string,
-      getClientIp(req),
-      req.headers['user-agent'] ?? ''
+      clientIp(req),
+      req.headers['user-agent'] ?? '',
+      locationFromRequest(req)
     );
 
     const auth_code = await authService.generateAuthCode(

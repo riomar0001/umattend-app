@@ -17,6 +17,7 @@ import {
 import { formatDateTime, generateExportFileName } from '@/utils/export.utils';
 import { NODE_ENV } from '@/constants/app.constants';
 import { decodeAndVerifyQR, qrFailureMessage } from '@/utils/decodeAndVerifyQR';
+import { routeParam } from '@/utils/routeParams';
 
 const addEvent = async (req: Request, res: Response) => {
   try {
@@ -99,8 +100,7 @@ const addEvent = async (req: Request, res: Response) => {
 
 const deleteEvent = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { event_id } = req.params;
-
+    const event_id = routeParam(req, 'event_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'Event ID is required');
     }
@@ -164,8 +164,7 @@ const updateEvent = async (req: Request, res: Response): Promise<Response> => {
       created_by,
     };
 
-    const { eventId } = req.params;
-
+    const eventId = routeParam(req, 'eventId');
     if (!eventId) {
       return HTTPErrorResponse(res, 400, 'Event ID is required');
     }
@@ -203,8 +202,8 @@ const createCheckInEvent = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { qr_code, event_id } = req.params;
-
+    const qr_code = routeParam(req, 'qr_code');
+    const event_id = routeParam(req, 'event_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'event_id is required');
     }
@@ -288,8 +287,8 @@ const createCheckOutEvent = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { qr_code, event_id } = req.params;
-
+    const qr_code = routeParam(req, 'qr_code');
+    const event_id = routeParam(req, 'event_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'event_id is required');
     }
@@ -375,8 +374,7 @@ const massCheckOutEvent = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { event_id } = req.params;
-
+    const event_id = routeParam(req, 'event_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'event_id is required');
     }
@@ -537,7 +535,7 @@ const removeOrganizer = async (req: Request, res: Response) => {
 
 const getEventDetailsById = async (req: Request, res: Response) => {
   try {
-    const { event_id } = req.params;
+    const event_id = routeParam(req, 'event_id');
     const user_id = req.user?.id;
     const role = req.user?.role;
 
@@ -573,7 +571,7 @@ const getEventDetailsById = async (req: Request, res: Response) => {
 
 const getOrganizersByEventId = async (req: Request, res: Response) => {
   try {
-    const { event_id } = req.params;
+    const event_id = routeParam(req, 'event_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'Event ID is required');
     }
@@ -668,7 +666,7 @@ const getAllPastEvents = async (req: Request, res: Response) => {
 
 const getPaginatedAttendeesByEventId = async (req: Request, res: Response) => {
   try {
-    const { event_id } = req.params;
+    const event_id = routeParam(req, 'event_id');
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search as string | undefined;
@@ -712,8 +710,7 @@ const getPaginatedAttendeesByEventId = async (req: Request, res: Response) => {
 
 const exportEventAttendeesToExcel = async (req: Request, res: Response) => {
   try {
-    const { event_id } = req.params;
-
+    const event_id = routeParam(req, 'event_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'Event ID is required');
     }
@@ -790,7 +787,7 @@ const exportEventAttendeesToExcel = async (req: Request, res: Response) => {
 
 const getEventAttendanceCount = async (req: Request, res: Response) => {
   try {
-    const { event_id } = req.params;
+    const event_id = routeParam(req, 'event_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'Event ID is required');
     }
@@ -822,7 +819,7 @@ const getEventAttendanceCount = async (req: Request, res: Response) => {
 
 const postEvent = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { event_id } = req.params;
+    const event_id = routeParam(req, 'event_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'Event ID is required');
     }
@@ -842,7 +839,7 @@ const postEvent = async (req: Request, res: Response): Promise<Response> => {
 
 const draftEvent = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { event_id } = req.params;
+    const event_id = routeParam(req, 'event_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'Event ID is required');
     }
@@ -865,8 +862,8 @@ const checkInStudentById = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { event_id, student_id } = req.params;
-
+    const event_id = routeParam(req, 'event_id');
+    const student_id = routeParam(req, 'student_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'event_id is required');
     }
@@ -928,8 +925,8 @@ const checkOutStudentById = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const { event_id, student_id } = req.params;
-
+    const event_id = routeParam(req, 'event_id');
+    const student_id = routeParam(req, 'student_id');
     if (!event_id) {
       return HTTPErrorResponse(res, 400, 'event_id is required');
     }

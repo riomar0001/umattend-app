@@ -78,3 +78,19 @@ DLQ_NAME=umattend-dlq
 # Create one at https://dash.cloudflare.com/profile/api-tokens
 CF_ACCOUNT_ID=b8d3ac74f68e959d2c02abaff44dd65f
 CF_API_TOKEN=
+
+# ---------- Frontend proxy ----------
+# Shared with the Next.js middleware in client/src/middleware.ts.
+#
+# The frontend rewrites /api/* to this Worker, so the Worker's CF-Connecting-IP
+# is the Vercel function, not the visitor — which is why login history used to
+# record AWS datacenters and why every visitor shared one rate-limit bucket. The
+# middleware forwards the real IP and location; this secret is what lets the
+# Worker trust those headers instead of treating them as a spoofable claim.
+#
+# Generate with `openssl rand -hex 32` and set the SAME value in both places:
+#   wrangler secret put API_PROXY_SECRET
+#   vercel env add API_PROXY_SECRET
+#
+# Leave empty to disable: both sides then fall back to CF-Connecting-IP.
+API_PROXY_SECRET=

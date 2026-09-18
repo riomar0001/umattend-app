@@ -4,6 +4,7 @@ import rateLimitStore from '../../configs/rateLimit.config';
 import { FRONTEND_URL } from '../../constants/app.constants';
 import authService from '../services/auth.service';
 import { HTTPErrorResponse } from '../../utils/responseHandler';
+import { clientIp } from '../../utils/clientIp';
 
 export const WINDOW_MS = 60_000;
 const IP_LIMIT = 300;
@@ -24,21 +25,13 @@ const CHECKIN_IP_LIMIT = 600; // 600 scans/min per IP (multiple devices)
 // script — see src/worker/rateLimiter.do.ts. A DO handles one call at a time,
 // so the prune-count-append sequence is atomic for the same reason EVAL was.
 
-function getClientIp(req: Request): string {
-  // CF-Connecting-IP is set by Cloudflare. Only trust it when the request
-  // actually came through our Cloudflare edge — `req.ip` reflects that
-  // because Express resolves it via the configured `trust proxy` setting.
-  // In other environments (direct access, internal tools, staging) we
-  // ignore CF-Connecting-IP because any client could spoof it.
-  const cfIp = req.headers['cf-connecting-ip'] as string | undefined;
-  if (cfIp && req.ip) {
-    return cfIp.trim();
-  }
-
-  // Otherwise fall back to Express's resolved IP — with `trust proxy` set,
-  // this honours X-Forwarded-For only when it comes from a trusted hop.
-  return req.ip ?? 'unknown';
-}
+// Client IP resolution lives in utils/clientIp, shared with the login-history
+// recorder. This file used to carry its own copy that trusted CF-Connecting-IP
+// outright — which, once the frontend began proxying /api/*, meant every
+// visitor was bucketed under the proxy's address. The per-IP budgets below were
+// therefore not per-IP at all: the whole user base shared one 300 req/min
+// window, and a single busy client could lock everyone else out.
+const getClientIp = clientIp;
 
 async function checkSlidingWindow(
   key: string,

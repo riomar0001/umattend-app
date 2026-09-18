@@ -5,10 +5,12 @@
  * `type`; this module keeps the old per-queue import surface intact for
  * `event.service.ts`.
  *
- * `remove()` is a no-op: Cloudflare Queues cannot withdraw an enqueued message.
- * Cancellation is handled instead by the consumer, which reloads the event and
- * re-derives whether it is actually due — see
- * `src/worker/consumers/eventStatus.consumer.ts`.
+ * There is deliberately no `remove()`. Cloudflare Queues cannot withdraw an
+ * enqueued message, so the one that used to live here did nothing while reading
+ * at its call site as though a stale job had been cancelled — which is how
+ * event edits ended up stacking duplicate messages. Cancellation is handled by
+ * the consumer instead: it reloads the event and re-derives whether it is
+ * actually due. See `src/worker/consumers/eventStatus.consumer.ts`.
  */
 
 import { bindings } from '../../worker/runtime';
@@ -33,10 +35,6 @@ export const startEventStatusQueue = {
       { type: 'event-start', event_id: data.event_id },
       { delaySeconds }
     );
-  },
-
-  async remove(_jobId: string): Promise<void> {
-    // Intentionally empty — see module docblock.
   },
 };
 

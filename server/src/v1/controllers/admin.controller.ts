@@ -12,6 +12,8 @@ import {
 import { matchedData, validationResult } from 'express-validator';
 import eventRepository from '../repositories/event.repository';
 import { NODE_ENV } from '@/constants/app.constants';
+import { parsePagination } from '@/utils/pagination';
+import { routeParam } from '@/utils/routeParams';
 
 // ---------------------------------------------------------------------------
 // Statistics
@@ -47,9 +49,8 @@ const getQueues = async (_req: Request, res: Response) => {
 
 const getFailedJobs = async (req: Request, res: Response) => {
   try {
-    const { queueName } = req.params;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const queueName = routeParam(req, 'queueName');
+    const { page, limit } = parsePagination(req.query, 10);
 
     const result = await adminService.getFailedJobs(queueName, page, limit);
     return HTTPSuccessResponse(res, 200, 'Failed jobs retrieved', result);
@@ -69,7 +70,8 @@ const getFailedJobs = async (req: Request, res: Response) => {
 
 const retryFailedJob = async (req: Request, res: Response) => {
   try {
-    const { queueName, jobId } = req.params;
+    const queueName = routeParam(req, 'queueName');
+    const jobId = routeParam(req, 'jobId');
     const result = await adminService.retryJob(queueName, jobId);
     return HTTPSuccessResponse(res, 200, 'Job retried', result);
   } catch (error) {
@@ -88,7 +90,8 @@ const retryFailedJob = async (req: Request, res: Response) => {
 
 const deleteFailedJob = async (req: Request, res: Response) => {
   try {
-    const { queueName, jobId } = req.params;
+    const queueName = routeParam(req, 'queueName');
+    const jobId = routeParam(req, 'jobId');
     const result = await adminService.removeJob(queueName, jobId);
     return HTTPSuccessResponse(res, 200, 'Job removed', result);
   } catch (error) {
@@ -107,7 +110,7 @@ const deleteFailedJob = async (req: Request, res: Response) => {
 
 const retryAllFailedJobs = async (req: Request, res: Response) => {
   try {
-    const { queueName } = req.params;
+    const queueName = routeParam(req, 'queueName');
     const result = await adminService.retryAllFailed(queueName);
     return HTTPSuccessResponse(res, 200, 'All failed jobs retried', result);
   } catch (error) {
@@ -126,7 +129,7 @@ const retryAllFailedJobs = async (req: Request, res: Response) => {
 
 const cleanAllFailedJobs = async (req: Request, res: Response) => {
   try {
-    const { queueName } = req.params;
+    const queueName = routeParam(req, 'queueName');
     const result = await adminService.cleanAllFailed(queueName);
     return HTTPSuccessResponse(res, 200, 'Failed jobs cleaned', result);
   } catch (error) {
@@ -149,8 +152,7 @@ const cleanAllFailedJobs = async (req: Request, res: Response) => {
 
 const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const { page, limit } = parsePagination(req.query);
     const search = req.query.search as string | undefined;
 
     const result = await adminService.getAllUsers(page, limit, search);
@@ -165,7 +167,7 @@ const getAllUsers = async (req: Request, res: Response) => {
 
 const getUserById = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = routeParam(req, 'userId');
     const user = await adminService.getUserById(userId);
     return HTTPSuccessResponse(res, 200, 'User retrieved', { user });
   } catch (error) {
@@ -186,7 +188,7 @@ const updateUserRole = async (req: Request, res: Response) => {
       return HTTPErrorResponse(res, 400, errors.array());
     }
 
-    const { userId } = req.params;
+    const userId = routeParam(req, 'userId');
     const { role } = matchedData(req);
 
     const updated = await adminService.updateUserRole(userId, role);
@@ -209,7 +211,7 @@ const updateUserRole = async (req: Request, res: Response) => {
 
 const deleteUser = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = routeParam(req, 'userId');
     const result = await adminService.softDeleteUser(userId);
     return HTTPSuccessResponse(res, 200, 'User soft-deleted', result);
   } catch (error) {
@@ -232,8 +234,7 @@ const deleteUser = async (req: Request, res: Response) => {
 
 const getAllEvents = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const { page, limit } = parsePagination(req.query);
     const search = req.query.search as string | undefined;
 
     const result = await adminService.getAllEvents(page, limit, search);
@@ -254,8 +255,7 @@ const updateEvent = async (req: Request, res: Response) => {
     }
 
     const data = matchedData(req);
-    const { eventId } = req.params;
-
+    const eventId = routeParam(req, 'eventId');
     if (!eventId) {
       return HTTPErrorResponse(res, 400, 'Event ID is required');
     }
@@ -325,7 +325,7 @@ const getRateLimits = async (req: Request, res: Response) => {
 
 const deleteRateLimit = async (req: Request, res: Response) => {
   try {
-    const { key } = req.params;
+    const key = routeParam(req, 'key');
     await adminService.deleteRateLimit(key);
     return HTTPSuccessResponse(res, 200, 'Rate limit cleared', { key });
   } catch (error) {

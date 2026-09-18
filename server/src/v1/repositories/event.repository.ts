@@ -11,6 +11,7 @@ import {
   AddCheckOutInterface,
 } from '../interface/event';
 import { Prisma } from '@/generated/prisma/client';
+import { mutateInBatches, queryInBatches } from '@/utils/d1';
 
 // The Serializable-isolation retry helper (P2034) that used to live here is
 // gone. D1 implements neither transactions nor isolation levels, so it could
@@ -108,18 +109,20 @@ const getAllEvents = async (includeDrafts = false) => {
     },
   });
 
-  // Single grouped query for checkout counts instead of one per event.
+  // One grouped query per batch instead of one per event. Batched because this
+  // list is not paginated: D1 caps a statement at 100 bound parameters, so an
+  // account with a hundred events would otherwise fail outright. See utils/d1.
   const eventIds = events.map((e) => e.id);
-  const checkoutCounts = eventIds.length
-    ? await prisma.attendance.groupBy({
-        by: ['event_id'],
-        where: {
-          event_id: { in: eventIds },
-          NOT: { check_out_at: null },
-        },
-        _count: { _all: true },
-      })
-    : [];
+  const checkoutCounts = await queryInBatches(eventIds, (batch) =>
+    prisma.attendance.groupBy({
+      by: ['event_id'],
+      where: {
+        event_id: { in: batch },
+        NOT: { check_out_at: null },
+      },
+      _count: { _all: true },
+    })
+  );
 
   const checkoutMap = new Map(
     checkoutCounts.map((c) => [c.event_id, c._count._all])
@@ -151,17 +154,19 @@ const getAllPastEvents = async (includeDrafts = false) => {
     },
   });
 
+  // Batched for the same reason as getAllEvents above — the past-events list
+  // is unpaginated and only grows.
   const eventIds = events.map((e) => e.id);
-  const checkoutCounts = eventIds.length
-    ? await prisma.attendance.groupBy({
-        by: ['event_id'],
-        where: {
-          event_id: { in: eventIds },
-          NOT: { check_out_at: null },
-        },
-        _count: { _all: true },
-      })
-    : [];
+  const checkoutCounts = await queryInBatches(eventIds, (batch) =>
+    prisma.attendance.groupBy({
+      by: ['event_id'],
+      where: {
+        event_id: { in: batch },
+        NOT: { check_out_at: null },
+      },
+      _count: { _all: true },
+    })
+  );
 
   const checkoutMap = new Map(
     checkoutCounts.map((c) => [c.event_id, c._count._all])
@@ -496,11 +501,11 @@ const getPaginatedAttendeesByEventId = async (
 /**
  * Mass check-out students for an event.
  *
- * Validation reads run outside the transaction (cheap, no locks held).
- * Updates run in batches, each in its own short transaction, so a large
- * event with thousands of attendees can't blow past the 30s tx timeout.
+ * Every query that filters on the caller's `student_ids` — or on the attendance
+ * ids derived from them — is batched, because D1 rejects a statement carrying
+ * more than 100 bound parameters and the list is client-supplied. Batch size
+ * comes from `utils/d1`; the old local constant was 200, over the cap.
  */
-const MASS_CHECKOUT_BATCH_SIZE = 200;
 
 const massCheckOutStudents = async (
   event_id: string,
@@ -516,10 +521,15 @@ const massCheckOutStudents = async (
   const departmentMismatch: number[] = [];
 
   if (event.department !== 'Open to all Departments') {
-    const students = await prisma.student.findMany({
-      where: { student_id: { in: student_ids } },
-      select: { student_id: true, department: true },
-    });
+    // `student_ids` comes straight from the request body, so its length is
+    // whatever the caller sent — batched to stay inside D1's bound-parameter
+    // cap. Same for the attendance lookup below.
+    const students = await queryInBatches(student_ids, (batch) =>
+      prisma.student.findMany({
+        where: { student_id: { in: batch } },
+        select: { student_id: true, department: true },
+      })
+    );
 
     const studentDeptMap = new Map(
       students.map((s) => [s.student_id, s.department])
@@ -533,17 +543,19 @@ const massCheckOutStudents = async (
     }
   }
 
-  const existing = await prisma.attendance.findMany({
-    where: {
-      event_id,
-      student_id: { in: student_ids },
-    },
-    select: {
-      id: true,
-      student_id: true,
-      check_out_at: true,
-    },
-  });
+  const existing = await queryInBatches(student_ids, (batch) =>
+    prisma.attendance.findMany({
+      where: {
+        event_id,
+        student_id: { in: batch },
+      },
+      select: {
+        id: true,
+        student_id: true,
+        check_out_at: true,
+      },
+    })
+  );
 
   const existingMap = new Map<number, (typeof existing)[number]>();
   existing.forEach((e) => existingMap.set(e.student_id, e));
@@ -572,35 +584,39 @@ const massCheckOutStudents = async (
 
   const checkoutTimestamp = check_out_at ?? new Date();
 
-  // Still batched, to keep each statement well inside D1's query limits. The
-  // transaction wrapper is gone: it only ever held a single `updateMany`, which
-  // is atomic on its own.
+  // Batched, to keep each statement inside D1's 100 bound-parameter cap. The
+  // previous batch size of 200 was over it: this statement binds one parameter
+  // per id *plus* check_out_at and check_out_by, so anything above 98 ids was
+  // rejected with "too many SQL variables" — i.e. every mass check-out of a
+  // hundred students or more. See utils/d1.
+  //
+  // The transaction wrapper is gone: it only ever held a single `updateMany`,
+  // which is atomic on its own.
   //
   // `check_out_at: null` is re-asserted rather than trusting the read that
   // built `toUpdateIds` — without a transaction an individual check-out could
   // have landed in between, and it must not be silently overwritten.
-  for (let i = 0; i < toUpdateIds.length; i += MASS_CHECKOUT_BATCH_SIZE) {
-    const batch = toUpdateIds.slice(i, i + MASS_CHECKOUT_BATCH_SIZE);
-    await prisma.attendance.updateMany({
+  await mutateInBatches(toUpdateIds, (batch) =>
+    prisma.attendance.updateMany({
       where: { id: { in: batch }, check_out_at: null },
       data: {
         check_out_at: checkoutTimestamp,
         check_out_by,
       },
-    });
-  }
+    })
+  );
 
-  const updatedRecords = toUpdateIds.length
-    ? await prisma.attendance.findMany({
-        where: { id: { in: toUpdateIds } },
-        include: {
-          event: true,
-          student: true,
-          check_in_by_user: true,
-          check_out_by_user: true,
-        },
-      })
-    : [];
+  const updatedRecords = await queryInBatches(toUpdateIds, (batch) =>
+    prisma.attendance.findMany({
+      where: { id: { in: batch } },
+      include: {
+        event: true,
+        student: true,
+        check_in_by_user: true,
+        check_out_by_user: true,
+      },
+    })
+  );
 
   return {
     updatedRecords,

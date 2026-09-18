@@ -11,7 +11,7 @@ import {
   JWT_REFRESH_TOKEN_SECRET,
   JWT_REFRESH_TOKEN_TTL,
 } from '../../constants/jwt.constants';
-import { getLocationByIp } from '../../utils/getIPLocation';
+import type { RequestLocation } from '../../utils/geoHeaders';
 
 export const generateAccessToken = (
   tokenPayload: AccessTokenPayloadTypes
@@ -47,7 +47,15 @@ export const generateAccessToken = (
 export const generateRefreshToken = async (
   user_id: string,
   ip: string,
-  user_agent: string
+  user_agent: string,
+  /**
+   * Resolved by the caller from request headers — Cloudflare's or the frontend
+   * proxy's, whichever describes the real visitor. Passed in rather than looked
+   * up here because this function has no request to read, and because the
+   * lookup it used to do (ip-api.com) was a blocking external call on the login
+   * path. See utils/geoHeaders.
+   */
+  location: RequestLocation
 ) => {
   const token_id = uuidv4();
 
@@ -64,11 +72,30 @@ export const generateRefreshToken = async (
   const parser = new UAParser(user_agent);
   const result = parser.getResult();
 
-  const device = result.device.model ?? result.device.type ?? 'Unknown';
-  const os = result.os.name ?? 'Unknown';
-  const browser = result.browser.name ?? 'Unknown';
+  // UAParser only fills `device` for phones and tablets — a desktop browser
+  // legitimately has neither a model nor a type. Reporting that as "Unknown"
+  // made every laptop login look like a parse failure; it is simply a desktop.
+  // Genuinely unparseable input (no UA header at all) still reads "Unknown".
+  const device =
+    result.device.model ??
+    result.device.type ??
+    (result.os.name ? 'Desktop' : 'Unknown');
 
-  const { city, region, country } = await getLocationByIp(ip);
+  const os = result.os.name ?? 'Unknown';
+
+  // `browser.name` falls back to the rendering engine when the UA carries no
+  // product token — a UA ending at "AppleWebKit/537.36 (KHTML, like Gecko)"
+  // reports "WebKit". That is a truncated User-Agent reaching us, not a real
+  // browser; label it so the history does not imply a browser nobody uses.
+  const engineOnly =
+    result.browser.name !== undefined &&
+    result.browser.name === result.engine.name;
+
+  const browser = engineOnly
+    ? `Unknown (${result.browser.name})`
+    : (result.browser.name ?? 'Unknown');
+
+  const { city, region, country } = location;
 
   await prisma.refresh_token.create({
     data: {

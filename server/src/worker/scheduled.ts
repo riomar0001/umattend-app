@@ -6,6 +6,7 @@
  */
 
 import prisma from '../configs/prisma.config';
+import { mutateInBatches } from '../utils/d1';
 import type { Env } from './env';
 import { doneDueAt, startDueAt } from './eventStatus';
 
@@ -68,19 +69,22 @@ const reconcileEventStatus = async (): Promise<void> => {
     }
   }
 
-  if (toStart.length > 0) {
-    await prisma.events.updateMany({
-      where: { id: { in: toStart }, is_started: false },
+  // Batched: `take: 500` above means either list can hold far more ids than
+  // the 100 bound parameters D1 allows in one statement, and the sweep is
+  // exactly the code that runs when a backlog has built up. See utils/d1.
+  await mutateInBatches(toStart, (batch) =>
+    prisma.events.updateMany({
+      where: { id: { in: batch }, is_started: false },
       data: { is_started: true },
-    });
-  }
+    })
+  );
 
-  if (toFinish.length > 0) {
-    await prisma.events.updateMany({
-      where: { id: { in: toFinish }, is_done: false },
+  await mutateInBatches(toFinish, (batch) =>
+    prisma.events.updateMany({
+      where: { id: { in: batch }, is_done: false },
       data: { is_done: true },
-    });
-  }
+    })
+  );
 
   if (toStart.length || toFinish.length) {
     console.log(

@@ -62,6 +62,11 @@ export const isDeadLetterEnvelope = (
  * low gives up an attempt early, and one that is too high hands the message to
  * the platform's dead-letter path instead, which is exactly today's behaviour —
  * the job is still preserved, just without its error.
+ *
+ * `message.attempts` starts at 1 on the first delivery, so a queue configured
+ * with `max_retries: n` delivers a message up to n + 1 times. The comparison is
+ * `<=` for that reason: `<` dead-lettered on delivery n and silently forfeited
+ * the last retry the queue was configured to allow.
  */
 export const retryOrDeadLetter = async <T>(
   message: Message<T>,
@@ -70,7 +75,7 @@ export const retryOrDeadLetter = async <T>(
   error: unknown,
   delaySeconds: number
 ): Promise<void> => {
-  if (message.attempts < maxRetries) {
+  if (message.attempts <= maxRetries) {
     message.retry({ delaySeconds });
     return;
   }

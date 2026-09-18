@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import eventRepository from '../repositories/event.repository';
 import redis from '../../configs/redis.config';
 import { HTTPErrorResponse } from '@/utils/responseHandler';
+import { routeParam } from '@/utils/routeParams';
 
 const ORGANIZER_CACHE_TTL_SECONDS = 60;
 
@@ -15,7 +16,7 @@ export const checkOrganizer = async (
 ) => {
   try {
     const user_id = req.user.id;
-    const event_id = req.params.event_id;
+    const event_id = routeParam(req, 'event_id');
 
     if (!user_id || !event_id) {
       return HTTPErrorResponse(res, 400, 'User ID and Event ID are required.');

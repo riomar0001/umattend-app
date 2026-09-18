@@ -27,6 +27,15 @@ const app = express();
 // ---------- SECURITY & PERFORMANCE MIDDLEWARE ----------
 app.set('trust proxy', 1);
 
+// Express derives `env` from process.env.NODE_ENV and compares it to the exact
+// lowercase string 'production'. This app's NODE_ENV is 'PRODUCTION' /
+// 'STAGING' / 'DEVELOPMENT', so that comparison never matched and Express ran
+// in development mode in production — which is what makes its built-in
+// `finalhandler` serialise stack traces and absolute file paths into the
+// response body. Normalised here rather than by renaming the variable, because
+// NODE_ENV's uppercase form is read all over the codebase.
+app.set('env', NODE_ENV === 'DEVELOPMENT' ? 'development' : 'production');
+
 // Disable CSP for documentation routes in dev/staging
 app.use(
   helmet({
