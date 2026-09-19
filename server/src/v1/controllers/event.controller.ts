@@ -379,9 +379,10 @@ const massCheckOutEvent = async (
       return HTTPErrorResponse(res, 400, 'event_id is required');
     }
 
-    const { student_ids, checkout_time } = req.body as {
+    const { student_ids, checkout_time, confirm_email } = req.body as {
       student_ids?: number[];
       checkout_time?: string;
+      confirm_email?: string;
     };
 
     if (
@@ -398,8 +399,25 @@ const massCheckOutEvent = async (
 
     const { umindanao_email, done_onboarding } = req.user;
 
+    if (!umindanao_email) {
+      return HTTPErrorResponse(res, 401, 'Unauthorized');
+    }
+
     if (!done_onboarding) {
       throw new ForbiddenError('User has not completed onboarding');
+    }
+
+    // The caller has to retype their own account email to confirm a bulk
+    // check-out. The UI gates the button on the same comparison, but that is
+    // only a speed bump — this endpoint is reachable directly, so the check
+    // has to hold here too.
+    if (
+      confirm_email?.trim().toLowerCase() !==
+      umindanao_email.trim().toLowerCase()
+    ) {
+      throw new ForbiddenError(
+        'The email you entered does not match your account email'
+      );
     }
 
     const result = await eventServices.massCheckOutStudents(
@@ -408,10 +426,6 @@ const massCheckOutEvent = async (
       req.user.id,
       checkout_time
     );
-
-    if (!umindanao_email) {
-      return HTTPErrorResponse(res, 401, 'Unauthorized');
-    }
 
     return HTTPSuccessResponse(res, 200, 'Mass check-out completed', result);
   } catch (error: unknown) {

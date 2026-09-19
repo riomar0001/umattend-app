@@ -1944,6 +1944,10 @@ export type PostEventMassCheckOutByEventIdData = {
          */
         student_ids: Array<number>;
         /**
+         * The caller typing their own account email, as confirmation. Must match the authenticated account or the request is rejected with 403.
+         */
+        confirm_email: string;
+        /**
          * Optional checkout time in HH:MM (Philippines time) or ISO 8601 format.
          */
         checkout_time?: string;
@@ -1968,7 +1972,7 @@ export type PostEventMassCheckOutByEventIdErrors = {
      */
     401: unknown;
     /**
-     * Forbidden — Admin/CSG/Organizer only
+     * Forbidden — Admin/CSG/Organizer only, or confirm_email does not match the authenticated account
      */
     403: unknown;
     /**

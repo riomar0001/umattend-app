@@ -17,7 +17,8 @@ interface MassCheckOutDialogProps {
   /** Human-readable time that will be recorded as the check-out time */
   checkOutTimeLabel: string;
   isLoading: boolean;
-  onConfirm: () => void;
+  /** Receives the email exactly as typed — the server re-checks it against the account */
+  onConfirm: (typedEmail: string) => void;
 }
 
 export function MassCheckOutDialog({ open, onOpenChange, pendingCount, confirmEmail, checkOutTimeLabel, isLoading, onConfirm }: MassCheckOutDialogProps) {
@@ -34,7 +35,7 @@ export function MassCheckOutDialog({ open, onOpenChange, pendingCount, confirmEm
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailMatches || isLoading) return;
-    onConfirm();
+    onConfirm(email.trim());
   };
 
   return (

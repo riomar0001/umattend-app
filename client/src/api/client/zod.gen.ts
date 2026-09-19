@@ -777,6 +777,7 @@ export const zPatchEventByEventIdDraftResponse = z.object({
 export const zPostEventMassCheckOutByEventIdData = z.object({
     body: z.object({
         student_ids: z.array(z.int()),
+        confirm_email: z.string(),
         checkout_time: z.optional(z.string())
     }),
     path: z.object({

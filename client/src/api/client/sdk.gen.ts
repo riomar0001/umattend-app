@@ -738,7 +738,7 @@ export class Event {
     /**
      * Mass check-out students
      *
-     * Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only).
+     * Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only). Requires `confirm_email` to match the authenticated account.
      */
     public static postEventMassCheckOutByEventId<ThrowOnError extends boolean = false>(options: Options<PostEventMassCheckOutByEventIdData, ThrowOnError>) {
         return (options.client ?? client).post<PostEventMassCheckOutByEventIdResponses, PostEventMassCheckOutByEventIdErrors, ThrowOnError>({

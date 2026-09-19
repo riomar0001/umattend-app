@@ -189,8 +189,16 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
    * roster is pulled first (without the active search filter) to collect the
    * students who have no check-out time yet.
    */
-  const handleMassCheckOut = async () => {
+  const handleMassCheckOut = async (typedEmail: string) => {
     if (isMassCheckingOut) return;
+
+    // Mirror of the server-side guard: the typed email has to be the signed-in
+    // account's. The dialog already blocks Confirm on a mismatch, so reaching
+    // this means the store changed under us (token refresh, account switch).
+    if (!currentUserEmail || typedEmail.trim().toLowerCase() !== currentUserEmail.trim().toLowerCase()) {
+      toast.error('The email you entered does not match your account email');
+      return;
+    }
 
     setIsMassCheckingOut(true);
     const toastId = toast.loading('Checking out remaining attendees…');
@@ -226,6 +234,7 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
         },
         body: {
           student_ids: pendingIds,
+          confirm_email: typedEmail.trim(),
           // Record the check-out at the event's end time rather than "now" —
           // this runs after the event is over, sometimes days later.
           ...(eventEndTime ? { checkout_time: new Date(eventEndTime).toISOString() } : {})

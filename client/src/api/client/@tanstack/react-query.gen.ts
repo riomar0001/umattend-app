@@ -663,7 +663,7 @@ export const patchEventByEventIdDraftMutation = (options?: Partial<Options<Patch
 /**
  * Mass check-out students
  *
- * Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only).
+ * Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only). Requires `confirm_email` to match the authenticated account.
  */
 export const postEventMassCheckOutByEventIdMutation = (options?: Partial<Options<PostEventMassCheckOutByEventIdData>>): UseMutationOptions<PostEventMassCheckOutByEventIdResponse, AxiosError<DefaultError>, Options<PostEventMassCheckOutByEventIdData>> => {
     const mutationOptions: UseMutationOptions<PostEventMassCheckOutByEventIdResponse, AxiosError<DefaultError>, Options<PostEventMassCheckOutByEventIdData>> = {

@@ -2352,7 +2352,7 @@ const massCheckOut = {
       tags: ['Event'],
       summary: 'Mass check-out students',
       description:
-        'Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only).',
+        'Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only). Requires `confirm_email` to match the authenticated account.',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -2369,13 +2369,19 @@ const massCheckOut = {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['student_ids'],
+              required: ['student_ids', 'confirm_email'],
               properties: {
                 student_ids: {
                   type: 'array',
                   items: { type: 'integer' },
                   description: 'Array of student IDs to check out.',
                   example: [20230001, 20230002],
+                },
+                confirm_email: {
+                  type: 'string',
+                  description:
+                    'The caller typing their own account email, as confirmation. Must match the authenticated account or the request is rejected with 403.',
+                  example: 'juan.delacruz@umindanao.edu.ph',
                 },
                 checkout_time: {
                   type: 'string',
@@ -2425,7 +2431,10 @@ const massCheckOut = {
         },
         400: { description: 'Bad request — student_ids array is required' },
         401: { description: 'Unauthorized' },
-        403: { description: 'Forbidden — Admin/CSG/Organizer only' },
+        403: {
+          description:
+            'Forbidden — Admin/CSG/Organizer only, or confirm_email does not match the authenticated account',
+        },
         404: { description: 'Event not found' },
         500: { description: 'Internal server error' },
       },
