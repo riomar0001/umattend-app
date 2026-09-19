@@ -31,9 +31,28 @@ export const toKebabCase = (str: string): string => {
     .toLowerCase();
 };
 
+/**
+ * Reduces a string to ASCII letters, digits and dashes. Header values only
+ * accept bytes in [\t\x20-\x7e\x80-\xff], so anything else (smart quotes,
+ * en/em dashes, emoji, CJK) would make res.setHeader throw ERR_INVALID_CHAR.
+ */
+export const toAsciiSlug = (str: string): string => {
+  // NFKD splits accented letters into base + combining mark so the base letter
+  // survives instead of being dropped with the rest of the non-ASCII text.
+  const withoutAccents = str.normalize('NFKD').replace(/\p{M}+/gu, '');
+
+  return toKebabCase(withoutAccents)
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-|-$/g, '');
+};
+
 export const generateExportFileName = (
   eventId: string,
   eventName: string
 ): string => {
-  return `${eventId}_${toKebabCase(eventName)}_${formatDate(new Date())}.xlsx`;
+  const id = toAsciiSlug(eventId ?? '') || 'export';
+  const name = toAsciiSlug(eventName ?? '') || 'event';
+
+  return `${id}_${name}_${formatDate(new Date())}.xlsx`;
 };
