@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, UserPlus } from 'lucide-react';
+import { Download, LogOut, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -11,23 +11,30 @@ import EvenAttendeesSkeleton from './event-attendees-skeleton';
 import EventAttendeesStats from './event-attendees-stats';
 import EventAttendeesStatsSkeleton from './event-attendees-stats-skeleton';
 import EventDataTableSkeleton from './event-data-table-skeleton';
+import { MassCheckOutDialog } from './mass-check-out-dialog';
 import { getEventAttendanceCountOptions, getEventByEventIdAttendeesOptions } from '@/api/client/@tanstack/react-query.gen';
 import { Event } from '@/api/client/sdk.gen';
 import { formatDateTime } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
 
 interface EventAttendeesProps {
   eventId: string;
   checkOutRequired: boolean;
   eventStartTime?: string;
   eventEndTime?: string;
+  /** Server-side "event finished" flag — mass check-out is gated on it */
+  isEventDone?: boolean;
 }
 
-export default function EventAttendees({ eventId, checkOutRequired, eventStartTime, eventEndTime }: EventAttendeesProps) {
+export default function EventAttendees({ eventId, checkOutRequired, eventStartTime, eventEndTime, isEventDone = false }: EventAttendeesProps) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null);
   const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [isMassCheckOutDialogOpen, setIsMassCheckOutDialogOpen] = useState(false);
+  const [isMassCheckingOut, setIsMassCheckingOut] = useState(false);
+  const currentUserEmail = useAuthStore((state) => state.user?.umindanao_email ?? '');
   const limit = 10;
 
   const {
@@ -175,6 +182,76 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
     }
   };
 
+  /**
+   * Check out every attendee who is still checked in, in one request.
+   *
+   * The table is paginated, so the rows on screen are only a slice — the full
+   * roster is pulled first (without the active search filter) to collect the
+   * students who have no check-out time yet.
+   */
+  const handleMassCheckOut = async () => {
+    if (isMassCheckingOut) return;
+
+    setIsMassCheckingOut(true);
+    const toastId = toast.loading('Checking out remaining attendees…');
+
+    try {
+      const roster = await Event.getEventByEventIdAttendees({
+        path: {
+          event_id: eventId
+        },
+        query: {
+          page: 1,
+          limit: Math.max(totalAttendees, 1)
+        },
+        throwOnError: true
+      });
+
+      const pendingIds = (roster.data?.data?.data ?? [])
+        .map((item) => item.student)
+        .filter((student) => !!student && !student.check_out_at && typeof student.student_id === 'number')
+        .map((student) => student!.student_id as number);
+
+      if (pendingIds.length === 0) {
+        toast.dismiss(toastId);
+        toast.info('Everyone has already been checked out');
+        setIsMassCheckOutDialogOpen(false);
+        handleRefresh();
+        return;
+      }
+
+      const response = await Event.postEventMassCheckOutByEventId({
+        path: {
+          event_id: eventId
+        },
+        body: {
+          student_ids: pendingIds,
+          // Record the check-out at the event's end time rather than "now" —
+          // this runs after the event is over, sometimes days later.
+          ...(eventEndTime ? { checkout_time: new Date(eventEndTime).toISOString() } : {})
+        },
+        throwOnError: true
+      });
+
+      const updatedCount = response.data?.data?.updatedCount ?? 0;
+      const skipped = pendingIds.length - updatedCount;
+
+      toast.dismiss(toastId);
+      toast.success(`Checked out ${updatedCount} ${updatedCount === 1 ? 'attendee' : 'attendees'}${skipped > 0 ? ` · ${skipped} skipped` : ''}`);
+      setIsMassCheckOutDialogOpen(false);
+      handleRefresh();
+    } catch (err: unknown) {
+      toast.dismiss(toastId);
+
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      const msg = axiosErr?.response?.data?.message ?? 'Failed to check out attendees';
+      toast.error(msg);
+      console.error('Mass check-out error:', err);
+    } finally {
+      setIsMassCheckingOut(false);
+    }
+  };
+
   const attendanceRecords: AttendanceRecord[] =
     attendeesData?.data?.data
       ?.map((item) => {
@@ -201,9 +278,20 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
   const totalStudentsStats = Number(attendeesStatsData?.data?.totalAttendance);
   const totalCheckedOutStats = Number(attendeesStatsData?.data?.totalCheckedOut);
 
+  // The stats above can be NaN while the query is settling; mass check-out sizes
+  // its roster request off these, so narrow them to real numbers first.
+  const totalAttendees = Number.isFinite(totalStudentsStats) ? totalStudentsStats : totalStudents;
+  const totalCheckedOut = Number.isFinite(totalCheckedOutStats) ? totalCheckedOutStats : 0;
+  const pendingCheckOutCount = Math.max(totalAttendees - totalCheckedOut, 0);
+
   const now = new Date();
   const isEventStarted = eventStartTime ? new Date(eventStartTime) <= now : true;
   const isEventEnded = eventEndTime ? new Date(eventEndTime) < now : false;
+
+  // `is_done` is flipped by a scheduled sweep, so it can lag the end time by a
+  // few minutes — either signal is enough to call the event finished.
+  const isEventFinished = isEventDone || isEventEnded;
+  const massCheckOutTimeLabel = eventEndTime ? `${formatDateTime(eventEndTime)} (event end)` : 'the current time';
 
   // Build columns — include the Actions column only when check-out is required
   const tableColumns = createColumns({
@@ -268,6 +356,40 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
         onCheckOut={handleCheckOut}
         loadingStudentId={loadingStudentId}
         isEventEnded={isEventEnded}
+      />
+
+      {checkOutRequired && (
+        <div className="border-border mt-6 flex flex-col gap-3 rounded-lg border border-dashed p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-foreground text-sm font-semibold">Mass Check Out</h2>
+            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+              {!isEventFinished
+                ? 'Available once the event is done. Checks out everyone who is still checked in, in one go.'
+                : pendingCheckOutCount === 0
+                  ? 'Every attendee has already been checked out.'
+                  : `${pendingCheckOutCount} ${pendingCheckOutCount === 1 ? 'attendee is' : 'attendees are'} still checked in.`}
+            </p>
+          </div>
+          <Button
+            onClick={() => setIsMassCheckOutDialogOpen(true)}
+            disabled={!isEventFinished || pendingCheckOutCount === 0 || isMassCheckingOut}
+            title={!isEventFinished ? 'The event has not finished yet' : undefined}
+            className="gap-2 bg-amber-600 text-sm font-semibold text-white shadow-sm hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-neutral-400 disabled:opacity-50 dark:bg-amber-500 dark:hover:bg-amber-600"
+          >
+            <LogOut className="size-4" />
+            Mass Check Out
+          </Button>
+        </div>
+      )}
+
+      <MassCheckOutDialog
+        open={isMassCheckOutDialogOpen}
+        onOpenChange={setIsMassCheckOutDialogOpen}
+        pendingCount={pendingCheckOutCount}
+        confirmEmail={currentUserEmail}
+        checkOutTimeLabel={massCheckOutTimeLabel}
+        isLoading={isMassCheckingOut}
+        onConfirm={handleMassCheckOut}
       />
 
       <CheckInStudentDialog
