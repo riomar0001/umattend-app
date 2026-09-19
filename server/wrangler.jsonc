@@ -75,10 +75,15 @@
 		"consumers": [
 			{
 				"queue": "umattend-email",
-				// One at a time, mirroring the BullMQ limiter that capped sending to a
-				// single message per tick.
-				"max_batch_size": 1,
-				"max_concurrency": 2,
+				// Emails per SMTP login. The consumer sends a whole batch over one
+				// authenticated session, spaced by MAIL_SEND_INTERVAL_MS, because
+				// Gmail throttles on login count — `max_batch_size: 1` meant one
+				// login per email and mass check-outs hit "454-4.7.0 Too many login
+				// attempts". Concurrency is 1 so two batches never authenticate at
+				// the same time.
+				"max_batch_size": 10,
+				"max_batch_timeout": 10,
+				"max_concurrency": 1,
 				"max_retries": 3,
 				"dead_letter_queue": "umattend-dlq"
 			},
@@ -175,7 +180,10 @@
 		"MAIL_SECURE": "false",
 		"MAIL_USER": "m.inguito.484470@umindanao.edu.ph",
 		"MAIL_FROM": "attendance_admin@umattend.site",
-		"MAIL_FROM_NAME": "UMAttend"
+		"MAIL_FROM_NAME": "UMAttend",
+		// Pause between messages on one SMTP session. Raise it if Gmail starts
+		// answering with "421 4.7.0 Try again later".
+		"MAIL_SEND_INTERVAL_MS": "1000"
 	},
 	"env": {
 		"staging": {
@@ -226,7 +234,8 @@
 				"MAIL_SECURE": "false",
 				"MAIL_USER": "inguitomario00@gmail.com",
 				"MAIL_FROM": "attendance@umattend.site",
-				"MAIL_FROM_NAME": "UMAttend (Staging)"
+				"MAIL_FROM_NAME": "UMAttend (Staging)",
+				"MAIL_SEND_INTERVAL_MS": "1000"
 			},
 			"d1_databases": [
 				{
@@ -261,7 +270,10 @@
 				"consumers": [
 					{
 						"queue": "umattend-email-staging",
-						"max_batch_size": 1,
+						// See the production consumer: batch size is emails per SMTP
+						// login, not per connection-per-message.
+						"max_batch_size": 10,
+						"max_batch_timeout": 10,
 						"max_concurrency": 1,
 						"max_retries": 3,
 						"dead_letter_queue": "umattend-dlq-staging"

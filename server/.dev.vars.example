@@ -62,6 +62,11 @@ MAIL_PASS=
 MAIL_FROM=
 MAIL_FROM_NAME=
 
+# Pause between consecutive messages on one SMTP session, in milliseconds.
+# Optional; defaults to 1000. Gmail throttles a mailbox that sends in a tight
+# loop, so raise this if "421 4.7.0 Try again later" starts appearing.
+MAIL_SEND_INTERVAL_MS=1000
+
 # ---------- Queues ----------
 # Queue names matching the bindings in wrangler.jsonc. The admin dead-letter
 # viewer reads the DLQ over the Queues REST API, which addresses queues by name

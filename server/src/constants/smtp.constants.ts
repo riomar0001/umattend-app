@@ -22,7 +22,17 @@ export interface SmtpConfig {
   pass: string;
   from: string;
   fromName: string;
+  /** Pause between consecutive sends on one connection, in milliseconds. */
+  sendIntervalMs: number;
 }
+
+/**
+ * Gmail throttles a mailbox that sends in a tight loop ("421 4.7.0 Try again
+ * later"), so messages are spaced out even though they share one login. A
+ * second is slow enough for Gmail and still clears a full batch well inside the
+ * queue consumer's time budget.
+ */
+const DEFAULT_SEND_INTERVAL_MS = 1000;
 
 export const getSmtpConfig = (): SmtpConfig => {
   // SMTP account used to authenticate. With Gmail this is the mailbox that owns
@@ -37,6 +47,13 @@ export const getSmtpConfig = (): SmtpConfig => {
   // rest of this file documents.
   const port = Number.parseInt(getEnv('MAIL_PORT', false) ?? '', 10);
 
+  // Tunable without a code deploy, so the interval can be widened if Gmail
+  // starts throttling again. Same NaN guard as the port above.
+  const sendIntervalMs = Number.parseInt(
+    getEnv('MAIL_SEND_INTERVAL_MS', false) ?? '',
+    10
+  );
+
   return {
     host: getEnv('MAIL_HOST'),
     port: Number.isInteger(port) ? port : 587,
@@ -50,5 +67,9 @@ export const getSmtpConfig = (): SmtpConfig => {
     // the header back to MAIL_USER.
     from: getEnv('MAIL_FROM', false) || user,
     fromName: getEnv('MAIL_FROM_NAME', false),
+    sendIntervalMs:
+      Number.isInteger(sendIntervalMs) && sendIntervalMs >= 0
+        ? sendIntervalMs
+        : DEFAULT_SEND_INTERVAL_MS,
   };
 };
