@@ -1,11 +1,32 @@
+/**
+ * Every timestamp that leaves this file is rendered in Philippine time.
+ *
+ * The Workers runtime reports UTC as its local timezone, so `getHours()` and a
+ * bare `toLocaleString()` put the whole export eight hours behind the wall
+ * clock the organizers actually ran the event on. The timezone has to be named
+ * explicitly — it is never picked up from the host.
+ */
+const EXPORT_TIME_ZONE = 'Asia/Manila';
+
 export const formatDate = (date: Date): string => {
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  const yyyy = date.getFullYear();
-  const hh = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  const ss = String(date.getSeconds()).padStart(2, '0');
-  return `${mm}${dd}${yyyy}_${hh}${min}${ss}`;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: EXPORT_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? '';
+
+  // `hour12: false` still renders midnight as "24" in some ICU versions.
+  const hh = get('hour') === '24' ? '00' : get('hour');
+
+  return `${get('month')}${get('day')}${get('year')}_${hh}${get('minute')}${get('second')}`;
 };
 
 export const formatDateTime = (date: Date | null): string => {
@@ -14,6 +35,7 @@ export const formatDateTime = (date: Date | null): string => {
   }
 
   return new Date(date).toLocaleString('en-US', {
+    timeZone: EXPORT_TIME_ZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

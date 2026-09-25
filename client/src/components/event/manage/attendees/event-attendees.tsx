@@ -234,10 +234,11 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
         },
         body: {
           student_ids: pendingIds,
-          confirm_email: typedEmail.trim(),
-          // Record the check-out at the event's end time rather than "now" —
-          // this runs after the event is over, sometimes days later.
-          ...(eventEndTime ? { checkout_time: new Date(eventEndTime).toISOString() } : {})
+          confirm_email: typedEmail.trim()
+          // No `checkout_time`: the server stamps `new Date()`, so each record
+          // carries the moment the check-out actually happened. This used to
+          // send the event's end_time, which gave every attendee the same
+          // fabricated timestamp regardless of when the organizer ran it.
         },
         throwOnError: true
       });
@@ -300,7 +301,7 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
   // `is_done` is flipped by a scheduled sweep, so it can lag the end time by a
   // few minutes — either signal is enough to call the event finished.
   const isEventFinished = isEventDone || isEventEnded;
-  const massCheckOutTimeLabel = eventEndTime ? `${formatDateTime(eventEndTime)} (event end)` : 'the current time';
+  const massCheckOutTimeLabel = 'the current time';
 
   // Build columns — include the Actions column only when check-out is required
   const tableColumns = createColumns({
