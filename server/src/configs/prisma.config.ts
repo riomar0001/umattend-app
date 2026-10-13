@@ -18,15 +18,55 @@
 import { PrismaD1 } from '@prisma/adapter-d1';
 import { PrismaClient } from '../generated/prisma/client';
 import { bindings } from '../worker/runtime';
+import { invalidateDataCache } from '../utils/dataCache';
+import { requestMetrics } from '../utils/performance';
 
-let client: PrismaClient | null = null;
+const readOperations = new Set([
+  'findUnique',
+  'findUniqueOrThrow',
+  'findFirst',
+  'findFirstOrThrow',
+  'findMany',
+  'count',
+  'aggregate',
+  'groupBy',
+]);
+const summaryModels = new Set(['user', 'student', 'events', 'attendance']);
 
-const getClient = (): PrismaClient => {
-  client ??= new PrismaClient({
-    adapter: new PrismaD1(bindings().DB),
+const createClient = () =>
+  new PrismaClient({ adapter: new PrismaD1(bindings().DB) }).$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          const read = readOperations.has(operation);
+          const metrics = requestMetrics.getStore();
+          const started = performance.now();
+          if (metrics) {
+            if (read) {
+              metrics.databaseReadOperations++;
+            } else {
+              metrics.databaseWriteOperations++;
+            }
+          }
+          try {
+            return await query(args);
+          } finally {
+            if (metrics) {
+              metrics.databaseOperationMs += performance.now() - started;
+            }
+            // Await invalidation for HTTP, queue and cron writes alike. Even a
+            // failed nested mutation may have applied some D1 statements.
+            if (!read && summaryModels.has(model)) {
+              await invalidateDataCache();
+            }
+          }
+        },
+      },
+    },
   });
-  return client;
-};
+
+let client: ReturnType<typeof createClient> | null = null;
+const getClient = () => (client ??= createClient());
 
 /**
  * Proxy so existing `import prisma from '.../prisma.config'` call sites keep

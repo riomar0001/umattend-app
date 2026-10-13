@@ -24,6 +24,7 @@ import { startEventStatusQueue } from '../queues/startEvent.queue';
 // Same derivation the queue consumer and the cron sweep use, so "did this edit
 // move the due time?" is answered identically everywhere.
 import { doneDueAt, startDueAt } from '@/worker/eventStatus';
+import { cachedData } from '../../utils/dataCache';
 import { GetStudentsByEventIdInterface } from '../interface/student';
 import studentRepository from '../repositories/student.repository';
 import { CHECK_IN_EMAIL } from '../template/checkIn.email';
@@ -802,20 +803,19 @@ const getAttendeesByEventId = async (
   );
 };
 
-const getEventNameById = async (event_id: string): Promise<string> => {
-  const eventData = await eventRepository.getEventDetails(event_id);
-
-  if (!eventData) {
-    throw new NotFoundError('No event found with this ID');
-  }
-
-  return eventData.title;
-};
+const getEventNameById = async (event_id: string): Promise<string> =>
+  cachedData('event:title:' + event_id, 300, async () => {
+    const eventData = await eventRepository.getEventDetails(event_id);
+    if (!eventData) {throw new NotFoundError('No event found with this ID');}
+    return eventData.title;
+  });
 
 const getTotalAttendanceByEventId = async (
   event_id: string
 ): Promise<{ totalAttendance: number; totalCheckedOut: number }> => {
-  return await eventRepository.getEventAttendanceCount(event_id);
+  return cachedData('event:attendance:' + event_id, 15, () =>
+    eventRepository.getEventAttendanceCount(event_id)
+  );
 };
 
 /**

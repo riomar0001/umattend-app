@@ -16,7 +16,11 @@ import docsRoutes from './v1/routes/docs.routes';
 import healthRoutes from './v1/routes/health.routes';
 import { NODE_ENV, ALLOWED_ORIGINS } from './constants/app.constants';
 
+import { measureRequest } from './v1/middlewares/performance.middleware';
+import performanceRoutes from './v1/routes/performance.routes';
+
 const app = express();
+app.use(measureRequest);
 
 // The Prometheus /metrics endpoint is gone along with the rest of the LGTM
 // stack: prom-client and the OpenTelemetry Node SDK cannot run on workerd, and
@@ -44,6 +48,8 @@ app.use(
 );
 app.use(cacheControl);
 app.use(cookieParser());
+// Metric payloads have their own small body limit before the general parser.
+app.use('/api/v1/performance', performanceRoutes);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

@@ -16,6 +16,8 @@ import { getQueuesConfig } from '@/constants/queues.constants';
 import { bindings } from '@/worker/runtime';
 import { isDeadLetterEnvelope } from '@/worker/deadLetter';
 
+import { cachedData } from '../../utils/dataCache';
+
 const VALID_ROLES = ['student', 'admin', 'csg', 'instructor', 'organizer'];
 
 // ---------------------------------------------------------------------------
@@ -123,13 +125,25 @@ const assertInspectable = (queueName: string): string => {
  */
 const unwrap = (
   body: string
-): { job: unknown; reason: string | null; queue: string | null; attempts: number | null; failedAt: number | null } => {
+): {
+  job: unknown;
+  reason: string | null;
+  queue: string | null;
+  attempts: number | null;
+  failedAt: number | null;
+} => {
   let parsed: unknown;
   try {
     parsed = JSON.parse(body);
   } catch {
     // A message that is not JSON is still worth showing, just not parsed.
-    return { job: { raw: body }, reason: null, queue: null, attempts: null, failedAt: null };
+    return {
+      job: { raw: body },
+      reason: null,
+      queue: null,
+      attempts: null,
+      failedAt: null,
+    };
   }
 
   if (isDeadLetterEnvelope(parsed)) {
@@ -143,7 +157,13 @@ const unwrap = (
     };
   }
 
-  return { job: parsed, reason: null, queue: null, attempts: null, failedAt: null };
+  return {
+    job: parsed,
+    reason: null,
+    queue: null,
+    attempts: null,
+    failedAt: null,
+  };
 };
 
 const toJob = (message: PulledMessage) => {
@@ -262,7 +282,9 @@ const retryJob = async (queueName: string, jobId: string) => {
   // re-sending the envelope would enqueue the bookkeeping instead of the work.
   const { job } = unwrap(message.body);
   if (typeof job !== 'object' || job === null) {
-    throw new BadRequestError('Job body is not valid JSON and cannot be retried.');
+    throw new BadRequestError(
+      'Job body is not valid JSON and cannot be retried.'
+    );
   }
   const body = job as { type?: string };
 
@@ -339,7 +361,8 @@ const cleanAllFailed = async (queueName: string) => {
 // Statistics
 // ---------------------------------------------------------------------------
 
-const getStatistics = async () => adminRepository.getStatistics();
+const getStatistics = async () =>
+  cachedData('admin:statistics', 30, () => adminRepository.getStatistics());
 
 // ---------------------------------------------------------------------------
 // Users
@@ -465,7 +488,6 @@ const deleteRateLimit = async (key: string): Promise<void> => {
 const deleteAllRateLimits = async (): Promise<number> => {
   return rateLimitStore.deleteAll(RATE_LIMIT_PREFIX);
 };
-
 
 const adminService = {
   getStatistics,

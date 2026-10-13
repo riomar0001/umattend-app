@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { PerformanceMetrics } from '@/components/performance-metrics';
+import { ThemedToaster } from '@/components/themed-toaster';
 import './globals.css';
 import { Providers } from './providers';
-import { ThemedToaster } from '@/components/themed-toaster';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -35,6 +36,7 @@ export default function RootLayout({
         <Providers>
           <Suspense fallback={null}>{children}</Suspense>
           <ThemedToaster />
+          <PerformanceMetrics />
         </Providers>
       </body>
     </html>
