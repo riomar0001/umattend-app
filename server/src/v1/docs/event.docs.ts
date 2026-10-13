@@ -1643,7 +1643,7 @@ const getPaginatedAttendeesByEventId = {
       tags: ['Event'],
       summary: 'Get paginated attendees by event ID',
       description:
-        'Retrieve a paginated list of attendees for a specific event, including check-in/check-out details and pagination metadata. Supports search by name, student ID, or email.',
+        'Retrieve a paginated list of attendees for a specific event, including check-in/check-out details and pagination metadata. Supports search by name, student ID, or email. Accessible to admins, CSG users, and organizers assigned to this event.',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -2139,7 +2139,7 @@ const getEventAttendanceCount = {
     get: {
       summary: 'Get event attendance count',
       description:
-        'Returns the total number of attendees and total checked-out attendees for a specific event.\n\n- Requires authentication.\n- Only accessible by users with roles: **admin** or **csg**.\n- Organizer permission check is enforced.',
+        'Returns the total number of attendees and total checked-out attendees for a specific event.\n\n- Requires authentication.\n- Accessible to admins, CSG users, and organizers assigned to this event.',
       tags: ['Event'],
       operationId: 'getEventAttendanceCount',
       security: [

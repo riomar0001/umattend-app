@@ -113,7 +113,6 @@ router.get('/:event_id', authMiddleware, eventController.getEventDetailsById);
 router.get(
   '/:event_id/attendees',
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   eventController.getPaginatedAttendeesByEventId
 );
@@ -121,7 +120,6 @@ router.get(
 router.get(
   '/:event_id/organizers',
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   eventController.getOrganizersByEventId
 );
@@ -129,7 +127,6 @@ router.get(
 router.get(
   '/export/:event_id',
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   eventController.exportEventAttendeesToExcel
 );
@@ -137,7 +134,6 @@ router.get(
 router.get(
   '/:event_id/attendance_count',
   authMiddleware,
-  checkRole('admin', 'csg'),
   checkOrganizer,
   eventController.getEventAttendanceCount
 );
