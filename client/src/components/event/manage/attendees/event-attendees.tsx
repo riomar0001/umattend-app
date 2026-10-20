@@ -11,6 +11,7 @@ import EvenAttendeesSkeleton from './event-attendees-skeleton';
 import EventAttendeesStats from './event-attendees-stats';
 import EventAttendeesStatsSkeleton from './event-attendees-stats-skeleton';
 import EventDataTableSkeleton from './event-data-table-skeleton';
+import { MassCheckInDialog } from './mass-check-in-dialog';
 import { MassCheckOutDialog } from './mass-check-out-dialog';
 import { getEventAttendanceCountOptions, getEventByEventIdAttendeesOptions } from '@/api/client/@tanstack/react-query.gen';
 import { Event } from '@/api/client/sdk.gen';
@@ -32,6 +33,7 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null);
   const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [isMassCheckInDialogOpen, setIsMassCheckInDialogOpen] = useState(false);
   const [isMassCheckOutDialogOpen, setIsMassCheckOutDialogOpen] = useState(false);
   const [isMassCheckingOut, setIsMassCheckingOut] = useState(false);
   const currentUserEmail = useAuthStore((state) => state.user?.umindanao_email ?? '');
@@ -325,7 +327,11 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
           <h1 className="text-foreground text-xl font-bold tracking-tight sm:text-2xl md:text-3xl lg:text-4xl">Attendance Records</h1>
           <p className="text-muted-foreground mt-1 text-xs sm:text-sm md:mt-2 md:text-base lg:text-lg">Manage student check-in and check-out records</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setIsMassCheckInDialogOpen(true)} variant="outline" className="flex-1 gap-2 text-sm font-semibold sm:flex-none">
+            <UserPlus className="size-4" />
+            Mass Check In
+          </Button>
           <Button
             onClick={() => setIsCheckInDialogOpen(true)}
             variant="outline"
@@ -410,6 +416,16 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
         isEventStarted={isEventStarted}
         isEventEnded={isEventEnded}
       />
+      {isMassCheckInDialogOpen && (
+        <MassCheckInDialog
+          eventId={eventId}
+          open={isMassCheckInDialogOpen}
+          onOpenChange={setIsMassCheckInDialogOpen}
+          onComplete={handleRefresh}
+          isEventStarted={isEventStarted}
+          isEventEnded={isEventEnded}
+        />
+      )}
     </div>
   );
 }

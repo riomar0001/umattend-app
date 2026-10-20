@@ -18,6 +18,29 @@ import { formatDateTime, generateExportFileName } from '@/utils/export.utils';
 import { NODE_ENV } from '@/constants/app.constants';
 import { decodeAndVerifyQR, qrFailureMessage } from '@/utils/decodeAndVerifyQR';
 import { routeParam } from '@/utils/routeParams';
+import { runMassCheckIn, validateStudentIds } from '../services/mass-check-in';
+
+const massCheckInEvent = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    if (!req.user.done_onboarding) {
+      return HTTPErrorResponse(res, 403, 'User has not completed onboarding');
+    }
+    const studentIds = validateStudentIds(req.body?.student_ids);
+    const eventId = routeParam(req, 'event_id');
+    const data = await runMassCheckIn(studentIds, (studentId) =>
+      eventServices.checkInStudentById(eventId, studentId, req.user.id)
+    );
+    return HTTPSuccessResponse(res, 200, 'Mass check-in completed', data);
+  } catch (error) {
+    if (error instanceof BadRequestError) {
+      return HTTPErrorResponse(res, 400, error.message);
+    }
+    return HTTPErrorResponse(res, 500, 'Internal server error');
+  }
+};
 
 const addEvent = async (req: Request, res: Response) => {
   try {
@@ -998,6 +1021,7 @@ const checkOutStudentById = async (
 };
 
 const eventController = {
+  massCheckInEvent,
   addEvent,
   deleteEvent,
   updateEvent,

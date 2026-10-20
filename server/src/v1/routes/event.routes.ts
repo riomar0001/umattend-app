@@ -65,6 +65,14 @@ router.post(
 );
 
 router.post(
+  '/mass_check_in/:event_id',
+  authMiddleware,
+  checkInRateLimiter,
+  checkOrganizer,
+  eventController.massCheckInEvent
+);
+
+router.post(
   `/mass_check_out/:event_id`,
   authMiddleware,
   checkInRateLimiter,

@@ -97,13 +97,17 @@ async function request(route, user, eventId = 'assigned-event') {
 }
 
 for (const endpoint of [
+  '/mass_check_in/:event_id',
   '/:event_id/attendees',
   '/:event_id/attendance_count',
   '/:event_id/organizers',
   '/export/:event_id',
 ]) {
   const route = routes.find(
-    (entry) => entry.method === 'get' && entry.route === endpoint
+    (entry) =>
+      entry.route === endpoint &&
+      entry.method ===
+        (endpoint === '/mass_check_in/:event_id' ? 'post' : 'get')
   );
   assert.ok(route, `Missing endpoint: ${endpoint}`);
   test(`${endpoint}: access follows event membership`, async () => {

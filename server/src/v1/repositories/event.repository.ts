@@ -748,6 +748,14 @@ const checkInStudentById = async (
     throw new NotFoundError('Student not found');
   }
 
+  const existing = await prisma.attendance.findUnique({
+    where: { event_id_student_id: { event_id, student_id } },
+    select: { id: true },
+  });
+  if (existing) {
+    throw new ConflictError('Student has already checked in to this event');
+  }
+
   if (
     event.department !== 'Open to all Departments' &&
     student.department !== event.department
@@ -761,7 +769,7 @@ const checkInStudentById = async (
   if (event.capacity !== null && event.capacity !== undefined) {
     const currentCount = await prisma.attendance.count({ where: { event_id } });
     if (currentCount >= event.capacity) {
-      throw new Error('Event has reached its maximum capacity');
+      throw new BadRequestError('Event has reached its maximum capacity');
     }
   }
 
@@ -800,7 +808,7 @@ const checkInStudentById = async (
 
     if (position > event.capacity) {
       await prisma.attendance.delete({ where: { id: attendance.id } });
-      throw new Error('Event has reached its maximum capacity');
+      throw new BadRequestError('Event has reached its maximum capacity');
     }
   }
 

@@ -2624,6 +2624,83 @@ const checkoutStudentById = {
 };
 
 export const event = {
+  '/event/mass_check_in/{event_id}': {
+    post: {
+      tags: ['Event'],
+      summary: 'Check in multiple students by student ID',
+      description:
+        'Admin, CSG, or assigned event organizers only. Accepts up to 25 six-digit ID strings per request. Duplicate IDs are removed. Each student is processed independently using normal eligibility, capacity, and duplicate checks. A successful response can contain failed or skipped students; inspect every result. Larger imports should use sequential batches.',
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          in: 'path',
+          name: 'event_id',
+          required: true,
+          schema: { type: 'string' },
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['student_ids'],
+              properties: {
+                student_ids: {
+                  type: 'array',
+                  minItems: 1,
+                  maxItems: 25,
+                  items: { type: 'string', pattern: '^\\d{6}$' },
+                  example: ['123456', '234567'],
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: {
+          description: 'Per-student check-in results',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  message: { type: 'string' },
+                  data: {
+                    type: 'object',
+                    properties: {
+                      results: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          required: ['student_id', 'status', 'message'],
+                          properties: {
+                            student_id: { type: 'string' },
+                            status: {
+                              type: 'string',
+                              enum: ['checked_in', 'skipped', 'failed'],
+                            },
+                            message: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: { description: 'Invalid student IDs or batch size' },
+        401: { description: 'Authentication required' },
+        403: { description: 'Not an event organizer or onboarding incomplete' },
+        429: { description: 'Rate limit exceeded' },
+      },
+    },
+  },
   ...createAndGetEvent,
   ...updateAndDeleteEvent,
   ...checkIn,
