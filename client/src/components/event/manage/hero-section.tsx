@@ -28,7 +28,17 @@ const statusConfig = {
   }
 };
 
-export default function HeroSection({ event, setIsSheetOpen, refetch }: { event: Event; setIsSheetOpen: (open: boolean) => void; refetch: () => void }) {
+export default function HeroSection({
+  event,
+  setIsSheetOpen,
+  refetch,
+  canManage = false
+}: {
+  event: Event;
+  setIsSheetOpen: (open: boolean) => void;
+  refetch: () => void;
+  canManage?: boolean;
+}) {
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [confirmName, setConfirmName] = useState('');
@@ -92,77 +102,79 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Primary state action — same shape across draft/posted, color tells the state */}
-            {event.is_draft ? (
-              <Button
-                size="sm"
-                onClick={() => postEvent({ path: { event_id: event.id } })}
-                disabled={isPosting}
-                className="h-8 gap-1.5 bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-emerald-900 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-              >
-                {isPosting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
-                <span className="hidden sm:inline">Post event</span>
-                <span className="sm:hidden">Post</span>
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => draftEvent({ path: { event_id: event.id } })}
-                disabled={isDrafting}
-                className="h-8 gap-1.5 border-amber-300 bg-amber-50/60 px-3 text-xs font-medium text-amber-800 hover:bg-amber-100 hover:text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-200"
-              >
-                {isDrafting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <EyeOff className="h-3.5 w-3.5" />}
-                <span>Unpost</span>
-              </Button>
-            )}
+          {canManage && (
+            <div className="flex items-center gap-2">
+              {/* Primary state action — same shape across draft/posted, color tells the state */}
+              {event.is_draft ? (
+                <Button
+                  size="sm"
+                  onClick={() => postEvent({ path: { event_id: event.id } })}
+                  disabled={isPosting}
+                  className="h-8 gap-1.5 bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-emerald-900 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                >
+                  {isPosting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
+                  <span className="hidden sm:inline">Post event</span>
+                  <span className="sm:hidden">Post</span>
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => draftEvent({ path: { event_id: event.id } })}
+                  disabled={isDrafting}
+                  className="h-8 gap-1.5 border-amber-300 bg-amber-50/60 px-3 text-xs font-medium text-amber-800 hover:bg-amber-100 hover:text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-200"
+                >
+                  {isDrafting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <EyeOff className="h-3.5 w-3.5" />}
+                  <span>Unpost</span>
+                </Button>
+              )}
 
-            {/* Secondary toolbar — Edit + overflow grouped in a single segmented surface */}
-            <div className="border-border/60 bg-background/40 flex items-center rounded-md border shadow-sm">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsSheetOpen(true)}
-                className="hover:bg-muted/70 h-8 gap-1.5 rounded-l-[5px] rounded-r-none border-0 px-2.5 text-xs font-medium"
-              >
-                <Edit className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Edit</span>
-              </Button>
+              {/* Secondary toolbar — Edit + overflow grouped in a single segmented surface */}
+              <div className="border-border/60 bg-background/40 flex items-center rounded-md border shadow-sm">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsSheetOpen(true)}
+                  className="hover:bg-muted/70 h-8 gap-1.5 rounded-l-[5px] rounded-r-none border-0 px-2.5 text-xs font-medium"
+                >
+                  <Edit className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Edit</span>
+                </Button>
 
-              <div className="bg-border/60 h-4 w-px" />
+                <div className="bg-border/60 h-4 w-px" />
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-muted-foreground hover:text-foreground hover:bg-muted/70 h-8 w-8 rounded-l-none rounded-r-[5px] border-0 p-0"
-                    aria-label="More actions"
-                  >
-                    <MoreHorizontal className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44">
-                  <DropdownMenuItem onClick={() => setIsSheetOpen(true)} className="sm:hidden">
-                    <Edit className="mr-2 h-3.5 w-3.5" />
-                    Edit details
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="sm:hidden" />
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setConfirmName('');
-                      setDeleteDialogOpen(true);
-                    }}
-                    className="text-destructive focus:bg-destructive/10 focus:text-destructive dark:text-red-400 dark:focus:bg-red-400/10 dark:focus:text-red-400"
-                  >
-                    <Trash2 className="text-destructive mr-2 h-3.5 w-3.5" />
-                    Delete event
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-foreground hover:bg-muted/70 h-8 w-8 rounded-l-none rounded-r-[5px] border-0 p-0"
+                      aria-label="More actions"
+                    >
+                      <MoreHorizontal className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuItem onClick={() => setIsSheetOpen(true)} className="sm:hidden">
+                      <Edit className="mr-2 h-3.5 w-3.5" />
+                      Edit details
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="sm:hidden" />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setConfirmName('');
+                        setDeleteDialogOpen(true);
+                      }}
+                      className="text-destructive focus:bg-destructive/10 focus:text-destructive dark:text-red-400 dark:focus:bg-red-400/10 dark:focus:text-red-400"
+                    >
+                      <Trash2 className="text-destructive mr-2 h-3.5 w-3.5" />
+                      Delete event
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Date block + title row */}
@@ -232,7 +244,7 @@ export default function HeroSection({ event, setIsSheetOpen, refetch }: { event:
       </div>
 
       {/* Delete confirmation dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <Dialog open={canManage && deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-destructive">Delete Event</DialogTitle>

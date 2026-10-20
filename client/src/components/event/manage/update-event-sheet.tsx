@@ -36,6 +36,9 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
   const [validationErrors, setValidationErrors] = useState<{ endDate?: string; endTime?: string }>({});
 
   const timeOptions = generateTimeOptions();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const earliestEndDate = new Date(Math.max(today.getTime(), new Date(formData.startDate).setHours(0, 0, 0, 0)));
   const departments = ['Open to all Departments', ...Object.keys(DepartmentAndPrograms)];
 
   useEffect(() => {
@@ -202,6 +205,7 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
                       <Calendar
                         mode="single"
                         selected={formData.startDate}
+                        disabled={{ before: today }}
                         onSelect={(date) => date && setFormData({ ...formData, startDate: date })}
                         initialFocus
                       />
@@ -244,6 +248,7 @@ export function UpdateEventSheet({ event, open, onOpenChange, onUpdate }: Update
                       <Calendar
                         mode="single"
                         selected={formData.endDate}
+                        disabled={{ before: earliestEndDate }}
                         onSelect={(date) => date && setFormData({ ...formData, endDate: date })}
                         initialFocus
                       />

@@ -4,7 +4,7 @@ const updateAndDeleteEvent = {
       tags: ['Event'],
       summary: 'Delete event',
       description:
-        'Delete an existing event by ID (Admin/CSG/Organizer only). Requires typing the event name on the frontend to confirm.',
+        'Delete an existing event by ID (event creator or admin only). Requires typing the event name on the frontend to confirm.',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -64,7 +64,8 @@ const updateAndDeleteEvent = {
           },
         },
         403: {
-          description: 'Forbidden - only Admin/CSG roles can delete events',
+          description:
+            'Forbidden - only the event creator or an admin can delete events',
           content: {
             'application/json': {
               schema: {
@@ -111,7 +112,8 @@ const updateAndDeleteEvent = {
     put: {
       tags: ['Event'],
       summary: 'Update event',
-      description: 'Update an existing event by ID (Admin/CSG only).',
+      description:
+        'Update an existing event by ID (event creator or admin only). Admin edits preserve the original event creator.',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -318,7 +320,8 @@ const updateAndDeleteEvent = {
           },
         },
         403: {
-          description: 'Forbidden - only Admin/CSG roles can update events',
+          description:
+            'Forbidden - only the event creator or an admin can update events',
           content: {
             'application/json': {
               schema: {
@@ -2268,7 +2271,7 @@ const postAndDraftEvent = {
       tags: ['Event'],
       summary: 'Post event',
       description:
-        'Publish a draft event so it becomes visible to all users (Admin/CSG/Organizer only).',
+        'Publish a draft event so it becomes visible to all users (event creator or admin only).',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -2310,7 +2313,7 @@ const postAndDraftEvent = {
       tags: ['Event'],
       summary: 'Save event as draft',
       description:
-        'Unpost an event (save as draft), hiding it from regular users (Admin/CSG/Organizer only).',
+        'Unpost an event (save as draft), hiding it from regular users (event creator or admin only).',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -2352,7 +2355,7 @@ const massCheckOut = {
       tags: ['Event'],
       summary: 'Mass check-out students',
       description:
-        'Check out one or more students from an event by their student IDs (Admin/CSG/Organizer only). Requires `confirm_email` to match the authenticated account.',
+        'Check out one or more students from an event by their student IDs (event creator or admin only). Requires `confirm_email` to match the authenticated account. No organizer membership is required for admins.',
       security: [{ bearerAuth: [] }],
       parameters: [
         {
@@ -2433,7 +2436,7 @@ const massCheckOut = {
         401: { description: 'Unauthorized' },
         403: {
           description:
-            'Forbidden — Admin/CSG/Organizer only, or confirm_email does not match the authenticated account',
+            'Forbidden — event creator or admin only, or confirm_email does not match the authenticated account',
         },
         404: { description: 'Event not found' },
         500: { description: 'Internal server error' },

@@ -42,6 +42,14 @@ const organizers = load('v1/middlewares/checkOrganizer.middleware.ts', {
   '@/utils/routeParams': { routeParam: (req, name) => req.params[name] },
 });
 const routes = [];
+const owners = load('v1/middlewares/checkEventOwner.middleware.ts', {
+  '../repositories/event.repository': {
+    getEventDetails: async (eventId) =>
+      eventId === 'assigned-event' ? { created_by: 'creator-user' } : null,
+  },
+  '@/utils/responseHandler': responses,
+  '@/utils/routeParams': { routeParam: (req, name) => req.params[name] },
+});
 const router = Object.fromEntries(
   ['get', 'post', 'put', 'patch', 'delete'].map((method) => [
     method,
@@ -67,13 +75,14 @@ load('v1/routes/event.routes.ts', {
   'express-validator': { checkSchema: () => (_req, _res, next) => next() },
   '../validators/addEventValidSchema': {},
   '../middlewares/checkOrganizer.middleware': organizers,
+  '../middlewares/checkEventOwner.middleware': owners,
   '../middlewares/rateLimiter.middleware': {
     checkInRateLimiter: (_req, _res, next) => next(),
   },
 });
 
 async function request(route, user, eventId = 'assigned-event') {
-  const req = { user, params: { event_id: eventId } };
+  const req = { user, params: { event_id: eventId, eventId } };
   const res = {
     statusCode: 200,
     status(code) {
@@ -94,6 +103,39 @@ async function request(route, user, eventId = 'assigned-event') {
   }
   assert.ok(res.body, 'The middleware chain must produce a response');
   return res.statusCode;
+}
+
+for (const [method, endpoint] of [
+  ['delete', '/:event_id'],
+  ['patch', '/:event_id/post'],
+  ['patch', '/:event_id/draft'],
+  ['put', '/:eventId'],
+  ['post', '/mass_check_out/:event_id'],
+]) {
+  test(`${method} ${endpoint}: only creator or admin, without organizer membership`, async () => {
+    const route = routes.find(
+      (entry) => entry.method === method && entry.route === endpoint
+    );
+    assert.ok(route);
+    assert.equal(
+      await request(route, { id: 'admin-user', role: 'admin' }),
+      200
+    );
+    for (const role of ['student', 'instructor', 'organizer', 'csg']) {
+      assert.equal(await request(route, { id: 'creator-user', role }), 200);
+      assert.equal(await request(route, { id: 'assigned-user', role }), 403);
+      assert.equal(await request(route, { id: 'unrelated-user', role }), 403);
+    }
+    assert.equal(await request(route, undefined), 401);
+    assert.equal(
+      await request(
+        route,
+        { id: 'admin-user', role: 'admin' },
+        'missing-event'
+      ),
+      404
+    );
+  });
 }
 
 for (const endpoint of [

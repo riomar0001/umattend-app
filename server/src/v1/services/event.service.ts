@@ -96,16 +96,23 @@ const draftEvent = async (eventId: string): Promise<void> => {
   await eventRepository.draftEvent(eventId);
 };
 
-const updateEvent = async (eventId: string, event_data: AddEventInterface) => {
+const updateEvent = async (
+  eventId: string,
+  event_data: AddEventInterface,
+  isAdmin = false
+) => {
   const event = await eventRepository.getEventDetails(eventId);
 
   if (!event) {
     throw new NotFoundError('Event not found');
   }
-  if (event.created_by !== event_data.created_by) {
+  if (!isAdmin && event.created_by !== event_data.created_by) {
     throw new ForbiddenError('You are not authorized to update this event');
   }
-  const updated_event = await eventRepository.updateEvent(eventId, event_data);
+  const updated_event = await eventRepository.updateEvent(eventId, {
+    ...event_data,
+    created_by: event.created_by,
+  });
 
   // Only enqueue when the edit actually moved a due time.
   //
@@ -571,16 +578,17 @@ const getEventDetailsById = async (
   }
 
   const student = await studentRepository.getStudentByUserId(user_id);
-  if (!student) {
+  if (!student && role !== 'admin') {
     throw new NotFoundError('Student not found');
   }
 
   // Without an ID number there is nothing attendance could have been recorded
   // against, so the event simply reads as not-yet-attended rather than 404ing.
+  const studentId = student?.student_id;
   const attendanceData =
-    student.student_id === null
+    studentId === null || studentId === undefined
       ? null
-      : await eventRepository.checkIfUserAttended(event_id, student.student_id);
+      : await eventRepository.checkIfUserAttended(event_id, studentId);
 
   const check_in_at = attendanceData?.check_in_at ?? null;
   const check_out_at =
@@ -591,7 +599,11 @@ const getEventDetailsById = async (
   const is_organizer = await eventRepository.checkOrganizer(user_id, event_id);
 
   if (event.is_draft) {
-    const canSeeDraft = role === 'admin' || role === 'csg' || !!is_organizer;
+    const canSeeDraft =
+      role === 'admin' ||
+      role === 'csg' ||
+      !!is_organizer ||
+      event.created_by === user_id;
     if (!canSeeDraft) {
       throw new NotFoundError('Event not found');
     }
@@ -602,7 +614,8 @@ const getEventDetailsById = async (
     capacity: event.capacity ?? undefined,
     start_time: event.start_time ?? undefined,
     end_time: event.end_time ?? undefined,
-    can_edit: !!is_organizer,
+    can_edit:
+      !!is_organizer || event.created_by === user_id || role === 'admin',
     checkin_count: checkin_count ?? 0,
     checkout_count,
     user_attendance: {
@@ -614,7 +627,8 @@ const getEventDetailsById = async (
 
 const getAllEvents = async (
   user_id: string,
-  includeDrafts = false
+  includeDrafts = false,
+  role?: string
 ): Promise<GetAllEventsInterface> => {
   const events = await eventRepository.getAllEvents(includeDrafts);
 
@@ -645,7 +659,8 @@ const getAllEvents = async (
         created_by: event.created_by,
         checkin_count: event.checkin_count ?? 0,
         checkout_count: event.checkout_count ?? 0,
-        can_edit: !!is_organizer,
+        can_edit:
+          !!is_organizer || event.created_by === user_id || role === 'admin',
       };
     })
   );
@@ -653,7 +668,8 @@ const getAllEvents = async (
 
 const getAllPastEvents = async (
   user_id: string,
-  includeDrafts = false
+  includeDrafts = false,
+  role?: string
 ): Promise<GetAllEventsInterface> => {
   const events = await eventRepository.getAllPastEvents(includeDrafts);
 
@@ -684,7 +700,8 @@ const getAllPastEvents = async (
         created_by: event.created_by,
         checkin_count: event.checkin_count ?? 0,
         checkout_count: event.checkout_count ?? 0,
-        can_edit: !!is_organizer,
+        can_edit:
+          !!is_organizer || event.created_by === user_id || role === 'admin',
       };
     })
   );
@@ -806,7 +823,9 @@ const getAttendeesByEventId = async (
 const getEventNameById = async (event_id: string): Promise<string> =>
   cachedData('event:title:' + event_id, 300, async () => {
     const eventData = await eventRepository.getEventDetails(event_id);
-    if (!eventData) {throw new NotFoundError('No event found with this ID');}
+    if (!eventData) {
+      throw new NotFoundError('No event found with this ID');
+    }
     return eventData.title;
   });
 

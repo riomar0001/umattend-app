@@ -9,6 +9,7 @@ import {
   RemoveOrganizerValidSchema,
 } from '../validators/addEventValidSchema';
 import { checkOrganizer } from '../middlewares/checkOrganizer.middleware';
+import { checkEventOwner } from '../middlewares/checkEventOwner.middleware';
 import { checkInRateLimiter } from '../middlewares/rateLimiter.middleware';
 const router = express.Router();
 
@@ -22,30 +23,27 @@ router.post(
 router.delete(
   '/:event_id',
   authMiddleware,
-  checkRole('admin', 'csg'),
-  checkOrganizer,
+  checkEventOwner,
   eventController.deleteEvent
 );
 
 router.patch(
   '/:event_id/post',
   authMiddleware,
-  checkRole('admin', 'csg'),
-  checkOrganizer,
+  checkEventOwner,
   eventController.postEvent
 );
 
 router.patch(
   '/:event_id/draft',
   authMiddleware,
-  checkRole('admin', 'csg'),
-  checkOrganizer,
+  checkEventOwner,
   eventController.draftEvent
 );
 router.put(
   '/:eventId',
   authMiddleware,
-  checkRole('admin', 'csg'),
+  checkEventOwner,
   checkSchema(EventValidSchema),
   eventController.updateEvent
 );
@@ -76,7 +74,7 @@ router.post(
   `/mass_check_out/:event_id`,
   authMiddleware,
   checkInRateLimiter,
-  checkOrganizer,
+  checkEventOwner,
   eventController.massCheckOutEvent
 );
 

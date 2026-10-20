@@ -16,14 +16,18 @@ import { UpdateEventSheet } from '@/components/event/manage/update-event-sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Event } from '@/types/events';
 import { getEventByEventIdOptions } from '@/api/client/@tanstack/react-query.gen';
+import { canManageEvent } from '@/lib/event-permissions';
 import { getEventStatus } from '@/lib/events-utils';
 import { formatTimePadded } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
 
 export default function ManageSingleEventPage() {
   const params = useParams();
   const router = useRouter();
   const eventId = params?.id as string;
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const userId = useAuthStore((state) => state.user?.user_id);
+  const role = useAuthStore((state) => state.user?.role);
 
   const {
     data: eventData,
@@ -52,6 +56,7 @@ export default function ManageSingleEventPage() {
   if (!eventData.data.can_edit) return <ManageEventSkeleton />;
 
   const apiEvent = eventData.data as typeof eventData.data & { is_draft?: boolean };
+  const canManage = canManageEvent(apiEvent.created_by, userId, role);
   const startDate = apiEvent.start_time ? new Date(apiEvent.start_time) : new Date();
   const endDate = apiEvent.end_time ? new Date(apiEvent.end_time) : new Date();
   const now = new Date();
@@ -95,7 +100,7 @@ export default function ManageSingleEventPage() {
         </svg>
       </div>
 
-      <HeroSection event={event} setIsSheetOpen={setIsSheetOpen} refetch={refetch} />
+      <HeroSection event={event} setIsSheetOpen={setIsSheetOpen} refetch={refetch} canManage={canManage} />
 
       <main className="max-w-10xl relative container mx-auto px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-8">
         <Tabs defaultValue="details">
@@ -156,6 +161,7 @@ export default function ManageSingleEventPage() {
               eventStartTime={apiEvent.start_time}
               eventEndTime={apiEvent.end_time}
               isEventDone={isEventDone}
+              canMassCheckOut={canManage}
             />
           </TabsContent>
 
@@ -173,7 +179,7 @@ export default function ManageSingleEventPage() {
         </Tabs>
       </main>
 
-      <UpdateEventSheet event={event} open={isSheetOpen} onOpenChange={setIsSheetOpen} onUpdate={handleUpdateEvent} />
+      {canManage && <UpdateEventSheet event={event} open={isSheetOpen} onOpenChange={setIsSheetOpen} onUpdate={handleUpdateEvent} />}
     </div>
   );
 }

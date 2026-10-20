@@ -194,7 +194,8 @@ const updateEvent = async (req: Request, res: Response): Promise<Response> => {
 
     const updated_event = await eventServices.updateEvent(
       eventId,
-      updated_event_data
+      updated_event_data,
+      req.user.role === 'admin'
     );
 
     return HTTPSuccessResponse(
@@ -645,7 +646,11 @@ const getAllEvents = async (req: Request, res: Response) => {
     }
 
     const includeDrafts = role === 'admin' || role === 'csg';
-    const events = await eventServices.getAllEvents(user_id, includeDrafts);
+    const events = await eventServices.getAllEvents(
+      user_id,
+      includeDrafts,
+      role
+    );
     return HTTPSuccessResponse(
       res,
       200,
@@ -678,7 +683,11 @@ const getAllPastEvents = async (req: Request, res: Response) => {
     }
 
     const includeDrafts = role === 'admin' || role === 'csg';
-    const events = await eventServices.getAllPastEvents(user_id, includeDrafts);
+    const events = await eventServices.getAllPastEvents(
+      user_id,
+      includeDrafts,
+      role
+    );
     return HTTPSuccessResponse(
       res,
       200,

@@ -15,6 +15,8 @@ import { MassCheckInDialog } from './mass-check-in-dialog';
 import { MassCheckOutDialog } from './mass-check-out-dialog';
 import { getEventAttendanceCountOptions, getEventByEventIdAttendeesOptions } from '@/api/client/@tanstack/react-query.gen';
 import { Event } from '@/api/client/sdk.gen';
+import { massCheckOut } from '@/api/mass-check-out';
+import { createMassCheckOutCsv, downloadCheckOutResults } from '@/lib/mass-check-out-results';
 import { formatDateTime } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 
@@ -25,9 +27,17 @@ interface EventAttendeesProps {
   eventEndTime?: string;
   /** Server-side "event finished" flag — mass check-out is gated on it */
   isEventDone?: boolean;
+  canMassCheckOut?: boolean;
 }
 
-export default function EventAttendees({ eventId, checkOutRequired, eventStartTime, eventEndTime, isEventDone = false }: EventAttendeesProps) {
+export default function EventAttendees({
+  eventId,
+  checkOutRequired,
+  eventStartTime,
+  eventEndTime,
+  isEventDone = false,
+  canMassCheckOut = false
+}: EventAttendeesProps) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [loadingStudentId, setLoadingStudentId] = useState<string | null>(null);
@@ -36,6 +46,7 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
   const [isMassCheckInDialogOpen, setIsMassCheckInDialogOpen] = useState(false);
   const [isMassCheckOutDialogOpen, setIsMassCheckOutDialogOpen] = useState(false);
   const [isMassCheckingOut, setIsMassCheckingOut] = useState(false);
+  const [checkOutReport, setCheckOutReport] = useState<{ eventId: string; owner: string; csv: string; filename: string; createdAt: string } | null>(null);
   const currentUserEmail = useAuthStore((state) => state.user?.umindanao_email ?? '');
   const limit = 10;
 
@@ -192,7 +203,7 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
    * students who have no check-out time yet.
    */
   const handleMassCheckOut = async (typedEmail: string) => {
-    if (isMassCheckingOut) return;
+    if (isMassCheckingOut || !canMassCheckOut) return;
 
     // Mirror of the server-side guard: the typed email has to be the signed-in
     // account's. The dialog already blocks Confirm on a mismatch, so reaching
@@ -217,10 +228,10 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
         throwOnError: true
       });
 
-      const pendingIds = (roster.data?.data?.data ?? [])
+      const pendingStudents = (roster.data?.data?.data ?? [])
         .map((item) => item.student)
-        .filter((student) => !!student && !student.check_out_at && typeof student.student_id === 'number')
-        .map((student) => student!.student_id as number);
+        .filter((student) => !!student && !student.check_out_at && typeof student.student_id === 'number');
+      const pendingIds = pendingStudents.map((student) => student!.student_id as number);
 
       if (pendingIds.length === 0) {
         toast.dismiss(toastId);
@@ -230,22 +241,21 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
         return;
       }
 
-      const response = await Event.postEventMassCheckOutByEventId({
-        path: {
-          event_id: eventId
-        },
-        body: {
-          student_ids: pendingIds,
-          confirm_email: typedEmail.trim()
-          // No `checkout_time`: the server stamps `new Date()`, so each record
-          // carries the moment the check-out actually happened. This used to
-          // send the event's end_time, which gave every attendee the same
-          // fabricated timestamp regardless of when the organizer ran it.
-        },
-        throwOnError: true
+      const result = await massCheckOut(eventId, pendingIds, typedEmail.trim());
+      const createdAt = new Date().toISOString();
+      setCheckOutReport({
+        eventId,
+        owner: currentUserEmail,
+        csv: createMassCheckOutCsv(
+          eventId,
+          pendingStudents.filter((student) => student != null),
+          result
+        ),
+        filename: `event-${eventId}-mass-check-out-${createdAt.replace(/[:.]/g, '-')}.csv`,
+        createdAt
       });
 
-      const updatedCount = response.data?.data?.updatedCount ?? 0;
+      const updatedCount = result.updatedCount ?? 0;
       const skipped = pendingIds.length - updatedCount;
 
       toast.dismiss(toastId);
@@ -374,7 +384,7 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
         isEventEnded={isEventEnded}
       />
 
-      {checkOutRequired && (
+      {checkOutRequired && canMassCheckOut && (
         <div className="border-border mt-6 flex flex-col gap-3 rounded-lg border border-dashed p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-foreground text-sm font-semibold">Mass Check Out</h2>
@@ -398,8 +408,34 @@ export default function EventAttendees({ eventId, checkOutRequired, eventStartTi
         </div>
       )}
 
+      {canMassCheckOut && checkOutReport?.eventId === eventId && checkOutReport.owner === currentUserEmail && (
+        <div className="border-border mt-4 flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div aria-live="polite">
+            <h2 className="text-sm font-semibold">Mass check-out results ready</h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Latest completed run: {formatDateTime(checkOutReport.createdAt)}. Download student results and checkout times as CSV before leaving this page.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              try {
+                downloadCheckOutResults(checkOutReport.csv, checkOutReport.filename);
+              } catch {
+                toast.error('Unable to download results. Please try again.');
+              }
+            }}
+          >
+            <Download className="size-4" />
+            Download Results
+          </Button>
+        </div>
+      )}
+
       <MassCheckOutDialog
-        open={isMassCheckOutDialogOpen}
+        open={canMassCheckOut && isMassCheckOutDialogOpen}
         onOpenChange={setIsMassCheckOutDialogOpen}
         pendingCount={pendingCheckOutCount}
         confirmEmail={currentUserEmail}
