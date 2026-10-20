@@ -1148,7 +1148,7 @@ const createAndGetEvent = {
     post: {
       tags: ['Event'],
       summary: 'Create event',
-      description: 'Create a new event (Admin/CSG only)',
+      description: 'Create a new event (Admin/CSG/Organizer only)',
       security: [{ bearerAuth: [] }],
       requestBody: {
         required: true,

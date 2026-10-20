@@ -105,6 +105,18 @@ async function request(route, user, eventId = 'assigned-event') {
   return res.statusCode;
 }
 
+test('event creation allows organizers, admins, and CSG without existing event membership', async () => {
+  const route = routes.find((entry) => entry.method === 'post' && entry.route === '/');
+  assert.ok(route);
+  for (const role of ['organizer', 'admin', 'csg']) {
+    assert.equal(await request(route, { id: 'new-creator', role }), 200);
+  }
+  for (const role of ['student', 'instructor']) {
+    assert.equal(await request(route, { id: 'unrelated-user', role }), 403);
+  }
+  assert.equal(await request(route, undefined), 401);
+});
+
 for (const [method, endpoint] of [
   ['delete', '/:event_id'],
   ['patch', '/:event_id/post'],

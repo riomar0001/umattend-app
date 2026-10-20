@@ -16,7 +16,7 @@ const router = express.Router();
 router.post(
   '/',
   authMiddleware,
-  checkRole('admin', 'csg'),
+  checkRole('admin', 'csg', 'organizer'),
   checkSchema(EventValidSchema),
   eventController.addEvent
 );
