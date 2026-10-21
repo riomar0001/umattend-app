@@ -37,12 +37,19 @@ const event = {
   check_out_required: false,
 };
 let saved;
+const listCalls = [];
 const service = load('../src/v1/services/event.service.ts', {
   '../repositories/event.repository': {
     default: {
       getEventDetails: async () => event,
-      getAllEvents: async () => [event],
-      getAllPastEvents: async () => [event],
+      getAllEvents: async (...args) => {
+        listCalls.push(args);
+        return [event];
+      },
+      getAllPastEvents: async (...args) => {
+        listCalls.push(args);
+        return [event];
+      },
       checkOrganizer: async (userId) => userId === 'organizer',
       getEventCheckinCount: async () => 0,
       updateEvent: async (_eventId, data) => {
@@ -113,4 +120,14 @@ test('admin edit preserves the original creator and noncreator edits are rejecte
     title: 'Creator edit',
   });
   assert.equal(saved.created_by, 'creator');
+});
+
+test('active and past lists scope draft visibility using the signed-in user ID', async () => {
+  listCalls.length = 0;
+  await service.getAllEvents('creator', false, 'organizer');
+  await service.getAllPastEvents('assigned-organizer', false, 'organizer');
+  assert.deepEqual(listCalls, [
+    [false, 'creator'],
+    [false, 'assigned-organizer'],
+  ]);
 });

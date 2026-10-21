@@ -1376,7 +1376,8 @@ const createAndGetEvent = {
     get: {
       tags: ['Event'],
       summary: 'Get all events',
-      description: 'Retrieve all active (ongoing) events ordered by start time',
+      description:
+        'Retrieve active events ordered by start time. Admin and CSG users can see all drafts; other users can see published events and drafts they created or organize.',
       security: [{ bearerAuth: [] }],
       responses: {
         200: {
@@ -1511,7 +1512,8 @@ const getAllPastEvents = {
     get: {
       tags: ['Event'],
       summary: 'Get all past events',
-      description: 'Retrieve all past (completed) events ordered by start time',
+      description:
+        'Retrieve completed events. Admin and CSG users can see all drafts; other users can see published events and drafts they created or organize.',
       security: [{ bearerAuth: [] }],
       responses: {
         200: {

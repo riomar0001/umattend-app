@@ -93,12 +93,33 @@ const draftEvent = async (eventId: string) => {
   });
 };
 
-const getAllEvents = async (includeDrafts = false) => {
+// Drafts stay discoverable to their creator and assigned organizers, while
+// unrelated users only see published events.
+const eventVisibility = (
+  includeDrafts: boolean,
+  userId?: string
+): Prisma.eventsWhereInput => {
+  if (includeDrafts) {
+    return {};
+  }
+  if (!userId) {
+    return { is_draft: false };
+  }
+  return {
+    OR: [
+      { is_draft: false },
+      { created_by: userId },
+      { organizers: { some: { user_id: userId } } },
+    ],
+  };
+};
+
+const getAllEvents = async (includeDrafts = false, userId?: string) => {
   const events = await prisma.events.findMany({
     orderBy: { start_time: 'asc' },
     where: {
       is_done: false,
-      ...(includeDrafts ? {} : { is_draft: false }),
+      ...eventVisibility(includeDrafts, userId),
     },
     include: {
       _count: {
@@ -138,12 +159,12 @@ const getAllEvents = async (includeDrafts = false) => {
   });
 };
 
-const getAllPastEvents = async (includeDrafts = false) => {
+const getAllPastEvents = async (includeDrafts = false, userId?: string) => {
   const events = await prisma.events.findMany({
     orderBy: { end_time: 'desc' },
     where: {
       is_done: true,
-      ...(includeDrafts ? {} : { is_draft: false }),
+      ...eventVisibility(includeDrafts, userId),
     },
     include: {
       _count: {

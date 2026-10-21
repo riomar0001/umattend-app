@@ -179,7 +179,7 @@
 		"MAIL_PORT": "587",
 		"MAIL_SECURE": "false",
 		"MAIL_USER": "m.inguito.484470@umindanao.edu.ph",
-		"MAIL_FROM": "attendance_admin@umattend.site",
+		"MAIL_FROM": "attendance@riomar.dev",
 		"MAIL_FROM_NAME": "UMAttend",
 		// Pause between messages on one SMTP session. Raise it if Gmail starts
 		// answering with "421 4.7.0 Try again later".

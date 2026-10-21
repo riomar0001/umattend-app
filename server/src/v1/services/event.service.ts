@@ -630,7 +630,7 @@ const getAllEvents = async (
   includeDrafts = false,
   role?: string
 ): Promise<GetAllEventsInterface> => {
-  const events = await eventRepository.getAllEvents(includeDrafts);
+  const events = await eventRepository.getAllEvents(includeDrafts, user_id);
 
   if (events.length === 0) {
     return [] as GetAllEventsInterface;
@@ -671,7 +671,7 @@ const getAllPastEvents = async (
   includeDrafts = false,
   role?: string
 ): Promise<GetAllEventsInterface> => {
-  const events = await eventRepository.getAllPastEvents(includeDrafts);
+  const events = await eventRepository.getAllPastEvents(includeDrafts, user_id);
 
   if (events.length === 0) {
     return [] as GetAllEventsInterface;
