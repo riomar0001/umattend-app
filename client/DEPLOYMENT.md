@@ -3,6 +3,35 @@
 Next.js 16 app in `client/`. The API is a Cloudflare Worker — see
 [`../server/DEPLOYMENT.md`](../server/DEPLOYMENT.md).
 
+## Temporary production domain (October 21, 2026)
+
+The production frontend now uses `https://umattend.riomar.dev`. The original
+`umattend.site` layout below is retained for reverting the temporary move.
+
+- Add `umattend.riomar.dev` to the frontend project's domains and point its DNS
+  to that project's deployment.
+- Keep `NEXT_PUBLIC_API_URL=/api/v1` and set
+  `API_ORIGIN=https://umattend-api.riomar.dev` for production. The API Worker
+  custom domain is `umattend-api.riomar.dev` in the `riomar.dev` Cloudflare zone.
+- Production `server/wrangler.jsonc` uses `https://umattend-api.riomar.dev`
+  for `API_URL` and `https://umattend.riomar.dev` for `FRONTEND_URL`,
+  `CORS_ORIGIN`, and `ALLOWED_ORIGINS`, with
+  `GOOGLE_REDIRECT_URI=https://umattend.riomar.dev/api/v1/auth/google/callback`.
+- In Google Cloud Console, add `https://umattend.riomar.dev` to authorized
+  JavaScript origins and the exact callback URL above to authorized redirect
+  URIs on the existing OAuth client.
+- Keep production `COOKIE_DOMAIN` empty. Cookies are host-only on the new
+  frontend because the callback and all browser API requests use its `/api`
+  proxy. A cookie for `.umattend.site` cannot be stored by `umattend.riomar.dev`.
+- Deploy the Worker after changing its configuration. Redeploy the frontend if
+  its proxy environment values change. Staging settings and mail sender
+  addresses are unchanged.
+
+Verify `https://umattend-api.riomar.dev/api/v1/health`,
+`https://umattend.riomar.dev/api/v1/health`, Google sign-in, a page reload,
+and logout after deployment. To revert, restore the original production URL
+values and cookie domain recorded below and in Git history.
+
 ## The one architectural decision
 
 The apex domain cannot serve both. Vercel and Cloudflare Workers each need to

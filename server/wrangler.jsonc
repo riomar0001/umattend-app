@@ -159,13 +159,13 @@
 		"DLQ_NAME": "umattend-dlq",
 		// Not a secret; the paired CF_API_TOKEN is.
 		"CF_ACCOUNT_ID": "b8d3ac74f68e959d2c02abaff44dd65f",
-		// Widens the auth cookies to the registrable domain so the frontend host
-		// and the API host share them. Leave unset locally (host-only on localhost).
-		"COOKIE_DOMAIN": ".umattend.site",
-		"API_URL": "https://umattend.site",
-		"FRONTEND_URL": "https://umattend.site",
-		"CORS_ORIGIN": "https://umattend.site",
-		"ALLOWED_ORIGINS": "https://umattend.site,https://www.umattend.site",
+		// Temporary frontend domain. OAuth and API requests use the frontend's
+		// /api proxy, so cookies must be host-only on umattend.riomar.dev.
+		"COOKIE_DOMAIN": "",
+		"API_URL": "https://umattend-api.riomar.dev",
+		"FRONTEND_URL": "https://umattend.riomar.dev",
+		"CORS_ORIGIN": "https://umattend.riomar.dev",
+		"ALLOWED_ORIGINS": "https://umattend.riomar.dev",
 		"JWT_ACCESS_TOKEN_TTL": "3",
 		"JWT_REFRESH_TOKEN_TTL": "24",
 		// Attendance QR token lifetime, in SECONDS (user.service.ts passes it to
@@ -173,7 +173,7 @@
 		// ASSUMED VALUE — no prior setting was recorded anywhere; confirm it.
 		"JWT_ATTENDANCE_TOKEN_TTL": "3600",
 		"GOOGLE_CLIENT_ID": "908931193191-1iv9dq0kc6quu5skd1g4m2m9iq799jqb.apps.googleusercontent.com",
-		"GOOGLE_REDIRECT_URI": "https://umattend.site/api/v1/auth/google/callback",
+		"GOOGLE_REDIRECT_URI": "https://umattend.riomar.dev/api/v1/auth/google/callback",
 		// Gmail submission port: plaintext connect upgraded via STARTTLS.
 		"MAIL_HOST": "smtp.gmail.com",
 		"MAIL_PORT": "587",
@@ -310,8 +310,8 @@
 	},
 	"routes": [
 		{
-			"pattern": "api.umattend.site",
-			"zone_name": "umattend.site",
+			"pattern": "umattend-api.riomar.dev",
+			"zone_name": "riomar.dev",
 			"custom_domain": true,
 			"enabled": true,
 			"previews_enabled": false

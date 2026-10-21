@@ -1,5 +1,14 @@
 # Deploying UMAttend API
 
+## Temporary production frontend domain
+
+As of October 21, 2026, the production frontend is `https://umattend.riomar.dev`.
+Production URL, CORS, OAuth callback, and cookie settings in `wrangler.jsonc`
+reflect that move. The API custom domain is `umattend-api.riomar.dev` in the
+`riomar.dev` zone. Staging is unchanged. See [the temporary domain checklist](../client/DEPLOYMENT.md#temporary-production-domain-october-21-2026)
+for frontend hosting and Google OAuth settings required alongside deployment.
+The original domain examples below are retained for reference and rollback.
+
 Two fully separate environments, selected by Wrangler's `--env` flag:
 
 |                | Staging                         | Production                |

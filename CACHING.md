@@ -8,7 +8,7 @@ Next.js already emits content-hashed JS, CSS, fonts and static image imports und
 
 Verify the deployed frontend (or a local production build):
 
-    node server/scripts/check-asset-cache.mjs https://umattend.site
+    node server/scripts/check-asset-cache.mjs https://umattend.riomar.dev
 
 Source: https://nextjs.org/docs/app/api-reference/config/next-config-js/headers
 
